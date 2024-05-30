@@ -1,0 +1,1 @@
+export { ColumnsChartComponent } from './ColumnsChartComponent';

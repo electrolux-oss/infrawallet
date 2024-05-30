@@ -1,0 +1,77 @@
+{
+  "name": "@electrolux-oss/plugin-infrawallet",
+  "version": "0.1.0",
+  "backstage": {
+    "role": "frontend-plugin"
+  },
+  "publishConfig": {
+    "access": "public",
+    "main": "dist/index.esm.js",
+    "types": "dist/index.d.ts"
+  },
+  "homepage": "https://opensource.electrolux.one",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/electrolux-oss/infrawallet",
+    "directory": "plugins/infrawallet"
+  },
+  "license": "Apache-2.0",
+  "sideEffects": false,
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "backstage-cli package build",
+    "clean": "backstage-cli package clean",
+    "lint": "backstage-cli package lint",
+    "prepack": "backstage-cli package prepack",
+    "postpack": "backstage-cli package postpack",
+    "start": "backstage-cli package start",
+    "test": "backstage-cli package test"
+  },
+  "dependencies": {
+    "@backstage/config": "^1.2.0",
+    "@backstage/core-components": "^0.14.7",
+    "@backstage/core-plugin-api": "^1.9.2",
+    "@backstage/theme": "^0.5.4",
+    "@material-ui/core": "^4.9.13",
+    "@material-ui/icons": "^4.9.1",
+    "@material-ui/lab": "^4.0.0-alpha.61",
+    "@mui/material": "^5.12.2",
+    "@mui/x-data-grid": "7.3.1",
+    "@mui/x-date-pickers": "^6.20.0",
+    "@stitches/react": "1.2.8",
+    "@types/node-fetch": "^2.6.4",
+    "@types/react-date-range": "1.4.5",
+    "@viniarruda/react-month-range-picker": "2.0.4",
+    "apexcharts": "3.42.0",
+    "better-react-mathjax": "^2.0.2",
+    "d3-shape": "3.2.0",
+    "date-fns": "2.30.0",
+    "human-format": "1.2.0",
+    "lodash": "^4.17.21",
+    "moment": "2.29.4",
+    "mui-modal-provider": "2.2.0",
+    "node-fetch": "^2.6.7",
+    "react-apexcharts": "1.4.1",
+    "react-date-range": "1.4.0"
+  },
+  "devDependencies": {
+    "@backstage/cli": "^0.26.5",
+    "@backstage/core-app-api": "^1.12.5",
+    "@backstage/dev-utils": "^1.0.32",
+    "@backstage/test-utils": "^1.5.5",
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.0.0",
+    "@types/lodash": "^4.14.151",
+    "msw": "^1.0.0"
+  },
+  "peerDependencies": {
+    "react": "^16.13.1 || ^17.0.0 || ^18.0.0",
+    "react-dom": "^17.0.0 || ^18.0.0",
+    "react-router-dom": "^6.13.0"
+  }
+}
