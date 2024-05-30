@@ -1,0 +1,1 @@
+export { WalletListComponent } from './WalletListComponent';

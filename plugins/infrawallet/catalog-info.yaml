@@ -1,0 +1,9 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: electrolux-plugin-infrawallet
+  title: '@electrolux-oss/plugin-infrawallet'
+spec:
+  lifecycle: experimental
+  type: backstage-frontend-plugin
+  owner: gluckzhang

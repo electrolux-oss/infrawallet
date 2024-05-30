@@ -1,0 +1,64 @@
+{
+  "name": "@electrolux-oss/plugin-infrawallet-backend",
+  "version": "0.1.0",
+  "backstage": {
+    "role": "backend-plugin"
+  },
+  "publishConfig": {
+    "access": "public",
+    "main": "dist/index.cjs.js",
+    "types": "dist/index.d.ts"
+  },
+  "homepage": "https://opensource.electrolux.one",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/electrolux-oss/infrawallet",
+    "directory": "plugins/infrawallet-backend"
+  },
+  "license": "Apache-2.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "files": [
+    "dist",
+    "migrations",
+    "seeds",
+    "config.d.ts"
+  ],
+  "scripts": {
+    "build": "backstage-cli package build",
+    "clean": "backstage-cli package clean",
+    "lint": "backstage-cli package lint",
+    "prepack": "backstage-cli package prepack",
+    "postpack": "backstage-cli package postpack",
+    "start": "backstage-cli package start",
+    "test": "backstage-cli package test"
+  },
+  "dependencies": {
+    "@aws-sdk/client-cost-explorer": "^3.554.0",
+    "@aws-sdk/client-sts": "^3.554.0",
+    "@azure/arm-costmanagement": "1.0.0-beta.1",
+    "@azure/identity": "4.1.0",
+    "@backstage/backend-common": "^0.22.0",
+    "@backstage/backend-defaults": "^0.2.18",
+    "@backstage/backend-plugin-api": "^0.6.18",
+    "@backstage/config": "^1.2.0",
+    "@backstage/types": "^1.1.1",
+    "@types/express": "*",
+    "express": "^4.17.1",
+    "express-promise-router": "^4.1.0",
+    "lodash": "^4.17.21",
+    "moment": "2.29.4",
+    "node-fetch": "^2.6.7",
+    "winston": "^3.2.1",
+    "yn": "^4.0.0"
+  },
+  "devDependencies": {
+    "@backstage/cli": "^0.26.5",
+    "@backstage/plugin-auth-backend": "^0.22.5",
+    "@backstage/plugin-auth-backend-module-guest-provider": "^0.1.4",
+    "@types/supertest": "^2.0.8",
+    "msw": "^1.0.0",
+    "supertest": "^6.2.4"
+  },
+  "configSchema": "config.d.ts"
+}

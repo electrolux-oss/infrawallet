@@ -1,0 +1,1 @@
+export { CostReportsTableComponent } from './CostReportsTableComponent';
