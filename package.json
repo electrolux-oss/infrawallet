@@ -21,6 +21,7 @@
     "fix": "backstage-cli repo fix",
     "lint": "backstage-cli repo lint --since origin/main",
     "lint:all": "backstage-cli repo lint",
+    "lint:type-deps": "backstage-repo-tools type-deps",
     "prettier:check": "prettier --check .",
     "new": "backstage-cli new --scope internal"
   },
