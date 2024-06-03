@@ -43,8 +43,6 @@
     "@mui/x-data-grid": "7.3.1",
     "@mui/x-date-pickers": "^6.20.0",
     "@stitches/react": "1.2.8",
-    "@types/node-fetch": "^2.6.4",
-    "@types/react-date-range": "1.4.5",
     "@viniarruda/react-month-range-picker": "2.0.4",
     "apexcharts": "3.42.0",
     "better-react-mathjax": "^2.0.2",
@@ -56,9 +54,12 @@
     "mui-modal-provider": "2.2.0",
     "node-fetch": "^2.6.7",
     "react-apexcharts": "1.4.1",
-    "react-date-range": "1.4.0"
+    "react-date-range": "1.4.0",
+    "@types/react": "^18"
   },
   "devDependencies": {
+    "@types/node-fetch": "^2.6.4",
+    "@types/react-date-range": "1.4.5",
     "@backstage/cli": "^0.26.5",
     "@backstage/core-app-api": "^1.12.5",
     "@backstage/dev-utils": "^1.0.32",

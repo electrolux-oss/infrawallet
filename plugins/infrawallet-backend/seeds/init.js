@@ -1,4 +1,4 @@
-exports.seed = async function (knex) {
+exports.seed = async (knex) => {
   await knex('category_mappings').insert([
     {
       provider: 'azure',
