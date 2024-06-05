@@ -53,14 +53,22 @@ export class AwsClient implements InfraWalletApi {
       });
       const categoryMappings = await getCategoryMappings(this.database, 'aws');
 
-      const promise = (async () => {
-        const client = new STSClient({
+      let stsParams = {};
+      if (accessKeyId && accessKeySecret) {
+        stsParams = {
           region: 'us-east-1',
           credentials: {
             accessKeyId: accessKeyId as string,
             secretAccessKey: accessKeySecret as string,
           },
-        });
+        };
+      } else {
+        stsParams = {
+          region: 'us-east-1',
+        };
+      }
+      const promise = (async () => {
+        const client = new STSClient(stsParams);
         const commandInput = {
           // AssumeRoleRequest
           RoleArn: `arn:aws:iam::${accountId}:role/${assumedRoleName}`,
