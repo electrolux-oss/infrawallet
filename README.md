@@ -255,7 +255,7 @@ When adding a new cloud vendor, you need to implement a client based on the inte
 
 ## Roadmap
 
-- [ ] Make IAM user optional for AWS credentials
+- [x] Make IAM user optional for AWS credentials
 - [ ] Support filters besides grouping bys
 - [ ] Support Google Cloud Costs
 - [ ] WebUI for managing category mappings
