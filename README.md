@@ -24,7 +24,7 @@ The configuration schema of InfraWallet is defined in the [plugins/infrawallet-b
 
 #### AWS
 
-For AWS, InfraWallet relies on an IAM role to fetch cost and usage data using AWS Cost Explorer APIs. Thus before adding the configurations, AWS IAM user, role, and policy need to be set up. If you have multiple AWS accounts, you can reuse the IAM user in one account and grant the necessary permissions to the role in each account. The role to be assumed in an AWS account needs the following permission:
+For AWS, InfraWallet relies on an IAM role to fetch cost and usage data using AWS Cost Explorer APIs. Thus before adding the configurations, AWS IAM role and policy need to be set up. If you have multiple AWS accounts, you should create a role in each account and configure trust relationships for it. The role to be assumed in an AWS account needs the following permission:
 
 ```json
 {
@@ -50,9 +50,11 @@ backend:
         - name: <unique_name_of_this_account>
           accountId: '<12-digit_account_ID>' # quoted as a string
           assumedRoleName: <name_of_the_AWS_IAM_role_to_be_assumed>
-          accessKeyId: <access_key_ID_of_AWS_IAM_user_that_assumes_the_role>
-          accessKeySecret: <access_key_secret_of_AWS_IAM_user_that_assumes_the_role>
+          accessKeyId: <access_key_ID_of_AWS_IAM_user_that_assumes_the_role> # optional, only needed when an IAM user is used to assume the role
+          accessKeySecret: <access_key_secret_of_AWS_IAM_user_that_assumes_the_role> # optional, only needed when an IAM user is used to assume the role
 ```
+
+The AWS client in InfraWallet is implemented using AWS SDK for JavaScript. If `accessKeyId` and `accessKeySecret` are defined in the configuration, it uses the configured IAM user to assume the role. Otherwise, the client follows the credential provider chain documented [here](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/setting-credentials-node.html#credchain).
 
 #### Azure
 
@@ -253,7 +255,7 @@ When adding a new cloud vendor, you need to implement a client based on the inte
 
 ## Roadmap
 
-- [ ] Make IAM user optional for AWS credentials
+- [x] Make IAM user optional for AWS credentials
 - [ ] Support filters besides grouping bys
 - [ ] Support Google Cloud Costs
 - [ ] WebUI for managing category mappings

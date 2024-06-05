@@ -20,8 +20,8 @@ export interface Config {
             name: string;
             accountId: string;
             assumedRoleName: string;
-            accessKeyId: string;
-            accessKeySecret: string;
+            accessKeyId?: string;
+            accessKeySecret?: string;
             tags?: string[];
           },
         ];
