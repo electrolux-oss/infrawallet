@@ -6,10 +6,7 @@ export const mergeCostReports = (
   reports: Report[],
   threshold: number,
 ): Report[] => {
-  if (reports.length <= threshold) {
-    return reports;
-  }
-  const totalCosts = [];
+  const totalCosts: { id: string, total: number }[] = [];
   reports.forEach(report => {
     let total = 0;
     Object.values(report.reports).forEach(v => {
@@ -22,7 +19,7 @@ export const mergeCostReports = (
 
   const mergedReports = reduce(
     reports,
-    (acc, report) => {
+    (acc: { [key: string]: Report }, report) => {
       let keyName = 'others';
       if (idsToBeKept.includes(report.id)) {
         keyName = report.id;
@@ -53,21 +50,25 @@ export const aggregateCostReports = (
   reports: Report[],
   aggregatedBy?: string,
 ): Report[] => {
-  const aggregatedReports = reduce(
+  const aggregatedReports: { [key: string]: Report } = reduce(
     reports,
     (acc, report) => {
-      let keyName = 'no value';
+      let keyName: string = 'no value';
       if (aggregatedBy && aggregatedBy in report) {
-        keyName = report[aggregatedBy];
+        keyName = report[aggregatedBy] as string;
       } else if (aggregatedBy === 'none') {
         keyName = 'Total cloud costs';
       }
+
       if (!acc[keyName]) {
         acc[keyName] = {
           id: keyName,
           reports: {},
-        };
-        acc[keyName][aggregatedBy] = keyName;
+        } as { id: string, reports: { [key: string]: number }, [key: string]: any };
+
+        if (aggregatedBy !== undefined) {
+          acc[keyName][aggregatedBy] = keyName;
+        }
       }
 
       Object.keys(report.reports).forEach(key => {
@@ -79,7 +80,7 @@ export const aggregateCostReports = (
       });
       return acc;
     },
-    {},
+    {} as { [key: string]: Report },
   );
   return Object.values(aggregatedReports);
 };

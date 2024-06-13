@@ -1,6 +1,7 @@
 import {
   CostExplorerClient,
   GetCostAndUsageCommand,
+  GetCostAndUsageCommandInput,
   Granularity,
 } from '@aws-sdk/client-cost-explorer';
 import { AssumeRoleCommand, STSClient } from '@aws-sdk/client-sts';
@@ -8,7 +9,8 @@ import { DatabaseService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
-import { CostQuery, InfraWalletApi, Report } from './InfraWalletApi';
+import { InfraWalletApi } from './InfraWalletApi';
+import { CostQuery, Report } from './types';
 import { getCategoryMappings, getCategoryByServiceName } from './functions';
 
 export class AwsClient implements InfraWalletApi {
@@ -30,7 +32,7 @@ export class AwsClient implements InfraWalletApi {
     }
 
     const promises = [];
-    const results = [];
+    const results: Report[] = [];
     const groupPairs = [];
     query.groups.split(',').forEach(group => {
       if (group.includes(':')) {
@@ -40,9 +42,9 @@ export class AwsClient implements InfraWalletApi {
     });
 
     for (const c of conf) {
-      const name = c.getOptionalString('name');
-      const accountId = c.getOptionalString('accountId');
-      const assumedRoleName = c.getOptionalString('assumedRoleName');
+      const name = c.getString('name');
+      const accountId = c.getString('accountId');
+      const assumedRoleName = c.getString('assumedRoleName');
       const accessKeyId = c.getOptionalString('accessKeyId');
       const accessKeySecret = c.getOptionalString('accessKeySecret');
       const tags = c.getOptionalStringArray('tags');
@@ -89,7 +91,7 @@ export class AwsClient implements InfraWalletApi {
         });
 
         // query this aws account's cost and usage using @aws-sdk/client-cost-explorer
-        const input = {
+        const input: GetCostAndUsageCommandInput = {
           TimePeriod: {
             Start: moment(parseInt(query.startTime, 10)).format('YYYY-MM-DD'),
             End: moment(parseInt(query.endTime, 10)).format('YYYY-MM-DD'),
@@ -99,35 +101,45 @@ export class AwsClient implements InfraWalletApi {
           GroupBy: [{ Type: 'DIMENSION', Key: 'SERVICE' }],
           Metrics: ['UnblendedCost'],
         };
+        
         const getCostCommand = new GetCostAndUsageCommand(input);
         const costAndusageResponse = await awsCeClient.send(getCostCommand);
 
         const transformedData = reduce(
           costAndusageResponse.ResultsByTime,
-          (acc, row) => {
-            const period = row.TimePeriod.Start.substring(0, 7);
-            row.Groups.forEach(group => {
-              const keyName = `${name}_${group.Keys[0]}`;
+          (acc: { [key: string]: Report }, row) => {
+            const rowTime = row.TimePeriod?.Start;
+            const period = rowTime ? rowTime.substring(0, 7): 'unknown';
+            if (row.Groups) {
+              row.Groups.forEach(group => {
+                const groupKeys = group.Keys ? group.Keys[0] : '';
+                const keyName = `${name}_${groupKeys}`;
+  
+                if (!acc[keyName]) {
+                  acc[keyName] = {
+                    id: keyName,
+                    name: name,
+                    service: `${groupKeys} (AWS)`,
+                    category: getCategoryByServiceName(
+                      groupKeys,
+                      categoryMappings,
+                    ),
+                    provider: 'AWS',
+                    reports: {},
+                    ...tagKeyValues,
+                  };
+                }
 
-              if (!acc[keyName]) {
-                acc[keyName] = {
-                  id: keyName,
-                  name: name,
-                  service: `${group.Keys[0]} (AWS)`,
-                  category: getCategoryByServiceName(
-                    group.Keys[0],
-                    categoryMappings,
-                  ),
-                  provider: 'AWS',
-                  reports: {},
-                  ...tagKeyValues,
-                };
-              }
+                const groupMetrics = group.Metrics;
+                
+                if (groupMetrics !== undefined) {
+                  acc[keyName].reports[period] = parseFloat(
+                    groupMetrics.UnblendedCost.Amount ?? '0.0',
+                  );
+                }
+              });
+            }
 
-              acc[keyName].reports[period] = parseFloat(
-                group.Metrics.UnblendedCost.Amount,
-              );
-            });
             return acc;
           },
           {},

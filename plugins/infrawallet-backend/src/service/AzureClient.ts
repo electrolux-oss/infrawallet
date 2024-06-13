@@ -4,7 +4,8 @@ import { DatabaseService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
-import { CostQuery, InfraWalletApi, Report } from './InfraWalletApi';
+import { InfraWalletApi } from './InfraWalletApi';
+import { CostQuery, Report } from './types';
 import { getCategoryMappings, getCategoryByServiceName } from './functions';
 
 export class AzureClient implements InfraWalletApi {
@@ -54,15 +55,15 @@ export class AzureClient implements InfraWalletApi {
     }
 
     const promises = [];
-    const results = [];
+    const results: Report[] = [];
 
     const groupPairs = [{ type: 'Dimension', name: 'ServiceName' }];
     for (const c of conf) {
-      const name = c.getOptionalString('name');
-      const subscriptionId = c.getOptionalString('subscriptionId');
-      const tenantId = c.getOptionalString('tenantId');
-      const clientId = c.getOptionalString('clientId');
-      const clientSecret = c.getOptionalString('clientSecret');
+      const name = c.getString('name');
+      const subscriptionId = c.getString('subscriptionId');
+      const tenantId = c.getString('tenantId');
+      const clientId = c.getString('clientId');
+      const clientSecret = c.getString('clientSecret');
       const credential = new ClientSecretCredential(
         tenantId as string,
         clientId as string,
@@ -93,7 +94,7 @@ export class AzureClient implements InfraWalletApi {
 
           const transformedData = reduce(
             costResponse.rows,
-            (acc, row) => {
+            (acc: { [key: string]: Report }, row) => {
               let keyName = name;
               for (let i = 0; i < groupPairs.length; i++) {
                 keyName += `->${row[i + 2]}`;
@@ -123,7 +124,7 @@ export class AzureClient implements InfraWalletApi {
             {},
           );
 
-          Object.values(transformedData).map((value: any) => {
+          Object.values(transformedData).map((value: Report) => {
             results.push(value);
           });
         } catch (e) {
