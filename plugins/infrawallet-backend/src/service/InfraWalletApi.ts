@@ -1,17 +1,4 @@
-export type CostQuery = {
-  filters: string;
-  groups: string;
-  granularity: string;
-  startTime: string;
-  endTime: string;
-};
-
-export type Report = {
-  id: string;
-  reports?: {
-    [period: string]: number;
-  };
-};
+import { CostQuery, Report } from "./types";
 
 /** @public */
 export type InfraWalletApi = {
