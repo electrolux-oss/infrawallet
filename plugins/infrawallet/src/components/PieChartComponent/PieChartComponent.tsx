@@ -33,7 +33,7 @@ export const PieChartComponent: FC<PieChartComponentProps> = ({
       labels: categories,
       dataLabels: {
         enabled: true,
-        formatter: (value, { seriesIndex, dataPointIndex, w }) => {
+        formatter: (value: number, { seriesIndex, w }: { seriesIndex: number, w: any }) => {
           return `${w.config.labels[seriesIndex]} (${value.toFixed(0)}%)`;
         },
       },
