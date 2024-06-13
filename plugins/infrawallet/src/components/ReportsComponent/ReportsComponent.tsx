@@ -1,7 +1,6 @@
 import {
   Content,
   Header,
-  HeaderLabel,
   Page,
   Progress,
 } from '@backstage/core-components';
@@ -53,8 +52,8 @@ export const ReportsComponent = () => {
   const [reportTags, setReportTags] = useState<string[]>([]);
   const [granularity, setGranularity] = useState<string>('monthly');
   const [aggregatedBy, setAggregatedBy] = useState<string>('none');
-  const [filters, setFilters] = useState<string>('');
-  const [groups, setGroups] = useState<string>('');
+  const [filters, _setFilters] = useState<string>('');
+  const [groups, _setGroups] = useState<string>('');
   const [monthRangeState, setMonthRangeState] = React.useState<MonthRange>({
     startMonth: startOfMonth(addMonths(new Date(), -2)),
     endMonth: endOfMonth(new Date()),

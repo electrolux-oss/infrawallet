@@ -5,7 +5,7 @@ import {
   LoggerService,
 } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { JsonArray } from '@backstage/types';
+import { Report } from './types';
 import express from 'express';
 import Router from 'express-promise-router';
 import { AwsClient } from './AwsClient';
@@ -42,8 +42,8 @@ export async function createRouter(
     const granularity = request.query.granularity as string;
     const startTime = request.query.startTime as string;
     const endTime = request.query.endTime as string;
-    const promises = [];
-    const results = [];
+    const promises: Promise<void>[] = [];
+    const results: Report[] = [];
 
     cloudClients.forEach(async client => {
       const fetchCloudCosts = (async () => {
@@ -55,7 +55,7 @@ export async function createRouter(
           startTime,
           endTime,
         ].join('_');
-        const cachedCosts = (await cache.get(cacheKey)) as JsonArray;
+        const cachedCosts = (await cache.get(cacheKey)) as Report[] | undefined;
         if (cachedCosts) {
           logger.debug(`${client.constructor.name} costs from cache`);
           cachedCosts.forEach(cost => {

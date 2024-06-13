@@ -1,10 +1,8 @@
 import {
   Content,
-  Header,
-  HeaderLabel,
+  Header, 
   InfoCard,
-  Page,
-  Progress,
+  Page
 } from '@backstage/core-components';
 import { alertApiRef, useApi } from '@backstage/core-plugin-api';
 import { Grid, Typography } from '@material-ui/core';
@@ -28,7 +26,7 @@ const rearrangeData = (reportDetails: any, yearmonths: string[]): any[] => {
   return arrCost;
 };
 
-const calcualateTotalCosts = (reports: Report[]): number => {
+const calcualateTotalCosts = (reports: Report[]): string => {
   let total = 0;
   reports.forEach(report => {
     Object.keys(report.reports).forEach(key => {
@@ -39,12 +37,12 @@ const calcualateTotalCosts = (reports: Report[]): number => {
 };
 
 export const WalletListComponent = () => {
-  const [submittingState, setSubmittingState] = useState<Boolean>(false);
+  const [_submittingState, setSubmittingState] = useState<Boolean>(false);
   const [reports, setReports] = useState<Report[]>([]);
-  const [granularity, setGranularity] = useState<string>('monthly');
-  const [filters, setFilters] = useState<string>('');
-  const [groups, setGroups] = useState<string>('');
-  const [dateRangeState, setDateRangeState] = React.useState<Range[]>([
+  const [granularity, _setGranularity] = useState<string>('monthly');
+  const [filters, _setFilters] = useState<string>('');
+  const [groups, _setGroups] = useState<string>('');
+  const [dateRangeState, _setDateRangeState] = React.useState<Range[]>([
     {
       startDate: startOfMonth(addMonths(new Date(), -11)),
       endDate: endOfMonth(new Date()),
