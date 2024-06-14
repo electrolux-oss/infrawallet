@@ -3,14 +3,15 @@ import {
   CacheService,
   DatabaseService,
   LoggerService,
+  resolvePackagePath,
 } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { Report } from './types';
 import express from 'express';
 import Router from 'express-promise-router';
 import { AwsClient } from './AwsClient';
 import { AzureClient } from './AzureClient';
 import { InfraWalletApi } from './InfraWalletApi';
+import { Report } from './types';
 
 export interface RouterOptions {
   logger: LoggerService;
@@ -19,10 +20,41 @@ export interface RouterOptions {
   database: DatabaseService;
 }
 
+async function setUpDatabase(database: DatabaseService) {
+  // check database migrations
+  const client = await database.getClient();
+  const migrationsDir = resolvePackagePath(
+    '@electrolux-oss/plugin-infrawallet-backend',
+    'migrations',
+  );
+  if (!database.migrations?.skip) {
+    await client.migrate.latest({
+      directory: migrationsDir,
+    });
+  }
+
+  // if there are no category mappings, seed the database
+  const category_mappings_count = await client('category_mappings').count(
+    'id as c',
+  );
+  if (
+    category_mappings_count[0].c === 0 ||
+    category_mappings_count[0].c === '0'
+  ) {
+    const seedsDir = resolvePackagePath(
+      '@electrolux-oss/plugin-infrawallet-backend',
+      'seeds',
+    );
+    await client.seed.run({ directory: seedsDir });
+  }
+}
+
 export async function createRouter(
   options: RouterOptions,
 ): Promise<express.Router> {
   const { logger, config, cache, database } = options;
+  // do database migrations here to support the legacy backend system
+  await setUpDatabase(database);
 
   const router = Router();
   router.use(express.json());
