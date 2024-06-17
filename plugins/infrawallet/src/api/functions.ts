@@ -19,26 +19,26 @@ export const mergeCostReports = (
 
   const mergedReports = reduce(
     reports,
-    (acc: { [key: string]: Report }, report) => {
+    (accumulator: { [key: string]: Report }, report) => {
       let keyName = 'others';
       if (idsToBeKept.includes(report.id)) {
         keyName = report.id;
       }
-      if (!acc[keyName]) {
-        acc[keyName] = {
+      if (!accumulator[keyName]) {
+        accumulator[keyName] = {
           id: keyName,
           reports: {},
         };
       }
 
       Object.keys(report.reports).forEach(key => {
-        if (acc[keyName].reports[key]) {
-          acc[keyName].reports[key] += report.reports[key];
+        if (accumulator[keyName].reports[key]) {
+          accumulator[keyName].reports[key] += report.reports[key];
         } else {
-          acc[keyName].reports[key] = report.reports[key];
+          accumulator[keyName].reports[key] = report.reports[key];
         }
       });
-      return acc;
+      return accumulator;
     },
     {},
   );
@@ -52,7 +52,7 @@ export const aggregateCostReports = (
 ): Report[] => {
   const aggregatedReports: { [key: string]: Report } = reduce(
     reports,
-    (acc, report) => {
+    (accumulator, report) => {
       let keyName: string = 'no value';
       if (aggregatedBy && aggregatedBy in report) {
         keyName = report[aggregatedBy] as string;
@@ -60,25 +60,25 @@ export const aggregateCostReports = (
         keyName = 'Total cloud costs';
       }
 
-      if (!acc[keyName]) {
-        acc[keyName] = {
+      if (!accumulator[keyName]) {
+        accumulator[keyName] = {
           id: keyName,
           reports: {},
         } as { id: string, reports: { [key: string]: number }, [key: string]: any };
 
         if (aggregatedBy !== undefined) {
-          acc[keyName][aggregatedBy] = keyName;
+          accumulator[keyName][aggregatedBy] = keyName;
         }
       }
 
       Object.keys(report.reports).forEach(key => {
-        if (acc[keyName].reports[key]) {
-          acc[keyName].reports[key] += report.reports[key];
+        if (accumulator[keyName].reports[key]) {
+          accumulator[keyName].reports[key] += report.reports[key];
         } else {
-          acc[keyName].reports[key] = report.reports[key];
+          accumulator[keyName].reports[key] = report.reports[key];
         }
       });
-      return acc;
+      return accumulator;
     },
     {} as { [key: string]: Report },
   );
