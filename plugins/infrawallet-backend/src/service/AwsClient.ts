@@ -21,7 +21,36 @@ export class AwsClient implements InfraWalletApi {
   constructor(
     private readonly config: Config,
     private readonly database: DatabaseService,
-  ) {}
+  ) { }
+
+  convertServiceName(serviceName: string): string {
+    let convertedName = serviceName;
+
+    const prefixes = ['Amazon', 'AWS'];
+
+    const aliases = new Map<string, string>([
+      ['Elastic Compute Cloud - Compute', 'EC2 - Instances'],
+      ['Virtual Private Cloud', 'VPC (Virtual Private Cloud)'],
+      ['Relational Database Service', 'RDS (Relational Database Service)'],
+      ['Simple Storage Service', 'S3 (Simple Storage Service)'],
+      ['Managed Streaming for Apache Kafka', 'MSK (Managed Streaming for Apache Kafka)'],
+      ['Elastic Container Service for Kubernetes', 'EKS (Elastic Container Service for Kubernetes)'],
+      ['Simple Queue Service', 'SQS (Simple Queue Service)'],
+      ['Simple Notification Service', 'SNS (Simple Notification Service)']
+    ]);
+
+    for (const prefix of prefixes) {
+      if (serviceName.startsWith(prefix)) {
+        convertedName = serviceName.slice(prefix.length).trim();
+      }
+    }
+
+    if (aliases.has(convertedName)) {
+      convertedName = aliases.get(convertedName) || convertedName;
+    }
+
+    return `AWS/${convertedName}`;
+  }
 
   async fetchCostsFromCloud(query: CostQuery): Promise<Report[]> {
     const conf = this.config.getOptionalConfigArray(
@@ -101,25 +130,25 @@ export class AwsClient implements InfraWalletApi {
           GroupBy: [{ Type: 'DIMENSION', Key: 'SERVICE' }],
           Metrics: ['UnblendedCost'],
         };
-        
+
         const getCostCommand = new GetCostAndUsageCommand(input);
         const costAndusageResponse = await awsCeClient.send(getCostCommand);
 
         const transformedData = reduce(
           costAndusageResponse.ResultsByTime,
-          (acc: { [key: string]: Report }, row) => {
+          (accumulator: { [key: string]: Report }, row) => {
             const rowTime = row.TimePeriod?.Start;
-            const period = rowTime ? rowTime.substring(0, 7): 'unknown';
+            const period = rowTime ? rowTime.substring(0, 7) : 'unknown';
             if (row.Groups) {
               row.Groups.forEach(group => {
                 const groupKeys = group.Keys ? group.Keys[0] : '';
                 const keyName = `${name}_${groupKeys}`;
-  
-                if (!acc[keyName]) {
-                  acc[keyName] = {
+
+                if (!accumulator[keyName]) {
+                  accumulator[keyName] = {
                     id: keyName,
-                    name: name,
-                    service: `${groupKeys} (AWS)`,
+                    name: `AWS/${name}`,
+                    service: this.convertServiceName(groupKeys),
                     category: getCategoryByServiceName(
                       groupKeys,
                       categoryMappings,
@@ -131,16 +160,16 @@ export class AwsClient implements InfraWalletApi {
                 }
 
                 const groupMetrics = group.Metrics;
-                
+
                 if (groupMetrics !== undefined) {
-                  acc[keyName].reports[period] = parseFloat(
+                  accumulator[keyName].reports[period] = parseFloat(
                     groupMetrics.UnblendedCost.Amount ?? '0.0',
                   );
                 }
               });
             }
 
-            return acc;
+            return accumulator;
           },
           {},
         );
