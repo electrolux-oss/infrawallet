@@ -1,3 +1,4 @@
+import Chip from '@material-ui/core/Chip';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Box from '@mui/material/Box';
@@ -8,14 +9,23 @@ import { getPreviousMonth } from '../../api/functions';
 import { CostReportsTableComponentProps } from '../types';
 import { TrendBarComponent } from './TrendBarComponent';
 
-const useStyles = makeStyles({
+const useStyles = makeStyles((theme) => ({
   increase: {
     color: 'red',
   },
   decrease: {
     color: 'green',
   },
-});
+  container: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  clip: {
+    backgroundColor: '#deebff',
+    color: '#0052cc',
+    marginLeft: theme.spacing(1),
+  },
+}));
 
 export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
   reports,
@@ -31,7 +41,23 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
       minWidth: 200,
       flex: 2,
       renderCell: (params: GridRenderCellParams): React.ReactNode => {
-        return <Typography variant="body2">{params.formattedValue}</Typography>;
+        return (
+          <Typography variant="body2" component="div" className={classes.container}>
+            {
+              aggregatedBy === 'service' || aggregatedBy === 'name' ?
+                (params.formattedValue !== undefined && params.formattedValue.indexOf('/') !== -1
+                  ? params.formattedValue.split('/')[1]
+                  : params.formattedValue)
+                : params.formattedValue
+            }
+            {
+              aggregatedBy === 'service' || aggregatedBy === 'name' ?
+                (params.formattedValue !== undefined && params.formattedValue.indexOf('/') !== -1
+                  ? <Chip size="small" label={params.formattedValue.split('/')[0].toLowerCase()} className={classes.clip} />
+                  : null)
+                : null
+            }
+          </Typography>);
       },
     },
     {
@@ -74,6 +100,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
           const formattedValue = humanFormat(value, {
             scale: customScale,
             separator: '',
+            decimals: 2
           });
           if (
             previousPeriod in row.reports &&
@@ -81,9 +108,12 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
           ) {
             const diff =
               row.reports[column.field] - row.reports[previousPeriod];
-            const percentage = (diff / row.reports[previousPeriod]) * 100;
+            const percentage = Math.round((diff / row.reports[previousPeriod]) * 100);
             const mark = diff > 0 ? '+' : '';
-            return `$${formattedValue} (${mark}${percentage.toFixed(2)}%)`;
+            // only display percentage change if it is larger than 1% or less than -1%
+            if (percentage >= 1 || percentage <= -1) {
+              return `$${formattedValue} (${mark}${percentage}%)`;
+            }
           }
           return `$${formattedValue}`;
         }
@@ -96,14 +126,16 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
           percentageIndex === -1
             ? params.formattedValue
             : params.formattedValue.substring(0, percentageIndex);
-        const percentageStr =
+        let percentageStr =
           percentageIndex === -1
             ? ''
             : params.formattedValue.substring(percentageIndex);
         if (percentageStr.includes('-')) {
           className = classes.decrease;
+          percentageStr = percentageStr.replace('-', '▼');
         } else if (percentageStr.includes('+')) {
           className = classes.increase;
+          percentageStr = percentageStr.replace('+', '▲');
         }
 
         return (
@@ -133,7 +165,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
     },
     valueFormatter: value => {
       if (typeof value === 'number') {
-        return `$${humanFormat(value, { scale: customScale, separator: '' })}`;
+        return `$${humanFormat(value, { scale: customScale, separator: '', decimals: 2 })}`;
       }
       return '-';
     },

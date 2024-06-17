@@ -16,7 +16,21 @@ export class AzureClient implements InfraWalletApi {
   constructor(
     private readonly config: Config,
     private readonly database: DatabaseService,
-  ) {}
+  ) { }
+
+  convertServiceName(serviceName: string): string {
+    let convertedName = serviceName;
+
+    const prefixes = ['Azure'];
+
+    for (const prefix of prefixes) {
+      if (serviceName.startsWith(prefix)) {
+        convertedName = serviceName.slice(prefix.length).trim();
+      }
+    }
+
+    return `Azure/${convertedName}`;
+  }
 
   async queryAzureCostExplorer(
     azureClient: any,
@@ -94,17 +108,17 @@ export class AzureClient implements InfraWalletApi {
 
           const transformedData = reduce(
             costResponse.rows,
-            (acc: { [key: string]: Report }, row) => {
+            (accumulator: { [key: string]: Report }, row) => {
               let keyName = name;
               for (let i = 0; i < groupPairs.length; i++) {
                 keyName += `->${row[i + 2]}`;
               }
 
-              if (!acc[keyName]) {
-                acc[keyName] = {
+              if (!accumulator[keyName]) {
+                accumulator[keyName] = {
                   id: keyName,
-                  name: name,
-                  service: `${row[2]} (Azure)`,
+                  name: `Azure/${name}`,
+                  service: this.convertServiceName(row[2]),
                   category: getCategoryByServiceName(row[2], categoryMappings),
                   provider: 'Azure',
                   reports: {},
@@ -115,11 +129,11 @@ export class AzureClient implements InfraWalletApi {
               if (
                 !moment(row[1]).isBefore(moment(parseInt(query.startTime, 10)))
               ) {
-                acc[keyName].reports[row[1].substring(0, 7)] = parseFloat(
+                accumulator[keyName].reports[row[1].substring(0, 7)] = parseFloat(
                   row[0],
                 );
               }
-              return acc;
+              return accumulator;
             },
             {},
           );
