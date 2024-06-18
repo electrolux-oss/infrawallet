@@ -14,7 +14,11 @@ import { CostQuery, Report } from './types';
 import { getCategoryMappings, getCategoryByServiceName } from './functions';
 
 export class AwsClient implements InfraWalletApi {
-  static create(config: Config, database: DatabaseService, logger: LoggerService) {
+  static create(
+    config: Config,
+    database: DatabaseService,
+    logger: LoggerService,
+  ) {
     return new AwsClient(config, database, logger);
   }
 
@@ -160,16 +164,16 @@ export class AwsClient implements InfraWalletApi {
               const period = rowTime ? (query.granularity.toUpperCase() === 'MONTHLY' ? rowTime.substring(0, 7) : rowTime) : 'unknown';
               if (row.Groups) {
                 row.Groups.forEach((group: any) => {
-                  const groupKeys = group.Keys ? group.Keys[0] : '';
-                  const keyName = `${name}_${groupKeys}`;
+                  const serviceName = group.Keys ? group.Keys[0] : '';
+                  const keyName = `${name}_${serviceName}`;
 
                   if (!accumulator[keyName]) {
                     accumulator[keyName] = {
                       id: keyName,
                       name: `AWS/${name}`,
-                      service: this.convertServiceName(groupKeys),
+                      service: this.convertServiceName(serviceName),
                       category: getCategoryByServiceName(
-                        groupKeys,
+                        serviceName,
                         categoryMappings,
                       ),
                       provider: 'AWS',

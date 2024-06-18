@@ -25,6 +25,16 @@ export interface Config {
             tags?: string[];
           },
         ];
+        gcp?: [
+          {
+            name: string;
+            keyFilePath: string;
+            projectId: string;
+            datasetId: string;
+            tableId: string;
+            tags?: string[];
+          },
+        ];
       };
     };
   };
