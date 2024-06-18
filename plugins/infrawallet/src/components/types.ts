@@ -49,4 +49,5 @@ export type PieChartComponentProps = {
 export type CostReportsTableComponentProps = {
   reports: Report[];
   aggregatedBy: string;
+  periods: string[];
 };

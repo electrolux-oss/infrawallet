@@ -1,12 +1,13 @@
-import { Report } from './types';
+import { format, parse, subMonths } from 'date-fns';
 import { reduce } from 'lodash';
-import { parse, format, subMonths } from 'date-fns';
+import moment from 'moment';
+import { Report } from './types';
 
 export const mergeCostReports = (
   reports: Report[],
   threshold: number,
 ): Report[] => {
-  const totalCosts: { id: string, total: number }[] = [];
+  const totalCosts: { id: string; total: number }[] = [];
   reports.forEach(report => {
     let total = 0;
     Object.values(report.reports).forEach(v => {
@@ -64,7 +65,11 @@ export const aggregateCostReports = (
         accumulator[keyName] = {
           id: keyName,
           reports: {},
-        } as { id: string, reports: { [key: string]: number }, [key: string]: any };
+        } as {
+          id: string;
+          reports: { [key: string]: number };
+          [key: string]: any;
+        };
 
         if (aggregatedBy !== undefined) {
           accumulator[keyName][aggregatedBy] = keyName;
@@ -109,4 +114,25 @@ export const getPreviousMonth = (month: string): string => {
   const date = parse(month, 'yyyy-MM', new Date());
   const previousMonth = subMonths(date, 1);
   return format(previousMonth, 'yyyy-MM');
+};
+
+export const getPeriodStrings = (
+  granularity: string,
+  startTime: Date,
+  endTime: Date,
+): string[] => {
+  const result: string[] = [];
+  const current = moment(startTime);
+
+  while (current.isSameOrBefore(endTime) && current.isSameOrBefore(moment())) {
+    if (granularity === 'monthly') {
+      result.push(current.format('YYYY-MM'));
+      current.add(1, 'months');
+    } else {
+      result.push(current.format('YYYY-MM-DD'));
+      current.add(1, 'days');
+    }
+  }
+
+  return result;
 };

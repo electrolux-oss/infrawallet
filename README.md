@@ -14,7 +14,7 @@
 - Swift response times with cached cost data, ensuring rapid access to financial insights fetched from cloud platforms
 - Easy configuration and deployment as a Backstage plugin, both frontend and backend plugins are production-ready
 
-\*_This version prioritizes AWS and Azure as the primary cloud vendors, but the framework is designed to be extensible to support others. Feel free to contribute to the project or wait for the next version with expanded cloud vendor support._
+\*_The latest version supports AWS, Azure and GCP cost aggregation while the framework is designed to be extensible to support others. Feel free to contribute to the project._
 
 ## Getting started
 
@@ -70,6 +70,24 @@ backend:
           tenantId: <Azure_tenant_ID>
           clientId: <Client_ID_of_the_created_application>
           clientSecret: <Client_secret_of_the_created_application>
+```
+
+#### GCP
+
+InfraWallet relies on GCP Big Query to fetch cost data. This means that the billing data needs to be exported to a big query dataset, and a service account needs to be created for InfraWallet. The steps of exporting billing data to Big Query can be found [here](https://cloud.google.com/billing/docs/how-to/export-data-bigquery). Then, visit Google Cloud Console and navigate to the `IAM & Admin` section in the billing account. Click `Service Accounts`, and create a new service account. The service account needs to have `BigQuery Data Viewer` and `BigQuery Job User` roles. On the `Service Accounts` page, click the three dots (menu) in the `Actions` column for the newly created service account and select `Manage keys`. There click `Add key` -> `Create new key`, and use `JSON` as the format. Download the JSON key file and keep it safe.
+
+After setting up the resources above, add the following configurations in `app-config.yaml`:
+
+```yaml
+backend:
+  infraWallet:
+    integrations:
+      gcp:
+        - name: <unique_name_of_this_account>
+          keyFilePath: <path_to_your_json_key_file> # if you run it in a k8s pod, you may need to create a secret and mount it to the pod
+          projectId: <GCP_project_that_your_big_query_dataset_belongs_to>
+          datasetId: <big_query_dataset_id>
+          tableId: <big_query_table_id>
 ```
 
 ### Adjust Category Mappings if Needed
