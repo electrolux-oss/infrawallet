@@ -9,7 +9,7 @@ import { getPreviousMonth } from '../../api/functions';
 import { CostReportsTableComponentProps } from '../types';
 import { TrendBarComponent } from './TrendBarComponent';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(theme => ({
   increase: {
     color: 'red',
   },
@@ -41,23 +41,32 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
       minWidth: 200,
       flex: 2,
       renderCell: (params: GridRenderCellParams): React.ReactNode => {
+        let formattedValue = params.formattedValue;
+        let chipLabel = null;
+
+        if (aggregatedBy === 'service' || aggregatedBy === 'name') {
+          if (
+            params.formattedValue !== undefined &&
+            params.formattedValue.indexOf('/') !== -1
+          ) {
+            const splitValue = params.formattedValue.split('/');
+            formattedValue = splitValue[1];
+            chipLabel = splitValue[0].toLowerCase();
+          }
+        }
+
         return (
-          <Typography variant="body2" component="div" className={classes.container}>
-            {
-              aggregatedBy === 'service' || aggregatedBy === 'name' ?
-                (params.formattedValue !== undefined && params.formattedValue.indexOf('/') !== -1
-                  ? params.formattedValue.split('/')[1]
-                  : params.formattedValue)
-                : params.formattedValue
-            }
-            {
-              aggregatedBy === 'service' || aggregatedBy === 'name' ?
-                (params.formattedValue !== undefined && params.formattedValue.indexOf('/') !== -1
-                  ? <Chip size="small" label={params.formattedValue.split('/')[0].toLowerCase()} className={classes.clip} />
-                  : null)
-                : null
-            }
-          </Typography>);
+          <Typography
+            variant="body2"
+            component="div"
+            className={classes.container}
+          >
+            {formattedValue}
+            {chipLabel && (
+              <Chip size="small" label={chipLabel} className={classes.clip} />
+            )}
+          </Typography>
+        );
       },
     },
     {
@@ -100,7 +109,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
           const formattedValue = humanFormat(value, {
             scale: customScale,
             separator: '',
-            decimals: 2
+            decimals: 2,
           });
           if (
             previousPeriod in row.reports &&
@@ -108,7 +117,9 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
           ) {
             const diff =
               row.reports[column.field] - row.reports[previousPeriod];
-            const percentage = Math.round((diff / row.reports[previousPeriod]) * 100);
+            const percentage = Math.round(
+              (diff / row.reports[previousPeriod]) * 100,
+            );
             const mark = diff > 0 ? '+' : '';
             // only display percentage change if it is larger than 1% or less than -1%
             if (percentage >= 1 || percentage <= -1) {
@@ -165,7 +176,11 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
     },
     valueFormatter: value => {
       if (typeof value === 'number') {
-        return `$${humanFormat(value, { scale: customScale, separator: '', decimals: 2 })}`;
+        return `$${humanFormat(value, {
+          scale: customScale,
+          separator: '',
+          decimals: 2,
+        })}`;
       }
       return '-';
     },
