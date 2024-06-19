@@ -59,8 +59,8 @@ export async function createRouter(
   const router = Router();
   router.use(express.json());
 
-  const azureClient = AzureClient.create(config, database);
-  const awsClient = AwsClient.create(config, database);
+  const azureClient = AzureClient.create(config, database, logger);
+  const awsClient = AwsClient.create(config, database, logger);
   const cloudClients: InfraWalletApi[] = [azureClient, awsClient];
 
   router.get('/health', (_, response) => {
@@ -94,19 +94,23 @@ export async function createRouter(
             results.push(cost);
           });
         } else {
-          const costs = await client.fetchCostsFromCloud({
-            filters: filters,
-            groups: groups,
-            granularity: granularity,
-            startTime: startTime,
-            endTime: endTime,
-          });
-          await cache.set(cacheKey, costs, {
-            ttl: 60 * 60 * 2 * 1000,
-          }); // cache for 2 hours
-          costs.forEach(cost => {
-            results.push(cost);
-          });
+          try {
+            const costs = await client.fetchCostsFromCloud({
+              filters: filters,
+              groups: groups,
+              granularity: granularity,
+              startTime: startTime,
+              endTime: endTime,
+            });
+            await cache.set(cacheKey, costs, {
+              ttl: 60 * 60 * 2 * 1000,
+            }); // cache for 2 hours
+            costs.forEach(cost => {
+              results.push(cost);
+            });
+          } catch (e) {
+            logger.error(e);
+          }
         }
       })();
       promises.push(fetchCloudCosts);

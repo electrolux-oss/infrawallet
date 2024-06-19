@@ -1,6 +1,6 @@
 import { CostManagementClient } from '@azure/arm-costmanagement';
 import { ClientSecretCredential } from '@azure/identity';
-import { DatabaseService } from '@backstage/backend-plugin-api';
+import { LoggerService, DatabaseService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
@@ -9,14 +9,15 @@ import { CostQuery, Report } from './types';
 import { getCategoryMappings, getCategoryByServiceName } from './functions';
 
 export class AzureClient implements InfraWalletApi {
-  static create(config: Config, database: DatabaseService) {
-    return new AzureClient(config, database);
+  static create(config: Config, database: DatabaseService, logger: LoggerService) {
+    return new AzureClient(config, database, logger);
   }
 
   constructor(
     private readonly config: Config,
     private readonly database: DatabaseService,
-  ) { }
+    private readonly logger: LoggerService,
+  ) {}
 
   convertServiceName(serviceName: string): string {
     let convertedName = serviceName;
@@ -129,9 +130,8 @@ export class AzureClient implements InfraWalletApi {
               if (
                 !moment(row[1]).isBefore(moment(parseInt(query.startTime, 10)))
               ) {
-                accumulator[keyName].reports[row[1].substring(0, 7)] = parseFloat(
-                  row[0],
-                );
+                accumulator[keyName].reports[row[1].substring(0, 7)] =
+                  parseFloat(row[0]);
               }
               return accumulator;
             },
@@ -142,7 +142,7 @@ export class AzureClient implements InfraWalletApi {
             results.push(value);
           });
         } catch (e) {
-          throw new Error(e.message);
+          this.logger.error(e);
         }
       })();
       promises.push(promise);
