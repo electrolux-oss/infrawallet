@@ -1,7 +1,7 @@
 import React from 'react';
 import { SvgIcon } from '@material-ui/core';
 
-export const InfraWalletLogo = () => {
+export const InfraWalletIcon = () => {
   return (
     <SvgIcon x="0px" y="0px" viewBox="0 0 24 24">
       <g>

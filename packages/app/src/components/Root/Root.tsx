@@ -26,7 +26,7 @@ import SearchIcon from '@material-ui/icons/Search';
 import React, { PropsWithChildren } from 'react';
 import LogoFull from './LogoFull';
 import LogoIcon from './LogoIcon';
-import { InfraWalletLogo } from '@electrolux-oss/plugin-infrawallet';
+import { InfraWalletIcon } from '@electrolux-oss/plugin-infrawallet';
 
 const useSidebarLogoStyles = makeStyles({
   root: {
@@ -75,7 +75,7 @@ export const Root = ({ children }: PropsWithChildren<{}>) => (
         <SidebarScrollWrapper>
           <SidebarItem icon={MapIcon} to="tech-radar" text="Tech Radar" />
           <SidebarItem
-            icon={InfraWalletLogo}
+            icon={InfraWalletIcon}
             to="infrawallet"
             text="InfraWallet"
           />

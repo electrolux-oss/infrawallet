@@ -1,3 +1,3 @@
 export { infraWalletPlugin, InfraWalletPage } from './plugin';
 
-export { InfraWalletLogo } from './components/InfraWalletLogo';
+export { InfraWalletIcon } from './components/InfraWalletIcon';

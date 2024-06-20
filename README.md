@@ -154,13 +154,13 @@ modify `packages/app/src/App.tsx` and add the following code
 
 ```ts
 ...
-import { InfraWalletLogo } from '@electrolux-oss/plugin-infrawallet';
+import { InfraWalletIcon } from '@electrolux-oss/plugin-infrawallet';
 ...
     <Sidebar>
       ...
       <SidebarGroup label="Menu" icon={<MenuIcon />}>
         <SidebarItem
-          icon={InfraWalletLogo}
+          icon={InfraWalletIcon}
           to="infrawallet"
           text="InfraWallet"
         />
