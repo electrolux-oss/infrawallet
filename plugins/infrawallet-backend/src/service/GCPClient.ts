@@ -51,11 +51,12 @@ export class GCPClient implements InfraWalletApi {
     // Initialize the BigQuery API
     const bigquery = new BigQuery(options);
     try {
+      const periodFormat = query.granularity.toUpperCase() === 'MONTHLY' ? '%Y-%m' : '%Y-%m-%d';
       const sql = `
         SELECT
           project.name AS project,
           service.description AS service,
-          FORMAT_TIMESTAMP('%Y-%m', usage_start_time) AS month,
+          FORMAT_TIMESTAMP('${periodFormat}', usage_start_time) AS period,
           SUM(cost) AS total_cost
         FROM
           \`${projectId}.${datasetId}.${tableId}\`
@@ -65,9 +66,9 @@ export class GCPClient implements InfraWalletApi {
           AND usage_start_time >= TIMESTAMP_MILLIS(${query.startTime})
           AND usage_start_time <= TIMESTAMP_MILLIS(${query.endTime})
         GROUP BY
-          project, service, month
+          project, service, period
         ORDER BY
-          project, month, total_cost DESC`;
+          project, period, total_cost DESC`;
 
       // Run the query as a job
       const [job] = await bigquery.createQueryJob({
@@ -121,7 +122,7 @@ export class GCPClient implements InfraWalletApi {
           const transformedData = reduce(
             costResponse,
             (acc: { [key: string]: Report }, row) => {
-              const period = row.month;
+              const period = row.period;
               const keyName = `${name}_${row.project}_${row.service}`;
 
               if (!acc[keyName]) {
