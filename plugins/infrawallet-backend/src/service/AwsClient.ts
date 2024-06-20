@@ -130,7 +130,7 @@ export class AwsClient implements InfraWalletApi {
           });
 
           // query this aws account's cost and usage using @aws-sdk/client-cost-explorer
-          let costAndUsageResults = [];
+          let costAndUsageResults: any[] = [];
           let nextPageToken = undefined;
 
           do {
@@ -159,7 +159,7 @@ export class AwsClient implements InfraWalletApi {
               const rowTime = row.TimePeriod?.Start;
               const period = rowTime ? (query.granularity.toUpperCase() === 'MONTHLY' ? rowTime.substring(0, 7) : rowTime) : 'unknown';
               if (row.Groups) {
-                row.Groups.forEach(group => {
+                row.Groups.forEach((group: any) => {
                   const groupKeys = group.Keys ? group.Keys[0] : '';
                   const keyName = `${name}_${groupKeys}`;
 

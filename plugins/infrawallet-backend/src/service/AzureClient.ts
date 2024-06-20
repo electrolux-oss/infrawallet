@@ -72,7 +72,7 @@ export class AzureClient implements InfraWalletApi {
         return JSON.parse(response.bodyAsText || '{}');
       }
       else if (response.status === 429) {
-        const retryAfter = parseInt(response.headers.get("x-ms-ratelimit-microsoft.costmanagement-entity-retry-after")!);
+        const retryAfter = parseInt(response.headers.get("x-ms-ratelimit-microsoft.costmanagement-entity-retry-after") || '60');
         this.logger.warn(`Hit Azure rate limit, retrying after ${retryAfter} seconds...`);
         await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
         retries++;
