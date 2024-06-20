@@ -111,8 +111,6 @@ export const ReportsComponent = () => {
               aggregatedBy={aggregatedBy}
               aggregatedBySetter={setAggregatedBy}
               tags={reportTags}
-              granularity={granularity}
-              granularitySetter={setGranularity}
               monthRange={monthRangeState}
               monthRangeSetter={setMonthRangeState}
             />
@@ -136,6 +134,7 @@ export const ReportsComponent = () => {
           <Grid item xs={12} md={8} lg={9}>
             {reportsAggregatedAndMerged.length > 0 && (
               <ColumnsChartComponent
+                granularitySetter={setGranularity}
                 categories={Object.keys(reportsAggregatedAndMerged[0].reports)}
                 series={reportsAggregatedAndMerged.map((item: any) => ({
                   name: item.id,

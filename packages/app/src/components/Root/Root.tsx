@@ -21,12 +21,12 @@ import ExtensionIcon from '@material-ui/icons/Extension';
 import HomeIcon from '@material-ui/icons/Home';
 import LibraryBooks from '@material-ui/icons/LibraryBooks';
 import MenuIcon from '@material-ui/icons/Menu';
-import AccountBalanceWalletIcon from '@material-ui/icons/AccountBalanceWallet';
 import MapIcon from '@material-ui/icons/MyLocation';
 import SearchIcon from '@material-ui/icons/Search';
 import React, { PropsWithChildren } from 'react';
 import LogoFull from './LogoFull';
 import LogoIcon from './LogoIcon';
+import { InfraWalletIcon } from '@electrolux-oss/plugin-infrawallet';
 
 const useSidebarLogoStyles = makeStyles({
   root: {
@@ -75,7 +75,7 @@ export const Root = ({ children }: PropsWithChildren<{}>) => (
         <SidebarScrollWrapper>
           <SidebarItem icon={MapIcon} to="tech-radar" text="Tech Radar" />
           <SidebarItem
-            icon={AccountBalanceWalletIcon}
+            icon={InfraWalletIcon}
             to="infrawallet"
             text="InfraWallet"
           />

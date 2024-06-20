@@ -30,8 +30,6 @@ export const TopbarComponent: FC<TopbarComponentProps> = ({
   aggregatedBy,
   aggregatedBySetter,
   tags,
-  granularity,
-  granularitySetter,
   monthRange,
   monthRangeSetter,
 }) => {
@@ -69,17 +67,6 @@ export const TopbarComponent: FC<TopbarComponentProps> = ({
             </MenuItem>
           ))}
         </Select>
-      </FormControl>
-
-      <FormControl className={classes.formControl} style={{ display: 'none' }}>
-        <Select
-          value={granularity}
-          onChange={event => granularitySetter(event.target.value)}
-        >
-          <MenuItem value="daily">Daily</MenuItem>
-          <MenuItem value="monthly">Monthly</MenuItem>
-        </Select>
-        <FormHelperText>Granularity</FormHelperText>
       </FormControl>
 
       <FormControl className={classes.formControl}>
