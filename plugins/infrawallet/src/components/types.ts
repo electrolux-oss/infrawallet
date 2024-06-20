@@ -16,8 +16,6 @@ export type TopbarComponentProps = {
   aggregatedBy: string;
   aggregatedBySetter: any;
   tags: string[];
-  granularity: string;
-  granularitySetter: any;
   monthRange: MonthRange;
   monthRangeSetter: any;
 };
@@ -30,6 +28,7 @@ export type QueryComponentProps = {
 };
 
 export type ColumnsChartComponentProps = {
+  granularitySetter: any;
   categories: any[];
   series: Array<{ name: string; data: any[] }>;
   height?: number;

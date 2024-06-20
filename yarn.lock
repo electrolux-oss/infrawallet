@@ -1212,7 +1212,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@azure/core-rest-pipeline@npm:^1.1.0, @azure/core-rest-pipeline@npm:^1.8.0, @azure/core-rest-pipeline@npm:^1.9.1":
+"@azure/core-rest-pipeline@npm:1.16.0, @azure/core-rest-pipeline@npm:^1.1.0, @azure/core-rest-pipeline@npm:^1.8.0, @azure/core-rest-pipeline@npm:^1.9.1":
   version: 1.16.0
   resolution: "@azure/core-rest-pipeline@npm:1.16.0"
   dependencies:
@@ -5208,6 +5208,7 @@ __metadata:
     "@aws-sdk/client-cost-explorer": ^3.554.0
     "@aws-sdk/client-sts": ^3.554.0
     "@azure/arm-costmanagement": 1.0.0-beta.1
+    "@azure/core-rest-pipeline": 1.16.0
     "@azure/identity": 4.1.0
     "@backstage/backend-common": ^0.22.0
     "@backstage/backend-defaults": ^0.2.18

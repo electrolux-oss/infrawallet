@@ -22,7 +22,8 @@ export class AwsClient implements InfraWalletApi {
     private readonly config: Config,
     private readonly database: DatabaseService,
     private readonly logger: LoggerService,
-  ) {}
+  ) {
+  }
 
   convertServiceName(serviceName: string): string {
     let convertedName = serviceName;
@@ -129,25 +130,34 @@ export class AwsClient implements InfraWalletApi {
           });
 
           // query this aws account's cost and usage using @aws-sdk/client-cost-explorer
-          const input: GetCostAndUsageCommandInput = {
-            TimePeriod: {
-              Start: moment(parseInt(query.startTime, 10)).format('YYYY-MM-DD'),
-              End: moment(parseInt(query.endTime, 10)).format('YYYY-MM-DD'),
-            },
-            Granularity: query.granularity.toUpperCase() as Granularity,
-            Filter: { Dimensions: { Key: 'RECORD_TYPE', Values: ['Usage'] } },
-            GroupBy: [{ Type: 'DIMENSION', Key: 'SERVICE' }],
-            Metrics: ['UnblendedCost'],
-          };
+          let costAndUsageResults = [];
+          let nextPageToken = undefined;
 
-          const getCostCommand = new GetCostAndUsageCommand(input);
-          const costAndusageResponse = await awsCeClient.send(getCostCommand);
+          do {
+            const input: GetCostAndUsageCommandInput = {
+              TimePeriod: {
+                Start: moment(parseInt(query.startTime, 10)).format('YYYY-MM-DD'),
+                End: moment(parseInt(query.endTime, 10)).format('YYYY-MM-DD'),
+              },
+              Granularity: query.granularity.toUpperCase() as Granularity,
+              Filter: { Dimensions: { Key: 'RECORD_TYPE', Values: ['Usage'] } },
+              GroupBy: [{ Type: 'DIMENSION', Key: 'SERVICE' }],
+              Metrics: ['UnblendedCost'],
+              NextPageToken: nextPageToken,
+            };
+
+            const getCostCommand = new GetCostAndUsageCommand(input);
+            const costAndUsageResponse = await awsCeClient.send(getCostCommand);
+
+            costAndUsageResults = costAndUsageResults.concat(costAndUsageResponse.ResultsByTime);
+            nextPageToken = costAndUsageResponse.NextPageToken;
+          } while (nextPageToken);
 
           const transformedData = reduce(
-            costAndusageResponse.ResultsByTime,
+            costAndUsageResults,
             (accumulator: { [key: string]: Report }, row) => {
               const rowTime = row.TimePeriod?.Start;
-              const period = rowTime ? rowTime.substring(0, 7) : 'unknown';
+              const period = rowTime ? (query.granularity.toUpperCase() === 'MONTHLY' ? rowTime.substring(0, 7) : rowTime) : 'unknown';
               if (row.Groups) {
                 row.Groups.forEach(group => {
                   const groupKeys = group.Keys ? group.Keys[0] : '';
