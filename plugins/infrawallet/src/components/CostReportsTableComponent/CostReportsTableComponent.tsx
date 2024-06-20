@@ -2,7 +2,7 @@ import Chip from '@material-ui/core/Chip';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Box from '@mui/material/Box';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridRenderCellParams, GridToolbarContainer, GridToolbarExport } from '@mui/x-data-grid';
 import humanFormat from 'human-format';
 import React, { FC } from 'react';
 import { getPreviousMonth } from '../../api/functions';
@@ -26,6 +26,14 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: theme.spacing(1),
   },
 }));
+
+function CustomToolbar() {
+  return (
+    <GridToolbarContainer>
+      <GridToolbarExport printOptions={{ disableToolbarButton: true }} />
+    </GridToolbarContainer>
+  );
+}
 
 export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
   reports,
@@ -64,6 +72,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
       field: 'TREND',
       headerName: 'TREND',
       width: 100,
+      disableExport: true,
       renderCell: (params: GridRenderCellParams): React.ReactNode => {
         return (
           <TrendBarComponent
@@ -96,7 +105,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
       },
       valueFormatter: (value, row, column) => {
         if (typeof value === 'number') {
-          const previousPeriod = getPreviousMonth(column.field);
+          const previousPeriod = period.length === 7 ? getPreviousMonth(column.field) : '';
           const formattedValue = humanFormat(value, {
             scale: customScale,
             separator: '',
@@ -190,8 +199,10 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
             },
           },
         }}
-        pageSizeOptions={[5, 15]}
+        pageSizeOptions={[15]}
+        slots={{ toolbar: CustomToolbar }}
         disableRowSelectionOnClick
+        disableColumnMenu
       />
     </Box>
   );
