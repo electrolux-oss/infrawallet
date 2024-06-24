@@ -10,6 +10,7 @@ import express from 'express';
 import Router from 'express-promise-router';
 import { AwsClient } from './AwsClient';
 import { AzureClient } from './AzureClient';
+import { GCPClient } from './GCPClient';
 import { InfraWalletApi } from './InfraWalletApi';
 import { Report } from './types';
 
@@ -61,7 +62,8 @@ export async function createRouter(
 
   const azureClient = AzureClient.create(config, database, logger);
   const awsClient = AwsClient.create(config, database, logger);
-  const cloudClients: InfraWalletApi[] = [azureClient, awsClient];
+  const gcpClient = GCPClient.create(config, database, logger);
+  const cloudClients: InfraWalletApi[] = [azureClient, awsClient, gcpClient];
 
   router.get('/health', (_, response) => {
     logger.info('PONG!');

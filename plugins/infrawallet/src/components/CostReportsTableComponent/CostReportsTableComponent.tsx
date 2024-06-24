@@ -38,10 +38,10 @@ function CustomToolbar() {
 export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
   reports,
   aggregatedBy,
+  periods,
 }) => {
   const classes = useStyles();
   const customScale = humanFormat.Scale.create(['', 'K', 'M', 'B'], 1000);
-  const periods = Object.keys(reports[0].reports);
   const columns: GridColDef[] = [
     {
       field: aggregatedBy,
@@ -112,7 +112,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
             decimals: 2
           });
           if (
-            previousPeriod in row.reports &&
+            periods.includes(previousPeriod) &&
             row.reports[previousPeriod] > 0
           ) {
             const diff =

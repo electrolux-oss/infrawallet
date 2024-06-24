@@ -1,9 +1,4 @@
-import {
-  Content,
-  Header,
-  Page,
-  Progress,
-} from '@backstage/core-components';
+import { Content, Header, Page, Progress } from '@backstage/core-components';
 import { alertApiRef, useApi } from '@backstage/core-plugin-api';
 import { Grid } from '@material-ui/core';
 import { addMonths, endOfMonth, startOfMonth } from 'date-fns';
@@ -13,6 +8,7 @@ import {
   aggregateCostReports,
   mergeCostReports,
   getAllReportTags,
+  getPeriodStrings,
 } from '../../api/functions';
 import { Report } from '../../api/types';
 import { ColumnsChartComponent } from '../ColumnsChartComponent';
@@ -58,6 +54,7 @@ export const ReportsComponent = () => {
     startMonth: startOfMonth(addMonths(new Date(), -2)),
     endMonth: endOfMonth(new Date()),
   });
+  const [periods, setPeriods] = useState<string[]>([]);
 
   const alertApi = useApi(alertApiRef);
   const infraWalletApi = useApi(infraWalletApiRef);
@@ -75,6 +72,13 @@ export const ReportsComponent = () => {
       .then(reportsResponse => {
         if (reportsResponse.data && reportsResponse.data.length > 0) {
           setReports(reportsResponse.data);
+          setPeriods(
+            getPeriodStrings(
+              granularity,
+              monthRangeState.startMonth,
+              monthRangeState.endMonth,
+            ),
+          );
         }
       })
       .catch(e =>
@@ -95,7 +99,7 @@ export const ReportsComponent = () => {
       setReportsAggregatedAndMerged(aggregatedAndMergedReports);
       setReportTags(allTags);
     }
-  }, [reports, aggregatedBy]);
+  }, [reports, aggregatedBy, granularity, monthRangeState]);
 
   useEffect(() => {
     fetchCostReportsCallback();
@@ -135,13 +139,10 @@ export const ReportsComponent = () => {
             {reportsAggregatedAndMerged.length > 0 && (
               <ColumnsChartComponent
                 granularitySetter={setGranularity}
-                categories={Object.keys(reportsAggregatedAndMerged[0].reports)}
+                categories={periods}
                 series={reportsAggregatedAndMerged.map((item: any) => ({
                   name: item.id,
-                  data: rearrangeData(
-                    item,
-                    Object.keys(reportsAggregatedAndMerged[0].reports),
-                  ),
+                  data: rearrangeData(item, periods),
                 }))}
                 height={350}
               />
@@ -152,6 +153,7 @@ export const ReportsComponent = () => {
               <CostReportsTableComponent
                 reports={reportsAggregated}
                 aggregatedBy={aggregatedBy}
+                periods={periods}
               />
             )}
           </Grid>
