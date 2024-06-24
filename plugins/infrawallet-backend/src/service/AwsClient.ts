@@ -161,7 +161,14 @@ export class AwsClient implements InfraWalletApi {
             costAndUsageResults,
             (accumulator: { [key: string]: Report }, row) => {
               const rowTime = row.TimePeriod?.Start;
-              const period = rowTime ? (query.granularity.toUpperCase() === 'MONTHLY' ? rowTime.substring(0, 7) : rowTime) : 'unknown';
+              let period = 'unknown';
+              if (rowTime) {
+                if (query.granularity.toUpperCase() === 'MONTHLY') {
+                  period = rowTime.substring(0, 7);
+                } else {
+                  period = rowTime;
+                }
+              }
               if (row.Groups) {
                 row.Groups.forEach((group: any) => {
                   const serviceName = group.Keys ? group.Keys[0] : '';
