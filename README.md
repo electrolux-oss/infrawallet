@@ -168,7 +168,7 @@ backend:
 
 4. add InfraWallet to the sidebar (optional)
 
-modify `packages/app/src/App.tsx` and add the following code
+modify `packages/app/src/components/Root/Root.tsx` and add the following code
 
 ```ts
 ...
