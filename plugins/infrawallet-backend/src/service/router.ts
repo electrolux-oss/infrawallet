@@ -1,10 +1,5 @@
 import { errorHandler } from '@backstage/backend-common';
-import {
-  CacheService,
-  DatabaseService,
-  LoggerService,
-  resolvePackagePath,
-} from '@backstage/backend-plugin-api';
+import { CacheService, DatabaseService, LoggerService, resolvePackagePath } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import express from 'express';
 import Router from 'express-promise-router';
@@ -12,7 +7,7 @@ import { AwsClient } from './AwsClient';
 import { AzureClient } from './AzureClient';
 import { GCPClient } from './GCPClient';
 import { InfraWalletApi } from './InfraWalletApi';
-import { Report, CloudProviderError } from './types';
+import { CloudProviderError, Report } from './types';
 
 export interface RouterOptions {
   logger: LoggerService;
@@ -24,10 +19,7 @@ export interface RouterOptions {
 async function setUpDatabase(database: DatabaseService) {
   // check database migrations
   const client = await database.getClient();
-  const migrationsDir = resolvePackagePath(
-    '@electrolux-oss/plugin-infrawallet-backend',
-    'migrations',
-  );
+  const migrationsDir = resolvePackagePath('@electrolux-oss/plugin-infrawallet-backend', 'migrations');
   if (!database.migrations?.skip) {
     await client.migrate.latest({
       directory: migrationsDir,
@@ -35,24 +27,14 @@ async function setUpDatabase(database: DatabaseService) {
   }
 
   // if there are no category mappings, seed the database
-  const category_mappings_count = await client('category_mappings').count(
-    'id as c',
-  );
-  if (
-    category_mappings_count[0].c === 0 ||
-    category_mappings_count[0].c === '0'
-  ) {
-    const seedsDir = resolvePackagePath(
-      '@electrolux-oss/plugin-infrawallet-backend',
-      'seeds',
-    );
+  const category_mappings_count = await client('category_mappings').count('id as c');
+  if (category_mappings_count[0].c === 0 || category_mappings_count[0].c === '0') {
+    const seedsDir = resolvePackagePath('@electrolux-oss/plugin-infrawallet-backend', 'seeds');
     await client.seed.run({ directory: seedsDir });
   }
 }
 
-export async function createRouter(
-  options: RouterOptions,
-): Promise<express.Router> {
+export async function createRouter(options: RouterOptions): Promise<express.Router> {
   const { logger, config, cache, database } = options;
   // do database migrations here to support the legacy backend system
   await setUpDatabase(database);
@@ -60,9 +42,9 @@ export async function createRouter(
   const router = Router();
   router.use(express.json());
 
-  const azureClient = AzureClient.create(config, database, logger);
-  const awsClient = AwsClient.create(config, database, logger);
-  const gcpClient = GCPClient.create(config, database, logger);
+  const azureClient = AzureClient.create(config, database, cache, logger);
+  const awsClient = AwsClient.create(config, database, cache, logger);
+  const gcpClient = GCPClient.create(config, database, cache, logger);
   const cloudClients: InfraWalletApi[] = [azureClient, awsClient, gcpClient];
 
   router.get('/health', (_, response) => {
@@ -82,46 +64,22 @@ export async function createRouter(
 
     cloudClients.forEach(async client => {
       const fetchCloudCosts = (async () => {
-        const cacheKey = [
-          client.constructor.name,
-          filters,
-          groups,
-          granularity,
-          startTime,
-          endTime,
-        ].join('_');
-        const cachedCosts = (await cache.get(cacheKey)) as Report[] | undefined;
-        if (cachedCosts) {
-          logger.debug(`${client.constructor.name} costs from cache`);
-          cachedCosts.forEach(cost => {
+        try {
+          const clientResponse = await client.fetchCostsFromCloud({
+            filters: filters,
+            groups: groups,
+            granularity: granularity,
+            startTime: startTime,
+            endTime: endTime,
+          });
+          clientResponse.errors.forEach(e => {
+            errors.push(e);
+          });
+          clientResponse.reports.forEach(cost => {
             results.push(cost);
           });
-        } else {
-          try {
-            const clientResponse = await client.fetchCostsFromCloud({
-              filters: filters,
-              groups: groups,
-              granularity: granularity,
-              startTime: startTime,
-              endTime: endTime,
-            });
-            if (clientResponse.errors.length === 0) {
-              // the client successfully fetches the costs data from all of the configured accounts
-              // save the costs data to cache
-              await cache.set(cacheKey, clientResponse.reports, {
-                ttl: 60 * 60 * 2 * 1000,
-              }); // cache for 2 hours
-            } else {
-              clientResponse.errors.forEach(e => {
-                errors.push(e);
-              });
-            }
-            clientResponse.reports.forEach(cost => {
-              results.push(cost);
-            });
-          } catch (e) {
-            logger.error(e);
-          }
+        } catch (e) {
+          logger.error(e);
         }
       })();
       promises.push(fetchCloudCosts);
@@ -129,7 +87,11 @@ export async function createRouter(
 
     await Promise.all(promises);
 
-    response.json({ data: results, errors: errors, status: 'ok' });
+    if (errors.length > 0) {
+      response.status(207).json({ data: results, errors: errors, status: 207 });
+    } else {
+      response.json({ data: results, errors: errors, status: 200 });
+    }
   });
 
   router.use(errorHandler());

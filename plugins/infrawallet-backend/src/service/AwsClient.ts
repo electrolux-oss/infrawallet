@@ -5,26 +5,24 @@ import {
   Granularity,
 } from '@aws-sdk/client-cost-explorer';
 import { AssumeRoleCommand, STSClient } from '@aws-sdk/client-sts';
-import { LoggerService, DatabaseService } from '@backstage/backend-plugin-api';
+import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
 import { InfraWalletApi } from './InfraWalletApi';
-import { CostQuery, ClientResponse, Report, CloudProviderError } from './types';
-import { getCategoryMappings, getCategoryByServiceName } from './functions';
+import { getCategoryByServiceName, getCategoryMappings, getReportsFromCache, setReportsToCache } from './functions';
+import { ClientResponse, CloudProviderError, CostQuery, Report } from './types';
 
 export class AwsClient implements InfraWalletApi {
-  static create(
-    config: Config,
-    database: DatabaseService,
-    logger: LoggerService,
-  ) {
-    return new AwsClient(config, database, logger);
+  static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
+    return new AwsClient('AWS', config, database, cache, logger);
   }
 
   constructor(
+    private readonly providerName: string,
     private readonly config: Config,
     private readonly database: DatabaseService,
+    private readonly cache: CacheService,
     private readonly logger: LoggerService,
   ) {}
 
@@ -38,28 +36,13 @@ export class AwsClient implements InfraWalletApi {
       ['Virtual Private Cloud', 'VPC (Virtual Private Cloud)'],
       ['Relational Database Service', 'RDS (Relational Database Service)'],
       ['Simple Storage Service', 'S3 (Simple Storage Service)'],
-      [
-        'Managed Streaming for Apache Kafka',
-        'MSK (Managed Streaming for Apache Kafka)'
-      ],
-      [
-        'Elastic Container Service for Kubernetes',
-        'EKS (Elastic Container Service for Kubernetes)'
-      ],
-      [
-        'Elastic Container Service',
-        'ECS (Elastic Container Service)'
-      ],
-      [
-        'EC2 Container Registry (ECR)',
-        'ECR (Elastic Container Registry)'
-      ],
+      ['Managed Streaming for Apache Kafka', 'MSK (Managed Streaming for Apache Kafka)'],
+      ['Elastic Container Service for Kubernetes', 'EKS (Elastic Container Service for Kubernetes)'],
+      ['Elastic Container Service', 'ECS (Elastic Container Service)'],
+      ['EC2 Container Registry (ECR)', 'ECR (Elastic Container Registry)'],
       ['Simple Queue Service', 'SQS (Simple Queue Service)'],
       ['Simple Notification Service', 'SNS (Simple Notification Service)'],
-      [
-        'Database Migration Service',
-        'DMS (Database Migration Service)'
-      ]
+      ['Database Migration Service', 'DMS (Database Migration Service)'],
     ]);
 
     for (const prefix of prefixes) {
@@ -72,15 +55,13 @@ export class AwsClient implements InfraWalletApi {
       convertedName = aliases.get(convertedName) || convertedName;
     }
 
-    return `AWS/${convertedName}`;
+    return `${this.providerName}/${convertedName}`;
   }
 
   async fetchCostsFromCloud(query: CostQuery): Promise<ClientResponse> {
-    const conf = this.config.getOptionalConfigArray(
-      'backend.infraWallet.integrations.aws',
-    );
+    const conf = this.config.getOptionalConfigArray('backend.infraWallet.integrations.aws');
     if (!conf) {
-      return {reports: [], errors: []};
+      return { reports: [], errors: [] };
     }
 
     const promises = [];
@@ -96,6 +77,17 @@ export class AwsClient implements InfraWalletApi {
 
     for (const c of conf) {
       const name = c.getString('name');
+
+      // first check if there is any cached
+      const cachedCosts = await getReportsFromCache(this.cache, this.providerName, name, query);
+      if (cachedCosts) {
+        this.logger.debug(`${this.providerName}/${name} costs from cache`);
+        cachedCosts.map(cost => {
+          results.push(cost);
+        });
+        continue;
+      }
+
       const accountId = c.getString('accountId');
       const assumedRoleName = c.getString('assumedRoleName');
       const accessKeyId = c.getOptionalString('accessKeyId');
@@ -106,7 +98,7 @@ export class AwsClient implements InfraWalletApi {
         const [k, v] = tag.split(':');
         tagKeyValues[k.trim()] = v.trim();
       });
-      const categoryMappings = await getCategoryMappings(this.database, 'aws');
+      const categoryMappings = await getCategoryMappings(this.database, this.providerName.toLowerCase());
 
       let stsParams = {};
       if (accessKeyId && accessKeySecret) {
@@ -136,12 +128,9 @@ export class AwsClient implements InfraWalletApi {
           const awsCeClient = new CostExplorerClient({
             region: 'us-east-1',
             credentials: {
-              accessKeyId: assumeRoleResponse.Credentials
-                ?.AccessKeyId as string,
-              secretAccessKey: assumeRoleResponse.Credentials
-                ?.SecretAccessKey as string,
-              sessionToken: assumeRoleResponse.Credentials
-                ?.SessionToken as string,
+              accessKeyId: assumeRoleResponse.Credentials?.AccessKeyId as string,
+              secretAccessKey: assumeRoleResponse.Credentials?.SecretAccessKey as string,
+              sessionToken: assumeRoleResponse.Credentials?.SessionToken as string,
             },
           });
 
@@ -152,9 +141,7 @@ export class AwsClient implements InfraWalletApi {
           do {
             const input: GetCostAndUsageCommandInput = {
               TimePeriod: {
-                Start: moment(parseInt(query.startTime, 10)).format(
-                  'YYYY-MM-DD',
-                ),
+                Start: moment(parseInt(query.startTime, 10)).format('YYYY-MM-DD'),
                 End: moment(parseInt(query.endTime, 10)).format('YYYY-MM-DD'),
               },
               Granularity: query.granularity.toUpperCase() as Granularity,
@@ -167,9 +154,7 @@ export class AwsClient implements InfraWalletApi {
             const getCostCommand = new GetCostAndUsageCommand(input);
             const costAndUsageResponse = await awsCeClient.send(getCostCommand);
 
-            costAndUsageResults = costAndUsageResults.concat(
-              costAndUsageResponse.ResultsByTime,
-            );
+            costAndUsageResults = costAndUsageResults.concat(costAndUsageResponse.ResultsByTime);
             nextPageToken = costAndUsageResponse.NextPageToken;
           } while (nextPageToken);
 
@@ -193,13 +178,10 @@ export class AwsClient implements InfraWalletApi {
                   if (!accumulator[keyName]) {
                     accumulator[keyName] = {
                       id: keyName,
-                      name: `AWS/${name}`,
+                      name: `${this.providerName}/${name}`,
                       service: this.convertServiceName(serviceName),
-                      category: getCategoryByServiceName(
-                        serviceName,
-                        categoryMappings,
-                      ),
-                      provider: 'AWS',
+                      category: getCategoryByServiceName(serviceName, categoryMappings),
+                      provider: this.providerName,
                       reports: {},
                       ...tagKeyValues,
                     };
@@ -208,9 +190,7 @@ export class AwsClient implements InfraWalletApi {
                   const groupMetrics = group.Metrics;
 
                   if (groupMetrics !== undefined) {
-                    accumulator[keyName].reports[period] = parseFloat(
-                      groupMetrics.UnblendedCost.Amount ?? '0.0',
-                    );
+                    accumulator[keyName].reports[period] = parseFloat(groupMetrics.UnblendedCost.Amount ?? '0.0');
                   }
                 });
               }
@@ -220,14 +200,24 @@ export class AwsClient implements InfraWalletApi {
             {},
           );
 
+          // cache the results for 2 hours
+          await setReportsToCache(
+            this.cache,
+            Object.values(transformedData),
+            this.providerName,
+            name,
+            query,
+            60 * 60 * 2 * 1000,
+          );
+
           Object.values(transformedData).map((value: any) => {
             results.push(value);
           });
         } catch (e) {
           this.logger.error(e);
           errors.push({
-            provider: 'AWS',
-            name: `AWS/${name}`,
+            provider: this.providerName,
+            name: `${this.providerName}/${name}`,
             error: e.message,
           });
         }

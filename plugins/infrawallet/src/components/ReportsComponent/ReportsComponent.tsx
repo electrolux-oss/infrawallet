@@ -84,7 +84,7 @@ export const ReportsComponent = () => {
             ),
           );
         }
-        if (reportsResponse.errors && reportsResponse.errors.length > 0) {
+        if (reportsResponse.status === 207 && reportsResponse.errors) {
           setCloudProviderErrors(reportsResponse.errors);
         }
       })
