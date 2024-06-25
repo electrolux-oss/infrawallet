@@ -41,14 +41,26 @@ export class AwsClient implements InfraWalletApi {
       ['Simple Storage Service', 'S3 (Simple Storage Service)'],
       [
         'Managed Streaming for Apache Kafka',
-        'MSK (Managed Streaming for Apache Kafka)',
+        'MSK (Managed Streaming for Apache Kafka)'
       ],
       [
         'Elastic Container Service for Kubernetes',
-        'EKS (Elastic Container Service for Kubernetes)',
+        'EKS (Elastic Container Service for Kubernetes)'
+      ],
+      [
+        'Elastic Container Service',
+        'ECS (Elastic Container Service)'
+      ],
+      [
+        'EC2 Container Registry (ECR)',
+        'ECR (Elastic Container Registry)'
       ],
       ['Simple Queue Service', 'SQS (Simple Queue Service)'],
       ['Simple Notification Service', 'SNS (Simple Notification Service)'],
+      [
+        'Database Migration Service',
+        'DMS (Database Migration Service)'
+      ]
     ]);
 
     for (const prefix of prefixes) {
