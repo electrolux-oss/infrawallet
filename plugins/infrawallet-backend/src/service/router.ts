@@ -26,12 +26,9 @@ async function setUpDatabase(database: DatabaseService) {
     });
   }
 
-  // if there are no category mappings, seed the database
-  const category_mappings_count = await client('category_mappings').count('id as c');
-  if (category_mappings_count[0].c === 0 || category_mappings_count[0].c === '0') {
-    const seedsDir = resolvePackagePath('@electrolux-oss/plugin-infrawallet-backend', 'seeds');
-    await client.seed.run({ directory: seedsDir });
-  }
+  // insert default category_mappings to the database
+  const seedsDir = resolvePackagePath('@electrolux-oss/plugin-infrawallet-backend', 'seeds');
+  await client.seed.run({ directory: seedsDir });
 }
 
 export async function createRouter(options: RouterOptions): Promise<express.Router> {
