@@ -22,7 +22,7 @@ export class GCPClient implements InfraWalletApi {
   convertServiceName(serviceName: string): string {
     let convertedName = serviceName;
 
-    const prefixes = [this.providerName];
+    const prefixes = ['Google Cloud'];
 
     for (const prefix of prefixes) {
       if (serviceName.startsWith(prefix)) {
@@ -88,12 +88,12 @@ export class GCPClient implements InfraWalletApi {
     const errors: CloudProviderError[] = [];
 
     for (const c of conf) {
-      const name = c.getString('name');
+      const accountName = c.getString('name');
 
       // first check if there is any cached
-      const cachedCosts = await getReportsFromCache(this.cache, this.providerName, name, query);
+      const cachedCosts = await getReportsFromCache(this.cache, this.providerName, accountName, query);
       if (cachedCosts) {
-        this.logger.debug(`${this.providerName}/${name} costs from cache`);
+        this.logger.debug(`${this.providerName}/${accountName} costs from cache`);
         cachedCosts.map(cost => {
           results.push(cost);
         });
@@ -110,7 +110,7 @@ export class GCPClient implements InfraWalletApi {
         const [k, v] = tag.split(':');
         tagKeyValues[k.trim()] = v.trim();
       });
-      const categoryMappings = await getCategoryMappings(this.database, this.providerName.toLowerCase());
+      const categoryMappings = await getCategoryMappings(this.database, this.providerName);
 
       const promise = (async () => {
         try {
@@ -119,12 +119,12 @@ export class GCPClient implements InfraWalletApi {
             costResponse,
             (acc: { [key: string]: Report }, row) => {
               const period = row.period;
-              const keyName = `${name}_${row.project}_${row.service}`;
+              const keyName = `${accountName}_${row.project}_${row.service}`;
 
               if (!acc[keyName]) {
                 acc[keyName] = {
                   id: keyName,
-                  name: `${this.providerName}/${name}`,
+                  name: `${this.providerName}/${accountName}`,
                   service: this.convertServiceName(row.service),
                   category: getCategoryByServiceName(row.service, categoryMappings),
                   provider: this.providerName,
@@ -146,7 +146,7 @@ export class GCPClient implements InfraWalletApi {
             this.cache,
             Object.values(transformedData),
             this.providerName,
-            name,
+            accountName,
             query,
             60 * 60 * 2 * 1000,
           );
@@ -158,7 +158,7 @@ export class GCPClient implements InfraWalletApi {
           this.logger.error(e);
           errors.push({
             provider: this.providerName,
-            name: `${this.providerName}/${name}`,
+            name: `${this.providerName}/${accountName}`,
             error: e.message,
           });
         }

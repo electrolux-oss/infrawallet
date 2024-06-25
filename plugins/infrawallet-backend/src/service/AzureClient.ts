@@ -124,7 +124,7 @@ export class AzureClient implements InfraWalletApi {
       return { reports: [], errors: [] };
     }
 
-    const categoryMappings = await getCategoryMappings(this.database, this.providerName.toLowerCase());
+    const categoryMappings = await getCategoryMappings(this.database, this.providerName);
 
     const promises = [];
     const results: Report[] = [];
@@ -132,12 +132,12 @@ export class AzureClient implements InfraWalletApi {
 
     const groupPairs = [{ type: 'Dimension', name: 'ServiceName' }];
     for (const c of conf) {
-      const name = c.getString('name');
+      const accountName = c.getString('name');
 
       // first check if there is any cached
       const cachedCosts = await getReportsFromCache(this.cache, this.providerName, name, query);
       if (cachedCosts) {
-        this.logger.debug(`${this.providerName}/${name} costs from cache`);
+        this.logger.debug(`${this.providerName}/${accountName} costs from cache`);
         cachedCosts.map(cost => {
           results.push(cost);
         });
@@ -197,7 +197,7 @@ export class AzureClient implements InfraWalletApi {
                 date = this.formatDate(date);
               }
 
-              let keyName = name;
+              let keyName = accountName;
               for (let i = 0; i < groupPairs.length; i++) {
                 keyName += `->${row[i + 2]}`;
               }
@@ -205,7 +205,7 @@ export class AzureClient implements InfraWalletApi {
               if (!accumulator[keyName]) {
                 accumulator[keyName] = {
                   id: keyName,
-                  name: `${this.providerName}/${name}`,
+                  name: `${this.providerName}/${accountName}`,
                   service: this.convertServiceName(serviceName),
                   category: getCategoryByServiceName(serviceName, categoryMappings),
                   provider: this.providerName,
@@ -232,7 +232,7 @@ export class AzureClient implements InfraWalletApi {
             this.cache,
             Object.values(transformedData),
             this.providerName,
-            name,
+            accountName,
             query,
             60 * 60 * 2 * 1000,
           );
@@ -244,7 +244,7 @@ export class AzureClient implements InfraWalletApi {
           this.logger.error(e);
           errors.push({
             provider: this.providerName,
-            name: `${this.providerName}/${name}`,
+            name: `${this.providerName}/${accountName}`,
             error: e.message,
           });
         }
