@@ -104,6 +104,13 @@ exports.seed = async knex => {
       cloud_service_names: JSON.stringify(['Storage']),
     },
     {
+      provider: 'azure',
+      category: 'Front-End Web & Mobile',
+      cloud_service_names: JSON.stringify([
+        'Azure Maps',
+      ]),
+    },
+    {
       provider: 'aws',
       category: 'Analytics',
       cloud_service_names: JSON.stringify([
@@ -120,6 +127,7 @@ exports.seed = async knex => {
         'Amazon API Gateway',
         'Amazon Simple Notification Service',
         'Amazon Simple Queue Service',
+        'AWS Step Functions',
       ]),
     },
     {
@@ -141,7 +149,8 @@ exports.seed = async knex => {
       category: 'Containers',
       cloud_service_names: JSON.stringify([
         'Amazon Elastic Container Service for Kubernetes',
-        'Amazon Elastic Container Registry (ECR)',
+        'Amazon Elastic Container Service',
+        'Amazon EC2 Container Registry (ECR)',
       ]),
     },
     {
@@ -158,27 +167,38 @@ exports.seed = async knex => {
     {
       provider: 'aws',
       category: 'Developer Tools',
-      cloud_service_names: JSON.stringify(['AWS CloudShell', 'AWS X-Ray']),
+      cloud_service_names: JSON.stringify([
+        'AWS CloudShell',
+        'AWS CodeArtifact',
+        'AWS X-Ray',
+      ]),
     },
     {
       provider: 'aws',
       category: 'Internet of Things',
-      cloud_service_names: JSON.stringify(['AWS IoT']),
+      cloud_service_names: JSON.stringify([
+        'AWS IoT',
+        'AWS IoT Device Defender',
+        'AWS IoT Device Management',
+      ]),
     },
     {
       provider: 'aws',
       category: 'Management & Governance',
       cloud_service_names: JSON.stringify([
         'AmazonCloudWatch',
+        'CloudWatch Events',
         'AWS CloudTrail',
         'AWS Config',
         'AWS Service Catalog',
+        'AWS Systems Manager',
       ]),
     },
     {
       provider: 'aws',
       category: 'Migration',
       cloud_service_names: JSON.stringify([
+        'AWS Database Migration Service',
         'AWS Migration Hub Refactor Spaces',
       ]),
     },
@@ -189,13 +209,18 @@ exports.seed = async knex => {
         'Amazon Elastic Load Balancing',
         'Amazon Route 53',
         'Amazon Virtual Private Cloud',
+        'AWS Global Accelerator',
       ]),
     },
     {
       provider: 'aws',
       category: 'Security, Identity, & Compliance',
       cloud_service_names: JSON.stringify([
+        'Amazon Cognito',
         'Amazon GuardDuty',
+        'Amazon Inspector',
+        'Amazon Verified Permissions',
+        'AWS Certificate Manager',
         'AWS Key Management Service',
         'AWS Secrets Manager',
         'AWS Security Hub',
@@ -206,8 +231,18 @@ exports.seed = async knex => {
       provider: 'aws',
       category: 'Storage',
       cloud_service_names: JSON.stringify([
+        'Amazon Elastic File System',
         'Amazon Glacier',
         'Amazon Simple Storage Service',
+      ]),
+    },
+    {
+      provider: 'aws',
+      category: 'Front-End Web & Mobile',
+      cloud_service_names: JSON.stringify([
+        'Amazon Location Service',
+        'Amazon Simple Email Service',
+        'AWS Device Farm',
       ]),
     },
   ]);
