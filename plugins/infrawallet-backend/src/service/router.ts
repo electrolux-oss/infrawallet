@@ -77,6 +77,11 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
           });
         } catch (e) {
           logger.error(e);
+          errors.push({
+            provider: client.constructor.name,
+            name: client.constructor.name,
+            error: e.message,
+          });
         }
       })();
       promises.push(fetchCloudCosts);
