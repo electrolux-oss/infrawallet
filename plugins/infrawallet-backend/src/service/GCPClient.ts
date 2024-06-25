@@ -1,30 +1,28 @@
-import { LoggerService, DatabaseService } from '@backstage/backend-plugin-api';
+import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { BigQuery } from '@google-cloud/bigquery';
 import { reduce } from 'lodash';
 import { InfraWalletApi } from './InfraWalletApi';
-import { CostQuery, Report } from './types';
-import { getCategoryByServiceName, getCategoryMappings } from './functions';
+import { getCategoryByServiceName, getCategoryMappings, getReportsFromCache, setReportsToCache } from './functions';
+import { ClientResponse, CloudProviderError, CostQuery, Report } from './types';
 
 export class GCPClient implements InfraWalletApi {
-  static create(
-    config: Config,
-    database: DatabaseService,
-    logger: LoggerService,
-  ) {
-    return new GCPClient(config, database, logger);
+  static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
+    return new GCPClient('GCP', config, database, cache, logger);
   }
 
   constructor(
+    private readonly providerName: string,
     private readonly config: Config,
     private readonly database: DatabaseService,
+    private readonly cache: CacheService,
     private readonly logger: LoggerService,
   ) {}
 
   convertServiceName(serviceName: string): string {
     let convertedName = serviceName;
 
-    const prefixes = ['GCP'];
+    const prefixes = ['Google Cloud'];
 
     for (const prefix of prefixes) {
       if (serviceName.startsWith(prefix)) {
@@ -32,16 +30,10 @@ export class GCPClient implements InfraWalletApi {
       }
     }
 
-    return `GCP/${convertedName}`;
+    return `${this.providerName}/${convertedName}`;
   }
 
-  async queryBigQuery(
-    keyFilePath: string,
-    projectId: string,
-    datasetId: string,
-    tableId: string,
-    query: CostQuery,
-  ) {
+  async queryBigQuery(keyFilePath: string, projectId: string, datasetId: string, tableId: string, query: CostQuery) {
     // Configure a JWT auth client
     const options = {
       keyFilename: keyFilePath,
@@ -85,19 +77,29 @@ export class GCPClient implements InfraWalletApi {
     }
   }
 
-  async fetchCostsFromCloud(query: CostQuery): Promise<Report[]> {
-    const conf = this.config.getOptionalConfigArray(
-      'backend.infraWallet.integrations.gcp',
-    );
+  async fetchCostsFromCloud(query: CostQuery): Promise<ClientResponse> {
+    const conf = this.config.getOptionalConfigArray('backend.infraWallet.integrations.gcp');
     if (!conf) {
-      return [];
+      return { reports: [], errors: [] };
     }
 
     const promises = [];
     const results: Report[] = [];
+    const errors: CloudProviderError[] = [];
 
     for (const c of conf) {
-      const name = c.getString('name');
+      const accountName = c.getString('name');
+
+      // first check if there is any cached
+      const cachedCosts = await getReportsFromCache(this.cache, this.providerName, accountName, query);
+      if (cachedCosts) {
+        this.logger.debug(`${this.providerName}/${accountName} costs from cache`);
+        cachedCosts.map(cost => {
+          results.push(cost);
+        });
+        continue;
+      }
+
       const keyFilePath = c.getString('keyFilePath');
       const projectId = c.getString('projectId');
       const datasetId = c.getString('datasetId');
@@ -108,33 +110,24 @@ export class GCPClient implements InfraWalletApi {
         const [k, v] = tag.split(':');
         tagKeyValues[k.trim()] = v.trim();
       });
-      const categoryMappings = await getCategoryMappings(this.database, 'gcp');
+      const categoryMappings = await getCategoryMappings(this.database, this.providerName);
 
       const promise = (async () => {
         try {
-          const costResponse = await this.queryBigQuery(
-            keyFilePath,
-            projectId,
-            datasetId,
-            tableId,
-            query,
-          );
+          const costResponse = await this.queryBigQuery(keyFilePath, projectId, datasetId, tableId, query);
           const transformedData = reduce(
             costResponse,
             (acc: { [key: string]: Report }, row) => {
               const period = row.period;
-              const keyName = `${name}_${row.project}_${row.service}`;
+              const keyName = `${accountName}_${row.project}_${row.service}`;
 
               if (!acc[keyName]) {
                 acc[keyName] = {
                   id: keyName,
-                  name: `GCP/${name}`,
+                  name: `${this.providerName}/${accountName}`,
                   service: this.convertServiceName(row.service),
-                  category: getCategoryByServiceName(
-                    row.service,
-                    categoryMappings,
-                  ),
-                  provider: 'GCP',
+                  category: getCategoryByServiceName(row.service, categoryMappings),
+                  provider: this.providerName,
                   reports: {},
                   ...{ project: row.project }, // TODO: how should we handle the project field? for now, we add project name as a field in the report
                   ...tagKeyValues, // note that if there is a tag `project:foo` in config, it overrides the project field set above
@@ -148,16 +141,34 @@ export class GCPClient implements InfraWalletApi {
             {},
           );
 
+          // cache the results for 2 hours
+          await setReportsToCache(
+            this.cache,
+            Object.values(transformedData),
+            this.providerName,
+            accountName,
+            query,
+            60 * 60 * 2 * 1000,
+          );
+
           Object.values(transformedData).map((value: any) => {
             results.push(value);
           });
         } catch (e) {
           this.logger.error(e);
+          errors.push({
+            provider: this.providerName,
+            name: `${this.providerName}/${accountName}`,
+            error: e.message,
+          });
         }
       })();
       promises.push(promise);
     }
     await Promise.all(promises);
-    return results;
+    return {
+      reports: results,
+      errors: errors,
+    };
   }
 }
