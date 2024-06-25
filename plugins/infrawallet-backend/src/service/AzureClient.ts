@@ -1,25 +1,26 @@
 import { CostManagementClient, QueryDefinition } from '@azure/arm-costmanagement';
+import { createHttpHeaders, createPipelineRequest } from '@azure/core-rest-pipeline';
 import { ClientSecretCredential } from '@azure/identity';
-import { createHttpHeaders, createPipelineRequest } from "@azure/core-rest-pipeline";
-import { LoggerService, DatabaseService } from '@backstage/backend-plugin-api';
+import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
 import { InfraWalletApi } from './InfraWalletApi';
-import { CostQuery, ClientResponse, Report, CloudProviderError } from './types';
-import { getCategoryMappings, getCategoryByServiceName } from './functions';
+import { getCategoryByServiceName, getCategoryMappings, getReportsFromCache, setReportsToCache } from './functions';
+import { ClientResponse, CloudProviderError, CostQuery, Report } from './types';
 
 export class AzureClient implements InfraWalletApi {
-  static create(config: Config, database: DatabaseService, logger: LoggerService) {
-    return new AzureClient(config, database, logger);
+  static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
+    return new AzureClient('Azure', config, database, cache, logger);
   }
 
   constructor(
+    private readonly providerName: string,
     private readonly config: Config,
     private readonly database: DatabaseService,
+    private readonly cache: CacheService,
     private readonly logger: LoggerService,
-  ) {
-  }
+  ) {}
 
   convertServiceName(serviceName: string): string {
     let convertedName = serviceName;
@@ -32,7 +33,7 @@ export class AzureClient implements InfraWalletApi {
       }
     }
 
-    return `Azure/${convertedName}`;
+    return `${this.providerName}/${convertedName}`;
   }
 
   formatDate(dateNumber: number): string | null {
@@ -50,29 +51,26 @@ export class AzureClient implements InfraWalletApi {
     return `${year}-${month}-${day}`;
   }
 
-  async fetchDataWithRetry(
-    client: CostManagementClient,
-    url: string,
-    body: any,
-    maxRetries = 5
-  ): Promise<any> {
+  async fetchDataWithRetry(client: CostManagementClient, url: string, body: any, maxRetries = 5): Promise<any> {
     let retries = 0;
 
     while (retries < maxRetries) {
       const request = createPipelineRequest({
         url: url,
-        method: "POST",
+        method: 'POST',
         body: JSON.stringify(body),
         headers: createHttpHeaders({
-          "Content-Type": "application/json"
+          'Content-Type': 'application/json',
         }),
       });
       const response = await client.pipeline.sendRequest(client, request);
       if (response.status === 200) {
         return JSON.parse(response.bodyAsText || '{}');
-      }
-      else if (response.status === 429) {
-        const retryAfter = parseInt(response.headers.get("x-ms-ratelimit-microsoft.costmanagement-entity-retry-after") || '60', 10);
+      } else if (response.status === 429) {
+        const retryAfter = parseInt(
+          response.headers.get('x-ms-ratelimit-microsoft.costmanagement-entity-retry-after') || '60',
+          10,
+        );
         this.logger.warn(`Hit Azure rate limit, retrying after ${retryAfter} seconds...`);
         await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
         retries++;
@@ -121,17 +119,12 @@ export class AzureClient implements InfraWalletApi {
   }
 
   async fetchCostsFromCloud(query: CostQuery): Promise<ClientResponse> {
-    const conf = this.config.getOptionalConfigArray(
-      'backend.infraWallet.integrations.azure',
-    );
+    const conf = this.config.getOptionalConfigArray('backend.infraWallet.integrations.azure');
     if (!conf) {
-      return {reports: [], errors: []};
+      return { reports: [], errors: [] };
     }
 
-    const categoryMappings = await getCategoryMappings(
-      this.database,
-      'azure',
-    );
+    const categoryMappings = await getCategoryMappings(this.database, this.providerName.toLowerCase());
 
     const promises = [];
     const results: Report[] = [];
@@ -140,15 +133,22 @@ export class AzureClient implements InfraWalletApi {
     const groupPairs = [{ type: 'Dimension', name: 'ServiceName' }];
     for (const c of conf) {
       const name = c.getString('name');
+
+      // first check if there is any cached
+      const cachedCosts = await getReportsFromCache(this.cache, this.providerName, name, query);
+      if (cachedCosts) {
+        this.logger.debug(`${this.providerName}/${name} costs from cache`);
+        cachedCosts.map(cost => {
+          results.push(cost);
+        });
+        continue;
+      }
+
       const subscriptionId = c.getString('subscriptionId');
       const tenantId = c.getString('tenantId');
       const clientId = c.getString('clientId');
       const clientSecret = c.getString('clientSecret');
-      const credential = new ClientSecretCredential(
-        tenantId as string,
-        clientId as string,
-        clientSecret as string,
-      );
+      const credential = new ClientSecretCredential(tenantId as string, clientId as string, clientSecret as string);
       const client = new CostManagementClient(credential);
       const tags = c.getOptionalStringArray('tags');
       const tagKeyValues: { [key: string]: string } = {};
@@ -205,18 +205,16 @@ export class AzureClient implements InfraWalletApi {
               if (!accumulator[keyName]) {
                 accumulator[keyName] = {
                   id: keyName,
-                  name: `Azure/${name}`,
+                  name: `${this.providerName}/${name}`,
                   service: this.convertServiceName(serviceName),
                   category: getCategoryByServiceName(serviceName, categoryMappings),
-                  provider: 'Azure',
+                  provider: this.providerName,
                   reports: {},
                   ...tagKeyValues,
                 };
               }
 
-              if (
-                !moment(date).isBefore(moment(parseInt(query.startTime, 10)))
-              ) {
+              if (!moment(date).isBefore(moment(parseInt(query.startTime, 10)))) {
                 if (query.granularity.toUpperCase() === 'MONTHLY') {
                   const yearMonth = date.substring(0, 7);
                   accumulator[keyName].reports[yearMonth] = parseFloat(cost);
@@ -229,14 +227,24 @@ export class AzureClient implements InfraWalletApi {
             {},
           );
 
+          // cache the results for 2 hours
+          await setReportsToCache(
+            this.cache,
+            Object.values(transformedData),
+            this.providerName,
+            name,
+            query,
+            60 * 60 * 2 * 1000,
+          );
+
           Object.values(transformedData).map((value: Report) => {
             results.push(value);
           });
         } catch (e) {
           this.logger.error(e);
           errors.push({
-            provider: 'Azure',
-            name: `Azure/${name}`,
+            provider: this.providerName,
+            name: `${this.providerName}/${name}`,
             error: e.message,
           });
         }

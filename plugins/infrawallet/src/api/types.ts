@@ -15,5 +15,5 @@ export type CloudProviderError = {
 export type CostReportsResponse = {
   data?: Report[];
   errors?: CloudProviderError[];
-  status: string;
+  status: number;
 };
