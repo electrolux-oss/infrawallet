@@ -6,13 +6,14 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import {
   aggregateCostReports,
-  mergeCostReports,
   getAllReportTags,
   getPeriodStrings,
+  mergeCostReports,
 } from '../../api/functions';
-import { Report } from '../../api/types';
+import { CloudProviderError, Report } from '../../api/types';
 import { ColumnsChartComponent } from '../ColumnsChartComponent';
 import { CostReportsTableComponent } from '../CostReportsTableComponent';
+import { ErrorsAlertComponent } from '../ErrorsAlertComponent';
 import { PieChartComponent } from '../PieChartComponent';
 import { TopbarComponent } from '../TopbarComponent';
 import { MonthRange } from '../types';
@@ -41,6 +42,9 @@ export const ReportsComponent = () => {
   const MERGE_THRESHOLD = 8;
   const [submittingState, setSubmittingState] = useState<Boolean>(false);
   const [reports, setReports] = useState<Report[]>([]);
+  const [cloudProviderErrors, setCloudProviderErrors] = useState<
+    CloudProviderError[]
+  >([]);
   const [reportsAggregated, setReportsAggregated] = useState<Report[]>([]);
   const [reportsAggregatedAndMerged, setReportsAggregatedAndMerged] = useState<
     Report[]
@@ -80,6 +84,9 @@ export const ReportsComponent = () => {
             ),
           );
         }
+        if (reportsResponse.errors && reportsResponse.errors.length > 0) {
+          setCloudProviderErrors(reportsResponse.errors);
+        }
       })
       .catch(e =>
         alertApi.post({ message: `${e.message}`, severity: 'error' }),
@@ -110,6 +117,11 @@ export const ReportsComponent = () => {
       <Header title="InfraWallet" />
       <Content>
         <Grid container spacing={3}>
+          {cloudProviderErrors.length > 0 && (
+            <Grid item xs={12}>
+              <ErrorsAlertComponent errors={cloudProviderErrors} />
+            </Grid>
+          )}
           <Grid item xs={12}>
             <TopbarComponent
               aggregatedBy={aggregatedBy}

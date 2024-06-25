@@ -3,7 +3,7 @@ import { Config } from '@backstage/config';
 import { BigQuery } from '@google-cloud/bigquery';
 import { reduce } from 'lodash';
 import { InfraWalletApi } from './InfraWalletApi';
-import { CostQuery, Report } from './types';
+import { CostQuery, ClientResponse, Report, CloudProviderError } from './types';
 import { getCategoryByServiceName, getCategoryMappings } from './functions';
 
 export class GCPClient implements InfraWalletApi {
@@ -85,16 +85,17 @@ export class GCPClient implements InfraWalletApi {
     }
   }
 
-  async fetchCostsFromCloud(query: CostQuery): Promise<Report[]> {
+  async fetchCostsFromCloud(query: CostQuery): Promise<ClientResponse> {
     const conf = this.config.getOptionalConfigArray(
       'backend.infraWallet.integrations.gcp',
     );
     if (!conf) {
-      return [];
+      return {reports: [], errors: []};
     }
 
     const promises = [];
     const results: Report[] = [];
+    const errors: CloudProviderError[] = [];
 
     for (const c of conf) {
       const name = c.getString('name');
@@ -153,11 +154,19 @@ export class GCPClient implements InfraWalletApi {
           });
         } catch (e) {
           this.logger.error(e);
+          errors.push({
+            provider: 'GCP',
+            name: `GCP/${name}`,
+            error: e.message,
+          });
         }
       })();
       promises.push(promise);
     }
     await Promise.all(promises);
-    return results;
+    return {
+      reports: results,
+      errors: errors,
+    };
   }
 }

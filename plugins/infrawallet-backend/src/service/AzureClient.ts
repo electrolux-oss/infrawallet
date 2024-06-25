@@ -6,7 +6,7 @@ import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
 import { InfraWalletApi } from './InfraWalletApi';
-import { CostQuery, Report } from './types';
+import { CostQuery, ClientResponse, Report, CloudProviderError } from './types';
 import { getCategoryMappings, getCategoryByServiceName } from './functions';
 
 export class AzureClient implements InfraWalletApi {
@@ -120,12 +120,12 @@ export class AzureClient implements InfraWalletApi {
     return allResults;
   }
 
-  async fetchCostsFromCloud(query: CostQuery): Promise<Report[]> {
+  async fetchCostsFromCloud(query: CostQuery): Promise<ClientResponse> {
     const conf = this.config.getOptionalConfigArray(
       'backend.infraWallet.integrations.azure',
     );
     if (!conf) {
-      return [];
+      return {reports: [], errors: []};
     }
 
     const categoryMappings = await getCategoryMappings(
@@ -135,6 +135,7 @@ export class AzureClient implements InfraWalletApi {
 
     const promises = [];
     const results: Report[] = [];
+    const errors: CloudProviderError[] = [];
 
     const groupPairs = [{ type: 'Dimension', name: 'ServiceName' }];
     for (const c of conf) {
@@ -233,11 +234,19 @@ export class AzureClient implements InfraWalletApi {
           });
         } catch (e) {
           this.logger.error(e);
+          errors.push({
+            provider: 'Azure',
+            name: `Azure/${name}`,
+            error: e.message,
+          });
         }
       })();
       promises.push(promise);
     }
     await Promise.all(promises);
-    return results;
+    return {
+      reports: results,
+      errors: errors,
+    };
   }
 }
