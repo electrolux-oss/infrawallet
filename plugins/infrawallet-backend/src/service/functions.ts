@@ -8,7 +8,7 @@ export async function getCategoryMappings(
 ): Promise<{ [category: string]: string[] }> {
   const result: { [category: string]: string[] } = {};
   const client = await database.getClient();
-  const mappings = await client.where({ provider: provider }).select().from<CategoryMapping>('category_mappings');
+  const mappings = await client.where({ provider: provider.toLowerCase() }).select().from<CategoryMapping>('category_mappings');
   mappings.forEach(mapping => {
     if (typeof mapping.cloud_service_names === 'string') {
       // just in case if the database such as sqlite does not support JSON column

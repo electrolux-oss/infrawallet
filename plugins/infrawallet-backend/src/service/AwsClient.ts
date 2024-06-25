@@ -76,12 +76,12 @@ export class AwsClient implements InfraWalletApi {
     });
 
     for (const c of conf) {
-      const name = c.getString('name');
+      const accountName = c.getString('name');
 
       // first check if there is any cached
-      const cachedCosts = await getReportsFromCache(this.cache, this.providerName, name, query);
+      const cachedCosts = await getReportsFromCache(this.cache, this.providerName, accountName, query);
       if (cachedCosts) {
-        this.logger.debug(`${this.providerName}/${name} costs from cache`);
+        this.logger.debug(`${this.providerName}/${accountName} costs from cache`);
         cachedCosts.map(cost => {
           results.push(cost);
         });
@@ -98,7 +98,7 @@ export class AwsClient implements InfraWalletApi {
         const [k, v] = tag.split(':');
         tagKeyValues[k.trim()] = v.trim();
       });
-      const categoryMappings = await getCategoryMappings(this.database, this.providerName.toLowerCase());
+      const categoryMappings = await getCategoryMappings(this.database, this.providerName);
 
       let stsParams = {};
       if (accessKeyId && accessKeySecret) {
@@ -173,12 +173,12 @@ export class AwsClient implements InfraWalletApi {
               if (row.Groups) {
                 row.Groups.forEach((group: any) => {
                   const serviceName = group.Keys ? group.Keys[0] : '';
-                  const keyName = `${name}_${serviceName}`;
+                  const keyName = `${accountName}_${serviceName}`;
 
                   if (!accumulator[keyName]) {
                     accumulator[keyName] = {
                       id: keyName,
-                      name: `${this.providerName}/${name}`,
+                      name: `${this.providerName}/${accountName}`,
                       service: this.convertServiceName(serviceName),
                       category: getCategoryByServiceName(serviceName, categoryMappings),
                       provider: this.providerName,
@@ -205,7 +205,7 @@ export class AwsClient implements InfraWalletApi {
             this.cache,
             Object.values(transformedData),
             this.providerName,
-            name,
+            accountName,
             query,
             60 * 60 * 2 * 1000,
           );
@@ -217,7 +217,7 @@ export class AwsClient implements InfraWalletApi {
           this.logger.error(e);
           errors.push({
             provider: this.providerName,
-            name: `${this.providerName}/${name}`,
+            name: `${this.providerName}/${accountName}`,
             error: e.message,
           });
         }
