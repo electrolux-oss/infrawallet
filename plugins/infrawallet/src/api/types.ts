@@ -6,7 +6,14 @@ export type Report = {
   };
 };
 
+export type CloudProviderError = {
+  provider: string; // AWS, GCP or Azure
+  name: string; // the name defined in the configuration file
+  error: string; // error message from the cloud provider
+}
+
 export type CostReportsResponse = {
   data?: Report[];
-  status: string;
+  errors?: CloudProviderError[];
+  status: number;
 };

@@ -1,9 +1,6 @@
 export interface Config {
   backend: {
     infraWallet: {
-      /**
-       * @deepVisibility secret
-       */
       integrations: {
         azure?: [
           {
@@ -11,6 +8,9 @@ export interface Config {
             subscriptionId: string;
             clientId: string;
             tenantId: string;
+            /**
+             * @visibility secret
+             */
             clientSecret: string;
             tags?: string[];
           },
@@ -20,7 +20,13 @@ export interface Config {
             name: string;
             accountId: string;
             assumedRoleName: string;
+            /**
+             * @visibility secret
+             */
             accessKeyId?: string;
+            /**
+             * @visibility secret
+             */
             accessKeySecret?: string;
             tags?: string[];
           },

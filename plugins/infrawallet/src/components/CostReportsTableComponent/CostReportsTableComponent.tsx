@@ -85,7 +85,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
       renderCell: (params: GridRenderCellParams): React.ReactNode => {
         return (
           <TrendBarComponent
-            categories={Object.keys(params.row.reports)}
+            categories={periods}
             series={[
               {
                 name: params.row.id,
