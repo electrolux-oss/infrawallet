@@ -15,19 +15,12 @@ exports.seed = async knex => {
     {
       provider: 'azure',
       category: 'Compute',
-      cloud_service_names: JSON.stringify([
-        'Virtual Machines',
-        'Azure App Service',
-        'Functions',
-      ]),
+      cloud_service_names: JSON.stringify(['Virtual Machines', 'Azure App Service', 'Functions']),
     },
     {
       provider: 'azure',
       category: 'Containers',
-      cloud_service_names: JSON.stringify([
-        'Azure Container Apps',
-        'Container Registry',
-      ]),
+      cloud_service_names: JSON.stringify(['Azure Container Apps', 'Container Registry']),
     },
     {
       provider: 'azure',
@@ -43,11 +36,7 @@ exports.seed = async knex => {
     {
       provider: 'azure',
       category: 'Developer Tools',
-      cloud_service_names: JSON.stringify([
-        'Azure DevOps',
-        'Notification Hubs',
-        'Visual Studio Subscription',
-      ]),
+      cloud_service_names: JSON.stringify(['Azure DevOps', 'Notification Hubs', 'Visual Studio Subscription']),
     },
     {
       provider: 'azure',
@@ -62,11 +51,7 @@ exports.seed = async knex => {
     {
       provider: 'azure',
       category: 'Artificial Intelligence',
-      cloud_service_names: JSON.stringify([
-        'Azure Cognitive Search',
-        'Azure Databricks',
-        'Cognitive Services',
-      ]),
+      cloud_service_names: JSON.stringify(['Azure Cognitive Search', 'Azure Databricks', 'Cognitive Services']),
     },
     {
       provider: 'azure',
@@ -93,11 +78,7 @@ exports.seed = async knex => {
     {
       provider: 'azure',
       category: 'Security, Identity, & Compliance',
-      cloud_service_names: JSON.stringify([
-        'Azure Firewall',
-        'Key Vault',
-        'Microsoft Defender for Cloud',
-      ]),
+      cloud_service_names: JSON.stringify(['Azure Firewall', 'Key Vault', 'Microsoft Defender for Cloud']),
     },
     {
       provider: 'azure',
@@ -137,11 +118,7 @@ exports.seed = async knex => {
     {
       provider: 'aws',
       category: 'Compute',
-      cloud_service_names: JSON.stringify([
-        'EC2 - Other',
-        'Amazon Elastic Compute Cloud - Compute',
-        'AWS Lambda',
-      ]),
+      cloud_service_names: JSON.stringify(['EC2 - Other', 'Amazon Elastic Compute Cloud - Compute', 'AWS Lambda']),
     },
     {
       provider: 'aws',
@@ -166,20 +143,12 @@ exports.seed = async knex => {
     {
       provider: 'aws',
       category: 'Developer Tools',
-      cloud_service_names: JSON.stringify([
-        'AWS CloudShell',
-        'AWS CodeArtifact',
-        'AWS X-Ray',
-      ]),
+      cloud_service_names: JSON.stringify(['AWS CloudShell', 'AWS CodeArtifact', 'AWS X-Ray']),
     },
     {
       provider: 'aws',
       category: 'Internet of Things',
-      cloud_service_names: JSON.stringify([
-        'AWS IoT',
-        'AWS IoT Device Defender',
-        'AWS IoT Device Management',
-      ]),
+      cloud_service_names: JSON.stringify(['AWS IoT', 'AWS IoT Device Defender', 'AWS IoT Device Management']),
     },
     {
       provider: 'aws',
@@ -196,10 +165,7 @@ exports.seed = async knex => {
     {
       provider: 'aws',
       category: 'Migration',
-      cloud_service_names: JSON.stringify([
-        'AWS Database Migration Service',
-        'AWS Migration Hub Refactor Spaces',
-      ]),
+      cloud_service_names: JSON.stringify(['AWS Database Migration Service', 'AWS Migration Hub Refactor Spaces']),
     },
     {
       provider: 'aws',

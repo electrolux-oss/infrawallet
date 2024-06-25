@@ -28,9 +28,9 @@ export type CloudProviderError = {
   provider: string; // AWS, GCP or Azure
   name: string; // the name defined in the configuration file
   error: string; // error message from the cloud provider
-}
+};
 
 export type ClientResponse = {
   reports: Report[];
   errors: CloudProviderError[];
-}
+};

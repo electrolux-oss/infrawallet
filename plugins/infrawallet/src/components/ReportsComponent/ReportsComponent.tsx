@@ -4,12 +4,7 @@ import { Grid } from '@material-ui/core';
 import { addMonths, endOfMonth, startOfMonth } from 'date-fns';
 import React, { useCallback, useEffect, useState } from 'react';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
-import {
-  aggregateCostReports,
-  getAllReportTags,
-  getPeriodStrings,
-  mergeCostReports,
-} from '../../api/functions';
+import { aggregateCostReports, getAllReportTags, getPeriodStrings, mergeCostReports } from '../../api/functions';
 import { CloudProviderError, Report } from '../../api/types';
 import { ColumnsChartComponent } from '../ColumnsChartComponent';
 import { CostReportsTableComponent } from '../CostReportsTableComponent';
@@ -42,13 +37,9 @@ export const ReportsComponent = () => {
   const MERGE_THRESHOLD = 8;
   const [submittingState, setSubmittingState] = useState<Boolean>(false);
   const [reports, setReports] = useState<Report[]>([]);
-  const [cloudProviderErrors, setCloudProviderErrors] = useState<
-    CloudProviderError[]
-  >([]);
+  const [cloudProviderErrors, setCloudProviderErrors] = useState<CloudProviderError[]>([]);
   const [reportsAggregated, setReportsAggregated] = useState<Report[]>([]);
-  const [reportsAggregatedAndMerged, setReportsAggregatedAndMerged] = useState<
-    Report[]
-  >([]);
+  const [reportsAggregatedAndMerged, setReportsAggregatedAndMerged] = useState<Report[]>([]);
   const [reportTags, setReportTags] = useState<string[]>([]);
   const [granularity, setGranularity] = useState<string>('monthly');
   const [aggregatedBy, setAggregatedBy] = useState<string>('none');
@@ -66,41 +57,24 @@ export const ReportsComponent = () => {
   const fetchCostReportsCallback = useCallback(async () => {
     setSubmittingState(true);
     await infraWalletApi
-      .getCostReports(
-        filters,
-        groups,
-        granularity,
-        monthRangeState.startMonth,
-        monthRangeState.endMonth,
-      )
+      .getCostReports(filters, groups, granularity, monthRangeState.startMonth, monthRangeState.endMonth)
       .then(reportsResponse => {
         if (reportsResponse.data && reportsResponse.data.length > 0) {
           setReports(reportsResponse.data);
-          setPeriods(
-            getPeriodStrings(
-              granularity,
-              monthRangeState.startMonth,
-              monthRangeState.endMonth,
-            ),
-          );
+          setPeriods(getPeriodStrings(granularity, monthRangeState.startMonth, monthRangeState.endMonth));
         }
         if (reportsResponse.status === 207 && reportsResponse.errors) {
           setCloudProviderErrors(reportsResponse.errors);
         }
       })
-      .catch(e =>
-        alertApi.post({ message: `${e.message}`, severity: 'error' }),
-      );
+      .catch(e => alertApi.post({ message: `${e.message}`, severity: 'error' }));
     setSubmittingState(false);
   }, [filters, groups, monthRangeState, granularity, infraWalletApi, alertApi]);
 
   useEffect(() => {
     if (reports.length !== 0) {
       const arrgegatedReports = aggregateCostReports(reports, aggregatedBy);
-      const aggregatedAndMergedReports = mergeCostReports(
-        arrgegatedReports,
-        MERGE_THRESHOLD,
-      );
+      const aggregatedAndMergedReports = mergeCostReports(arrgegatedReports, MERGE_THRESHOLD);
       const allTags = getAllReportTags(reports);
       setReportsAggregated(arrgegatedReports);
       setReportsAggregatedAndMerged(aggregatedAndMergedReports);
@@ -137,12 +111,8 @@ export const ReportsComponent = () => {
           <Grid item xs={12} md={4} lg={3}>
             {reportsAggregatedAndMerged.length > 0 && (
               <PieChartComponent
-                categories={reportsAggregatedAndMerged.map(
-                  (item: any) => item.id,
-                )}
-                series={reportsAggregatedAndMerged.map((item: any) =>
-                  getTotalCost(item),
-                )}
+                categories={reportsAggregatedAndMerged.map((item: any) => item.id)}
+                series={reportsAggregatedAndMerged.map((item: any) => getTotalCost(item))}
                 height={350}
               />
             )}
@@ -162,11 +132,7 @@ export const ReportsComponent = () => {
           </Grid>
           <Grid item xs={12}>
             {reportsAggregated.length > 0 && (
-              <CostReportsTableComponent
-                reports={reportsAggregated}
-                aggregatedBy={aggregatedBy}
-                periods={periods}
-              />
+              <CostReportsTableComponent reports={reportsAggregated} aggregatedBy={aggregatedBy} periods={periods} />
             )}
           </Grid>
         </Grid>

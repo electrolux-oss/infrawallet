@@ -33,11 +33,7 @@ export type ColumnsChartComponentProps = {
   series: Array<{ name: string; data: any[] }>;
   height?: number;
   thumbnail?: boolean;
-  dataPointSelectionHandler?: (
-    event: any,
-    chartContext: any,
-    config: any,
-  ) => void;
+  dataPointSelectionHandler?: (event: any, chartContext: any, config: any) => void;
 };
 
 export type PieChartComponentProps = {
