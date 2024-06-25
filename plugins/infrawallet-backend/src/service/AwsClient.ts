@@ -10,7 +10,7 @@ import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
 import { InfraWalletApi } from './InfraWalletApi';
-import { CostQuery, Report } from './types';
+import { CostQuery, ClientResponse, Report, CloudProviderError } from './types';
 import { getCategoryMappings, getCategoryByServiceName } from './functions';
 
 export class AwsClient implements InfraWalletApi {
@@ -26,8 +26,7 @@ export class AwsClient implements InfraWalletApi {
     private readonly config: Config,
     private readonly database: DatabaseService,
     private readonly logger: LoggerService,
-  ) {
-  }
+  ) {}
 
   convertServiceName(serviceName: string): string {
     let convertedName = serviceName;
@@ -76,16 +75,17 @@ export class AwsClient implements InfraWalletApi {
     return `AWS/${convertedName}`;
   }
 
-  async fetchCostsFromCloud(query: CostQuery): Promise<Report[]> {
+  async fetchCostsFromCloud(query: CostQuery): Promise<ClientResponse> {
     const conf = this.config.getOptionalConfigArray(
       'backend.infraWallet.integrations.aws',
     );
     if (!conf) {
-      return [];
+      return {reports: [], errors: []};
     }
 
     const promises = [];
     const results: Report[] = [];
+    const errors: CloudProviderError[] = [];
     const groupPairs = [];
     query.groups.split(',').forEach(group => {
       if (group.includes(':')) {
@@ -152,7 +152,9 @@ export class AwsClient implements InfraWalletApi {
           do {
             const input: GetCostAndUsageCommandInput = {
               TimePeriod: {
-                Start: moment(parseInt(query.startTime, 10)).format('YYYY-MM-DD'),
+                Start: moment(parseInt(query.startTime, 10)).format(
+                  'YYYY-MM-DD',
+                ),
                 End: moment(parseInt(query.endTime, 10)).format('YYYY-MM-DD'),
               },
               Granularity: query.granularity.toUpperCase() as Granularity,
@@ -165,7 +167,9 @@ export class AwsClient implements InfraWalletApi {
             const getCostCommand = new GetCostAndUsageCommand(input);
             const costAndUsageResponse = await awsCeClient.send(getCostCommand);
 
-            costAndUsageResults = costAndUsageResults.concat(costAndUsageResponse.ResultsByTime);
+            costAndUsageResults = costAndUsageResults.concat(
+              costAndUsageResponse.ResultsByTime,
+            );
             nextPageToken = costAndUsageResponse.NextPageToken;
           } while (nextPageToken);
 
@@ -221,11 +225,19 @@ export class AwsClient implements InfraWalletApi {
           });
         } catch (e) {
           this.logger.error(e);
+          errors.push({
+            provider: 'AWS',
+            name: `AWS/${name}`,
+            error: e.message,
+          });
         }
       })();
       promises.push(promise);
     }
     await Promise.all(promises);
-    return results;
+    return {
+      reports: results,
+      errors: errors,
+    };
   }
 }

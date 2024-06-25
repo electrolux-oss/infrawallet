@@ -12,7 +12,7 @@ import { AwsClient } from './AwsClient';
 import { AzureClient } from './AzureClient';
 import { GCPClient } from './GCPClient';
 import { InfraWalletApi } from './InfraWalletApi';
-import { Report } from './types';
+import { Report, CloudProviderError } from './types';
 
 export interface RouterOptions {
   logger: LoggerService;
@@ -78,6 +78,7 @@ export async function createRouter(
     const endTime = request.query.endTime as string;
     const promises: Promise<void>[] = [];
     const results: Report[] = [];
+    const errors: CloudProviderError[] = [];
 
     cloudClients.forEach(async client => {
       const fetchCloudCosts = (async () => {
@@ -97,17 +98,25 @@ export async function createRouter(
           });
         } else {
           try {
-            const costs = await client.fetchCostsFromCloud({
+            const clientResponse = await client.fetchCostsFromCloud({
               filters: filters,
               groups: groups,
               granularity: granularity,
               startTime: startTime,
               endTime: endTime,
             });
-            await cache.set(cacheKey, costs, {
-              ttl: 60 * 60 * 2 * 1000,
-            }); // cache for 2 hours
-            costs.forEach(cost => {
+            if (clientResponse.errors.length === 0) {
+              // the client successfully fetches the costs data from all of the configured accounts
+              // save the costs data to cache
+              await cache.set(cacheKey, clientResponse.reports, {
+                ttl: 60 * 60 * 2 * 1000,
+              }); // cache for 2 hours
+            } else {
+              clientResponse.errors.forEach(e => {
+                errors.push(e);
+              });
+            }
+            clientResponse.reports.forEach(cost => {
               results.push(cost);
             });
           } catch (e) {
@@ -120,7 +129,7 @@ export async function createRouter(
 
     await Promise.all(promises);
 
-    response.json({ data: results, status: 'ok' });
+    response.json({ data: results, errors: errors, status: 'ok' });
   });
 
   router.use(errorHandler());
