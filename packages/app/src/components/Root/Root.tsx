@@ -11,10 +11,7 @@ import {
   useSidebarOpenState,
 } from '@backstage/core-components';
 import { SidebarSearchModal } from '@backstage/plugin-search';
-import {
-  Settings as SidebarSettings,
-  UserSettingsSignInAvatar,
-} from '@backstage/plugin-user-settings';
+import { Settings as SidebarSettings, UserSettingsSignInAvatar } from '@backstage/plugin-user-settings';
 import { makeStyles } from '@material-ui/core';
 import CreateComponentIcon from '@material-ui/icons/AddCircleOutline';
 import ExtensionIcon from '@material-ui/icons/Extension';
@@ -74,20 +71,12 @@ export const Root = ({ children }: PropsWithChildren<{}>) => (
         <SidebarDivider />
         <SidebarScrollWrapper>
           <SidebarItem icon={MapIcon} to="tech-radar" text="Tech Radar" />
-          <SidebarItem
-            icon={InfraWalletIcon}
-            to="infrawallet"
-            text="InfraWallet"
-          />
+          <SidebarItem icon={InfraWalletIcon} to="infrawallet" text="InfraWallet" />
         </SidebarScrollWrapper>
       </SidebarGroup>
       <SidebarSpace />
       <SidebarDivider />
-      <SidebarGroup
-        label="Settings"
-        icon={<UserSettingsSignInAvatar />}
-        to="/settings"
-      >
+      <SidebarGroup label="Settings" icon={<UserSettingsSignInAvatar />} to="/settings">
         <SidebarSettings />
       </SidebarGroup>
     </Sidebar>

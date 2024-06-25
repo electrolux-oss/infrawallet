@@ -1,4 +1,4 @@
-import { CostQuery, ClientResponse } from "./types";
+import { CostQuery, ClientResponse } from './types';
 
 /** @public */
 export type InfraWalletApi = {

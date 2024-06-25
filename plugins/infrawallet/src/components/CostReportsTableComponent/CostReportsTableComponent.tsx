@@ -35,11 +35,7 @@ function CustomToolbar() {
   );
 }
 
-export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
-  reports,
-  aggregatedBy,
-  periods,
-}) => {
+export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ reports, aggregatedBy, periods }) => {
   const classes = useStyles();
   const customScale = humanFormat.Scale.create(['', 'K', 'M', 'B'], 1000);
   const columns: GridColDef[] = [
@@ -53,10 +49,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
         let chipLabel = null;
 
         if (aggregatedBy === 'service' || aggregatedBy === 'name') {
-          if (
-            params.formattedValue !== undefined &&
-            params.formattedValue.indexOf('/') !== -1
-          ) {
+          if (params.formattedValue !== undefined && params.formattedValue.indexOf('/') !== -1) {
             const splitValue = params.formattedValue.split('/');
             formattedValue = splitValue[1];
             chipLabel = splitValue[0].toLowerCase();
@@ -64,15 +57,9 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
         }
 
         return (
-          <Typography
-            variant="body2"
-            component="div"
-            className={classes.container}
-          >
+          <Typography variant="body2" component="div" className={classes.container}>
             {formattedValue}
-            {chipLabel && (
-              <Chip size="small" label={chipLabel} className={classes.clip} />
-            )}
+            {chipLabel && <Chip size="small" label={chipLabel} className={classes.clip} />}
           </Typography>
         );
       },
@@ -90,9 +77,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
               {
                 name: params.row.id,
                 data: periods.map(period =>
-                  params.row.reports[period] !== undefined
-                    ? params.row.reports[period]
-                    : null,
+                  params.row.reports[period] !== undefined ? params.row.reports[period] : null,
                 ),
               },
             ]}
@@ -120,15 +105,9 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
             separator: '',
             decimals: 2,
           });
-          if (
-            periods.includes(previousPeriod) &&
-            row.reports[previousPeriod] > 0
-          ) {
-            const diff =
-              row.reports[column.field] - row.reports[previousPeriod];
-            const percentage = Math.round(
-              (diff / row.reports[previousPeriod]) * 100,
-            );
+          if (periods.includes(previousPeriod) && row.reports[previousPeriod] > 0) {
+            const diff = row.reports[column.field] - row.reports[previousPeriod];
+            const percentage = Math.round((diff / row.reports[previousPeriod]) * 100);
             const mark = diff > 0 ? '+' : '';
             // only display percentage change if it is larger than 1% or less than -1%
             if (percentage >= 1 || percentage <= -1) {
@@ -143,13 +122,8 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({
         let className = '';
         const percentageIndex = params.formattedValue.indexOf('(');
         const costStr =
-          percentageIndex === -1
-            ? params.formattedValue
-            : params.formattedValue.substring(0, percentageIndex);
-        let percentageStr =
-          percentageIndex === -1
-            ? ''
-            : params.formattedValue.substring(percentageIndex);
+          percentageIndex === -1 ? params.formattedValue : params.formattedValue.substring(0, percentageIndex);
+        let percentageStr = percentageIndex === -1 ? '' : params.formattedValue.substring(percentageIndex);
         if (percentageStr.includes('-')) {
           className = classes.decrease;
           percentageStr = percentageStr.replace('-', '▼');

@@ -12,9 +12,7 @@ import Alert from '@material-ui/lab/Alert';
 import React, { FC } from 'react';
 import { CloudProviderError } from '../../api/types';
 
-export const ErrorsAlertComponent: FC<{ errors: CloudProviderError[] }> = ({
-  errors,
-}) => {
+export const ErrorsAlertComponent: FC<{ errors: CloudProviderError[] }> = ({ errors }) => {
   const [open, setOpen] = React.useState(true);
 
   return (
@@ -36,16 +34,13 @@ export const ErrorsAlertComponent: FC<{ errors: CloudProviderError[] }> = ({
         }
       >
         <p>
-          InfraWallet failed to fetch cloud costs from some of the configured
-          accounts. Here are the list of errors.
+          InfraWallet failed to fetch cloud costs from some of the configured accounts. Here are the list of errors.
         </p>
         <TableContainer component={Paper}>
           <Table aria-label="errors table">
             <TableHead>
               <TableRow>
-                <TableCell style={{ minWidth: '150px' }}>
-                  Account Name
-                </TableCell>
+                <TableCell style={{ minWidth: '150px' }}>Account Name</TableCell>
                 <TableCell>Error Message</TableCell>
               </TableRow>
             </TableHead>
