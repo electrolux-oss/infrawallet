@@ -1,0 +1,69 @@
+name: PR Checker
+
+on:
+  pull_request:
+    paths-ignore:
+      - 'plugins/infrawallet/docs/**'
+      - 'plugins/infrawallet-backend/docs/**'
+      - '**.md'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify-pull-requests:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18.x, 20.x]
+
+    env:
+      NODE_OPTIONS: --max-old-space-size=8192
+
+    steps:
+      - name: Harden Runner
+        uses: step-security/harden-runner@a4aa98b93cab29d9b1101a6143fb8bce00e2eac4 # v2.7.1
+        with:
+          egress-policy: audit
+
+      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
+
+      - name: use node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4.0.2
+        with:
+          node-version: ${{ matrix.node-version }}
+          registry-url: https://registry.npmjs.org/ # Needed for auth
+
+      - name: yarn install
+        run: |
+          yarn install
+
+      - name: verify yarn dependency duplicates
+        run: node scripts/verify-lockfile-duplicates.js
+
+      - name: verify local dependency ranges
+        run: node scripts/verify-local-dependencies.js
+
+      - name: check for missing repo fixes
+        run: yarn fix --check
+
+      - name: validate config
+        run: yarn backstage-cli config:check --lax
+
+      - name: lint
+        run: yarn backstage-cli repo lint
+
+      - name: type checking and declarations
+        run: yarn tsc:full
+
+      - name: prettier
+        run: yarn prettier:check
+
+      - name: build all packages
+        run: yarn backstage-cli repo build --all
+
+      - name: verify type dependencies
+        run: yarn lint:type-deps
