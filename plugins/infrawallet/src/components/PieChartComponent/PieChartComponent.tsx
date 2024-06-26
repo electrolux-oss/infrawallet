@@ -5,11 +5,7 @@ import React, { FC } from 'react';
 import Chart from 'react-apexcharts';
 import { PieChartComponentProps } from '../types';
 
-export const PieChartComponent: FC<PieChartComponentProps> = ({
-  categories,
-  series,
-  height,
-}) => {
+export const PieChartComponent: FC<PieChartComponentProps> = ({ categories, series, height }) => {
   const useStyles = makeStyles({
     fixedHeightPaper: {
       paddingTop: '10px',
@@ -33,7 +29,7 @@ export const PieChartComponent: FC<PieChartComponentProps> = ({
       labels: categories,
       dataLabels: {
         enabled: true,
-        formatter: (value: number, { seriesIndex, w }: { seriesIndex: number, w: any }) => {
+        formatter: (value: number, { seriesIndex, w }: { seriesIndex: number; w: any }) => {
           return `${w.config.labels[seriesIndex]} (${value.toFixed(0)}%)`;
         },
       },
@@ -124,12 +120,7 @@ export const PieChartComponent: FC<PieChartComponentProps> = ({
 
   return (
     <Paper className={classes.fixedHeightPaper}>
-      <Chart
-        options={state.options}
-        series={state.series}
-        type="donut"
-        height={height ? height : 300}
-      />
+      <Chart options={state.options} series={state.series} type="donut" height={height ? height : 300} />
     </Paper>
   );
 };

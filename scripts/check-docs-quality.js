@@ -72,13 +72,9 @@ async function exitIfMissingVale() {
 }
 
 async function runVale(files) {
-  const result = spawnSync(
-    'vale',
-    ['--config', resolvePath(rootDir, '.vale.ini'), ...files],
-    {
-      stdio: 'inherit',
-    },
-  );
+  const result = spawnSync('vale', ['--config', resolvePath(rootDir, '.vale.ini'), ...files], {
+    stdio: 'inherit',
+  });
 
   if (result.status !== 0) {
     // TODO(Rugvip): This logic was here before but seems a bit odd, could use some verification on windows.

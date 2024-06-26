@@ -1,10 +1,4 @@
-import {
-  Box,
-  Chip,
-  FormControl,
-  Input,
-  InputAdornment,
-} from '@material-ui/core';
+import { Box, Chip, FormControl, Input, InputAdornment } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import { debounce } from 'lodash';
 import React, { FC } from 'react';
@@ -17,12 +11,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-export const QueryComponent: FC<QueryComponentProps> = ({
-  filters,
-  filtersSetter,
-  groups,
-  groupsSetter,
-}) => {
+export const QueryComponent: FC<QueryComponentProps> = ({ filters, filtersSetter, groups, groupsSetter }) => {
   const classes = useStyles();
   const debouncedFiltersSetter = debounce(filtersSetter, 500);
   const debouncedGroupsSetter = debounce(groupsSetter, 500);

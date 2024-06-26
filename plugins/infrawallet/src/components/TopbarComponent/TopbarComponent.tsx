@@ -1,12 +1,4 @@
-import {
-  Box,
-  Button,
-  FormControl,
-  FormHelperText,
-  Grid,
-  MenuItem,
-  Select,
-} from '@material-ui/core';
+import { Box, Button, FormControl, FormHelperText, Grid, MenuItem, Select } from '@material-ui/core';
 import Divider from '@material-ui/core/Divider';
 import InputLabel from '@material-ui/core/InputLabel';
 import ListSubheader from '@material-ui/core/ListSubheader';
@@ -46,10 +38,7 @@ export const TopbarComponent: FC<TopbarComponentProps> = ({
     <Box>
       <FormControl className={classes.formControl}>
         <InputLabel shrink>Group by</InputLabel>
-        <Select
-          value={aggregatedBy}
-          onChange={event => aggregatedBySetter(event.target.value)}
-        >
+        <Select value={aggregatedBy} onChange={event => aggregatedBySetter(event.target.value)}>
           <MenuItem value="none">
             <em>None</em>
           </MenuItem>
@@ -58,9 +47,7 @@ export const TopbarComponent: FC<TopbarComponentProps> = ({
           <MenuItem value="category">Category</MenuItem>
           <MenuItem value="service">Cloud Service</MenuItem>
           <Divider light />
-          <ListSubheader onClickCapture={e => e.stopPropagation()}>
-            Tags
-          </ListSubheader>
+          <ListSubheader onClickCapture={e => e.stopPropagation()}>Tags</ListSubheader>
           {tags.map(tag => (
             <MenuItem key={tag} value={tag}>
               {`tag:${tag}`}

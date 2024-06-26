@@ -5,12 +5,7 @@ import { TrendBarComponentProps } from '../types';
 import Chart from 'react-apexcharts';
 import { ApexOptions } from 'apexcharts';
 
-export const TrendBarComponent: FC<TrendBarComponentProps> = ({
-  categories,
-  series,
-  height,
-  width,
-}) => {
+export const TrendBarComponent: FC<TrendBarComponentProps> = ({ categories, series, height, width }) => {
   const useStyles = makeStyles({
     fixedBox: {
       display: 'flex',

@@ -3,10 +3,7 @@ import { reduce } from 'lodash';
 import moment from 'moment';
 import { Report } from './types';
 
-export const mergeCostReports = (
-  reports: Report[],
-  threshold: number,
-): Report[] => {
+export const mergeCostReports = (reports: Report[], threshold: number): Report[] => {
   const totalCosts: { id: string; total: number }[] = [];
   reports.forEach(report => {
     let total = 0;
@@ -47,10 +44,7 @@ export const mergeCostReports = (
   return Object.values(mergedReports);
 };
 
-export const aggregateCostReports = (
-  reports: Report[],
-  aggregatedBy?: string,
-): Report[] => {
+export const aggregateCostReports = (reports: Report[], aggregatedBy?: string): Report[] => {
   const aggregatedReports: { [key: string]: Report } = reduce(
     reports,
     (accumulator, report) => {
@@ -92,14 +86,7 @@ export const aggregateCostReports = (
 
 export const getAllReportTags = (reports: Report[]): string[] => {
   const tags = new Set<string>();
-  const reservedKeys = [
-    'id',
-    'name',
-    'service',
-    'category',
-    'provider',
-    'reports',
-  ];
+  const reservedKeys = ['id', 'name', 'service', 'category', 'provider', 'reports'];
   reports.forEach(report => {
     Object.keys(report).forEach(key => {
       if (reservedKeys.indexOf(key) === -1) {
@@ -116,11 +103,7 @@ export const getPreviousMonth = (month: string): string => {
   return format(previousMonth, 'yyyy-MM');
 };
 
-export const getPeriodStrings = (
-  granularity: string,
-  startTime: Date,
-  endTime: Date,
-): string[] => {
+export const getPeriodStrings = (granularity: string, startTime: Date, endTime: Date): string[] => {
   const result: string[] = [];
   const current = moment(startTime);
 
