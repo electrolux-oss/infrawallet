@@ -68,14 +68,10 @@ async function main() {
     let failed;
 
     try {
-      const result = await execFile(
-        'yarn',
-        ['dedupe', ...(fix ? [] : ['--check'])],
-        {
-          shell: true,
-          cwd: lockFile.directoryAbsolute,
-        },
-      );
+      const result = await execFile('yarn', ['dedupe', ...(fix ? [] : ['--check'])], {
+        shell: true,
+        cwd: lockFile.directoryAbsolute,
+      });
       stdout = result.stdout?.trim();
       stderr = result.stderr?.trim();
       failed = false;
@@ -96,31 +92,17 @@ async function main() {
     if (failed) {
       if (!fix) {
         const command = `yarn dedupe${
-          lockFile.directoryRelativeToProjectRoot === '.'
-            ? ''
-            : ` --cwd ${lockFile.directoryRelativeToProjectRoot}`
+          lockFile.directoryRelativeToProjectRoot === '.' ? '' : ` --cwd ${lockFile.directoryRelativeToProjectRoot}`
         }`;
         const padding = ' '.repeat(Math.max(0, 85 - 6 - command.length));
         console.error('');
-        console.error(
-          '*************************************************************************************',
-        );
-        console.error(
-          '* You have duplicate versions of some packages in a yarn.lock file.                 *',
-        );
-        console.error(
-          '* To solve this, run the following command from the project root and commit all     *',
-        );
-        console.log(
-          '* yarn.lock changes.                                                                *',
-        );
-        console.log(
-          '*                                                                                   *',
-        );
+        console.error('*************************************************************************************');
+        console.error('* You have duplicate versions of some packages in a yarn.lock file.                 *');
+        console.error('* To solve this, run the following command from the project root and commit all     *');
+        console.log('* yarn.lock changes.                                                                *');
+        console.log('*                                                                                   *');
         console.log(`*   ${command}${padding} *`);
-        console.error(
-          '*************************************************************************************',
-        );
+        console.error('*************************************************************************************');
         console.error('');
       }
 

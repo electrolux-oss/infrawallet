@@ -135,7 +135,7 @@ export class AzureClient implements InfraWalletApi {
       const accountName = c.getString('name');
 
       // first check if there is any cached
-      const cachedCosts = await getReportsFromCache(this.cache, this.providerName, name, query);
+      const cachedCosts = await getReportsFromCache(this.cache, this.providerName, accountName, query);
       if (cachedCosts) {
         this.logger.debug(`${this.providerName}/${accountName} costs from cache`);
         cachedCosts.map(cost => {
