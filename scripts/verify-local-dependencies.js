@@ -26,12 +26,7 @@ const { resolve: resolvePath, join: joinPath } = require('path');
  * It can be run with a `--fix` flag to a automatically fix any issues.
  */
 
-const depTypes = [
-  'dependencies',
-  'devDependencies',
-  'peerDependencies',
-  'optionalDependencies',
-];
+const depTypes = ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'];
 
 const roleRules = [
   {
@@ -46,12 +41,7 @@ const roleRules = [
   },
   {
     sourceRole: ['common-library'],
-    targetRole: [
-      'frontend-plugin',
-      'web-library',
-      'backend-plugin',
-      'node-library',
-    ],
+    targetRole: ['frontend-plugin', 'web-library', 'backend-plugin', 'node-library'],
     message: `Polymorphic package SOURCE_NAME has a dependency on package TARGET_NAME with role TARGET_ROLE, which is not permitted since it's not also polymorphic`,
   },
   {
@@ -122,9 +112,7 @@ async function main(args) {
         const localPackage = pkgMap.get(dep);
         if (localPackage && range !== 'workspace:^') {
           hadVersionRangeErrors = true;
-          console.log(
-            `Local dependency from ${pkg.packageJson.name} to ${dep} should have a workspace range`,
-          );
+          console.log(`Local dependency from ${pkg.packageJson.name} to ${dep} should have a workspace range`);
 
           versionRangeErrorsFixed = true;
           pkg.packageJson[depType][dep] = 'workspace:^';
@@ -137,17 +125,12 @@ async function main(args) {
      */
     const sourceRole = pkg.packageJson.backstage?.role;
     if (typeof sourceRole === 'string') {
-      for (const [targetName] of Object.entries(
-        pkg.packageJson.dependencies ?? {},
-      )) {
+      for (const [targetName] of Object.entries(pkg.packageJson.dependencies ?? {})) {
         let targetPackageJson;
         try {
-          const packageJsonPath = require.resolve(
-            `${targetName}/package.json`,
-            {
-              paths: [pkg.dir],
-            },
-          );
+          const packageJsonPath = require.resolve(`${targetName}/package.json`, {
+            paths: [pkg.dir],
+          });
           targetPackageJson = JSON.parse(await fs.readFile(packageJsonPath));
         } catch {
           // ignore
@@ -158,21 +141,11 @@ async function main(args) {
         const targetRole = targetPackageJson.backstage?.role;
         if (typeof targetRole === 'string') {
           for (const rule of roleRules) {
-            const matchesSourceRole = [rule.sourceRole ?? []]
-              .flat()
-              .includes(sourceRole);
-            const matchesTargetRole = [rule.targetRole ?? []]
-              .flat()
-              .includes(targetRole);
-            const matchesTargetName = [rule.targetName ?? []]
-              .flat()
-              .includes(targetName);
+            const matchesSourceRole = [rule.sourceRole ?? []].flat().includes(sourceRole);
+            const matchesTargetRole = [rule.targetRole ?? []].flat().includes(targetRole);
+            const matchesTargetName = [rule.targetName ?? []].flat().includes(targetName);
             const isExempt = [rule.except ?? []].flat().includes(sourceName);
-            if (
-              matchesSourceRole &&
-              (matchesTargetName || matchesTargetRole) &&
-              !isExempt
-            ) {
+            if (matchesSourceRole && (matchesTargetName || matchesTargetRole) && !isExempt) {
               hadRoleErrors = true;
               console.error(
                 rule.message
@@ -200,9 +173,7 @@ async function main(args) {
   if (!shouldFix && hadVersionRangeErrors) {
     console.error();
     console.error('At least one package has an invalid local dependency');
-    console.error(
-      'Run `node scripts/verify-local-dependencies.js --fix` to fix',
-    );
+    console.error('Run `node scripts/verify-local-dependencies.js --fix` to fix');
     process.exit(2);
   }
 
