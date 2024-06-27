@@ -3,7 +3,7 @@ import { CacheService, DatabaseService, LoggerService, resolvePackagePath } from
 import { Config } from '@backstage/config';
 import express from 'express';
 import Router from 'express-promise-router';
-import { InfraWalletClient } from './InfraWalletApi';
+import { InfraWalletClient } from './InfraWalletClient';
 import { PROVIDER_CLIENT_MAPPINGS } from './consts';
 import { CloudProviderError, Report } from './types';
 
