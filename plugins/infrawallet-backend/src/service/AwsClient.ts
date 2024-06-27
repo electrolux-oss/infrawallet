@@ -9,22 +9,14 @@ import { CacheService, DatabaseService, LoggerService } from '@backstage/backend
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
-import { InfraWalletApi } from './InfraWalletApi';
-import { getCategoryByServiceName, getCategoryMappings, getReportsFromCache, setReportsToCache } from './functions';
-import { ClientResponse, CloudProviderError, CostQuery, Report } from './types';
+import { InfraWalletClient } from './InfraWalletApi';
+import { getCategoryByServiceName } from './functions';
+import { CostQuery, Report } from './types';
 
-export class AwsClient implements InfraWalletApi {
+export class AwsClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
     return new AwsClient('AWS', config, database, cache, logger);
   }
-
-  constructor(
-    private readonly providerName: string,
-    private readonly config: Config,
-    private readonly database: DatabaseService,
-    private readonly cache: CacheService,
-    private readonly logger: LoggerService,
-  ) {}
 
   convertServiceName(serviceName: string): string {
     let convertedName = serviceName;
@@ -58,176 +50,130 @@ export class AwsClient implements InfraWalletApi {
     return `${this.providerName}/${convertedName}`;
   }
 
-  async fetchCostsFromCloud(query: CostQuery): Promise<ClientResponse> {
-    const conf = this.config.getOptionalConfigArray('backend.infraWallet.integrations.aws');
-    if (!conf) {
-      return { reports: [], errors: [] };
-    }
+  async initCloudClient(subAccountConfig: Config): Promise<any> {
+    const accountId = subAccountConfig.getString('accountId');
+    const assumedRoleName = subAccountConfig.getString('assumedRoleName');
+    const accessKeyId = subAccountConfig.getOptionalString('accessKeyId');
+    const accessKeySecret = subAccountConfig.getOptionalString('accessKeySecret');
 
-    const promises = [];
-    const results: Report[] = [];
-    const errors: CloudProviderError[] = [];
-    const groupPairs = [];
-    query.groups.split(',').forEach(group => {
-      if (group.includes(':')) {
-        const [type, name] = group.split(':');
-        groupPairs.push({ type, name });
-      }
+    let stsParams = {};
+    if (accessKeyId && accessKeySecret) {
+      stsParams = {
+        region: 'us-east-1',
+        credentials: {
+          accessKeyId: accessKeyId as string,
+          secretAccessKey: accessKeySecret as string,
+        },
+      };
+    } else {
+      stsParams = {
+        region: 'us-east-1',
+      };
+    }
+    const client = new STSClient(stsParams);
+    const commandInput = {
+      // AssumeRoleRequest
+      RoleArn: `arn:aws:iam::${accountId}:role/${assumedRoleName}`,
+      RoleSessionName: 'AssumeRoleSession1',
+    };
+    const assumeRoleCommand = new AssumeRoleCommand(commandInput);
+    const assumeRoleResponse = await client.send(assumeRoleCommand);
+    // init aws cost explorer client
+    const awsCeClient = new CostExplorerClient({
+      region: 'us-east-1',
+      credentials: {
+        accessKeyId: assumeRoleResponse.Credentials?.AccessKeyId as string,
+        secretAccessKey: assumeRoleResponse.Credentials?.SecretAccessKey as string,
+        sessionToken: assumeRoleResponse.Credentials?.SessionToken as string,
+      },
     });
 
-    for (const c of conf) {
-      const accountName = c.getString('name');
+    return awsCeClient;
+  }
 
-      // first check if there is any cached
-      const cachedCosts = await getReportsFromCache(this.cache, this.providerName, accountName, query);
-      if (cachedCosts) {
-        this.logger.debug(`${this.providerName}/${accountName} costs from cache`);
-        cachedCosts.map(cost => {
-          results.push(cost);
-        });
-        continue;
-      }
+  async fetchCostsFromCloud(_subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
+    // query this aws account's cost and usage using @aws-sdk/client-cost-explorer
+    let costAndUsageResults: any[] = [];
+    let nextPageToken = undefined;
 
-      const accountId = c.getString('accountId');
-      const assumedRoleName = c.getString('assumedRoleName');
-      const accessKeyId = c.getOptionalString('accessKeyId');
-      const accessKeySecret = c.getOptionalString('accessKeySecret');
-      const tags = c.getOptionalStringArray('tags');
-      const tagKeyValues: { [key: string]: string } = {};
-      tags?.forEach(tag => {
-        const [k, v] = tag.split(':');
-        tagKeyValues[k.trim()] = v.trim();
-      });
-      const categoryMappings = await getCategoryMappings(this.database, this.providerName);
+    do {
+      const input: GetCostAndUsageCommandInput = {
+        TimePeriod: {
+          Start: moment(parseInt(query.startTime, 10)).format('YYYY-MM-DD'),
+          End: moment(parseInt(query.endTime, 10)).format('YYYY-MM-DD'),
+        },
+        Granularity: query.granularity.toUpperCase() as Granularity,
+        Filter: { Dimensions: { Key: 'RECORD_TYPE', Values: ['Usage'] } },
+        GroupBy: [{ Type: 'DIMENSION', Key: 'SERVICE' }],
+        Metrics: ['UnblendedCost'],
+        NextPageToken: nextPageToken,
+      };
 
-      let stsParams = {};
-      if (accessKeyId && accessKeySecret) {
-        stsParams = {
-          region: 'us-east-1',
-          credentials: {
-            accessKeyId: accessKeyId as string,
-            secretAccessKey: accessKeySecret as string,
-          },
-        };
-      } else {
-        stsParams = {
-          region: 'us-east-1',
-        };
-      }
-      const promise = (async () => {
-        try {
-          const client = new STSClient(stsParams);
-          const commandInput = {
-            // AssumeRoleRequest
-            RoleArn: `arn:aws:iam::${accountId}:role/${assumedRoleName}`,
-            RoleSessionName: 'AssumeRoleSession1',
-          };
-          const assumeRoleCommand = new AssumeRoleCommand(commandInput);
-          const assumeRoleResponse = await client.send(assumeRoleCommand);
-          // init aws cost explorer client
-          const awsCeClient = new CostExplorerClient({
-            region: 'us-east-1',
-            credentials: {
-              accessKeyId: assumeRoleResponse.Credentials?.AccessKeyId as string,
-              secretAccessKey: assumeRoleResponse.Credentials?.SecretAccessKey as string,
-              sessionToken: assumeRoleResponse.Credentials?.SessionToken as string,
-            },
-          });
+      const getCostCommand = new GetCostAndUsageCommand(input);
+      const costAndUsageResponse = await client.send(getCostCommand);
 
-          // query this aws account's cost and usage using @aws-sdk/client-cost-explorer
-          let costAndUsageResults: any[] = [];
-          let nextPageToken = undefined;
+      costAndUsageResults = costAndUsageResults.concat(costAndUsageResponse.ResultsByTime);
+      nextPageToken = costAndUsageResponse.NextPageToken;
+    } while (nextPageToken);
 
-          do {
-            const input: GetCostAndUsageCommandInput = {
-              TimePeriod: {
-                Start: moment(parseInt(query.startTime, 10)).format('YYYY-MM-DD'),
-                End: moment(parseInt(query.endTime, 10)).format('YYYY-MM-DD'),
-              },
-              Granularity: query.granularity.toUpperCase() as Granularity,
-              Filter: { Dimensions: { Key: 'RECORD_TYPE', Values: ['Usage'] } },
-              GroupBy: [{ Type: 'DIMENSION', Key: 'SERVICE' }],
-              Metrics: ['UnblendedCost'],
-              NextPageToken: nextPageToken,
-            };
+    return costAndUsageResults;
+  }
 
-            const getCostCommand = new GetCostAndUsageCommand(input);
-            const costAndUsageResponse = await awsCeClient.send(getCostCommand);
+  async transformCostsData(
+    subAccountConfig: Config,
+    query: CostQuery,
+    costResponse: any,
+    categoryMappings: { [service: string]: string },
+  ): Promise<Report[]> {
+    const accountName = subAccountConfig.getString('name');
+    const tags = subAccountConfig.getOptionalStringArray('tags');
+    const tagKeyValues: { [key: string]: string } = {};
+    tags?.forEach(tag => {
+      const [k, v] = tag.split(':');
+      tagKeyValues[k.trim()] = v.trim();
+    });
 
-            costAndUsageResults = costAndUsageResults.concat(costAndUsageResponse.ResultsByTime);
-            nextPageToken = costAndUsageResponse.NextPageToken;
-          } while (nextPageToken);
+    const transformedData = reduce(
+      costResponse,
+      (accumulator: { [key: string]: Report }, row) => {
+        const rowTime = row.TimePeriod?.Start;
+        let period = 'unknown';
+        if (rowTime) {
+          if (query.granularity.toUpperCase() === 'MONTHLY') {
+            period = rowTime.substring(0, 7);
+          } else {
+            period = rowTime;
+          }
+        }
+        if (row.Groups) {
+          row.Groups.forEach((group: any) => {
+            const serviceName = group.Keys ? group.Keys[0] : '';
+            const keyName = `${accountName}_${serviceName}`;
 
-          const transformedData = reduce(
-            costAndUsageResults,
-            (accumulator: { [key: string]: Report }, row) => {
-              const rowTime = row.TimePeriod?.Start;
-              let period = 'unknown';
-              if (rowTime) {
-                if (query.granularity.toUpperCase() === 'MONTHLY') {
-                  period = rowTime.substring(0, 7);
-                } else {
-                  period = rowTime;
-                }
-              }
-              if (row.Groups) {
-                row.Groups.forEach((group: any) => {
-                  const serviceName = group.Keys ? group.Keys[0] : '';
-                  const keyName = `${accountName}_${serviceName}`;
+            if (!accumulator[keyName]) {
+              accumulator[keyName] = {
+                id: keyName,
+                name: `${this.providerName}/${accountName}`,
+                service: this.convertServiceName(serviceName),
+                category: getCategoryByServiceName(serviceName, categoryMappings),
+                provider: this.providerName,
+                reports: {},
+                ...tagKeyValues,
+              };
+            }
 
-                  if (!accumulator[keyName]) {
-                    accumulator[keyName] = {
-                      id: keyName,
-                      name: `${this.providerName}/${accountName}`,
-                      service: this.convertServiceName(serviceName),
-                      category: getCategoryByServiceName(serviceName, categoryMappings),
-                      provider: this.providerName,
-                      reports: {},
-                      ...tagKeyValues,
-                    };
-                  }
+            const groupMetrics = group.Metrics;
 
-                  const groupMetrics = group.Metrics;
-
-                  if (groupMetrics !== undefined) {
-                    accumulator[keyName].reports[period] = parseFloat(groupMetrics.UnblendedCost.Amount ?? '0.0');
-                  }
-                });
-              }
-
-              return accumulator;
-            },
-            {},
-          );
-
-          // cache the results for 2 hours
-          await setReportsToCache(
-            this.cache,
-            Object.values(transformedData),
-            this.providerName,
-            accountName,
-            query,
-            60 * 60 * 2 * 1000,
-          );
-
-          Object.values(transformedData).map((value: any) => {
-            results.push(value);
-          });
-        } catch (e) {
-          this.logger.error(e);
-          errors.push({
-            provider: this.providerName,
-            name: `${this.providerName}/${accountName}`,
-            error: e.message,
+            if (groupMetrics !== undefined) {
+              accumulator[keyName].reports[period] = parseFloat(groupMetrics.UnblendedCost.Amount ?? '0.0');
+            }
           });
         }
-      })();
-      promises.push(promise);
-    }
-    await Promise.all(promises);
-    return {
-      reports: results,
-      errors: errors,
-    };
+
+        return accumulator;
+      },
+      {},
+    );
+    return Object.values(transformedData);
   }
 }
