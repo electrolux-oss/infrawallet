@@ -3,10 +3,8 @@ import { CacheService, DatabaseService, LoggerService, resolvePackagePath } from
 import { Config } from '@backstage/config';
 import express from 'express';
 import Router from 'express-promise-router';
-import { AwsClient } from './AwsClient';
-import { AzureClient } from './AzureClient';
-import { GCPClient } from './GCPClient';
-import { InfraWalletApi } from './InfraWalletApi';
+import { InfraWalletClient } from './InfraWalletApi';
+import { PROVIDER_CLIENT_MAPPINGS } from './consts';
 import { CloudProviderError, Report } from './types';
 
 export interface RouterOptions {
@@ -39,11 +37,6 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
   const router = Router();
   router.use(express.json());
 
-  const azureClient = AzureClient.create(config, database, cache, logger);
-  const awsClient = AwsClient.create(config, database, cache, logger);
-  const gcpClient = GCPClient.create(config, database, cache, logger);
-  const cloudClients: InfraWalletApi[] = [azureClient, awsClient, gcpClient];
-
   router.get('/health', (_, response) => {
     logger.info('PONG!');
     response.json({ status: 'ok' });
@@ -59,32 +52,36 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     const results: Report[] = [];
     const errors: CloudProviderError[] = [];
 
-    cloudClients.forEach(async client => {
-      const fetchCloudCosts = (async () => {
-        try {
-          const clientResponse = await client.fetchCostsFromCloud({
-            filters: filters,
-            groups: groups,
-            granularity: granularity,
-            startTime: startTime,
-            endTime: endTime,
-          });
-          clientResponse.errors.forEach(e => {
-            errors.push(e);
-          });
-          clientResponse.reports.forEach(cost => {
-            results.push(cost);
-          });
-        } catch (e) {
-          logger.error(e);
-          errors.push({
-            provider: client.constructor.name,
-            name: client.constructor.name,
-            error: e.message,
-          });
-        }
-      })();
-      promises.push(fetchCloudCosts);
+    const conf = config.getConfig('backend.infraWallet.integrations');
+    conf.keys().forEach((provider: string) => {
+      if (provider in PROVIDER_CLIENT_MAPPINGS) {
+        const client: InfraWalletClient = PROVIDER_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
+        const fetchCloudCosts = (async () => {
+          try {
+            const clientResponse = await client.getCostReports({
+              filters: filters,
+              groups: groups,
+              granularity: granularity,
+              startTime: startTime,
+              endTime: endTime,
+            });
+            clientResponse.errors.forEach((e: CloudProviderError) => {
+              errors.push(e);
+            });
+            clientResponse.reports.forEach((cost: Report) => {
+              results.push(cost);
+            });
+          } catch (e) {
+            logger.error(e);
+            errors.push({
+              provider: client.constructor.name,
+              name: client.constructor.name,
+              error: e.message,
+            });
+          }
+        })();
+        promises.push(fetchCloudCosts);
+      }
     });
 
     await Promise.all(promises);
