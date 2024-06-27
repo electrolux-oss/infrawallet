@@ -3,11 +3,6 @@ import { Config } from '@backstage/config';
 import { getCategoryMappings, getReportsFromCache, setReportsToCache } from './functions';
 import { ClientResponse, CloudProviderError, CostQuery, Report } from './types';
 
-/** @public */
-export type InfraWalletApi = {
-  fetchCostsFromCloud(query: CostQuery): Promise<ClientResponse>;
-};
-
 export abstract class InfraWalletClient {
   constructor(
     protected readonly providerName: string,

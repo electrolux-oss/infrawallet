@@ -2,7 +2,7 @@ import { CacheService, DatabaseService, LoggerService } from '@backstage/backend
 import { Config } from '@backstage/config';
 import { BigQuery } from '@google-cloud/bigquery';
 import { reduce } from 'lodash';
-import { InfraWalletClient } from './InfraWalletApi';
+import { InfraWalletClient } from './InfraWalletClient';
 import { getCategoryByServiceName } from './functions';
 import { CostQuery, Report } from './types';
 

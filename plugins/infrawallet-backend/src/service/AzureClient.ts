@@ -5,7 +5,7 @@ import { CacheService, DatabaseService, LoggerService } from '@backstage/backend
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
-import { InfraWalletClient } from './InfraWalletApi';
+import { InfraWalletClient } from './InfraWalletClient';
 import { getCategoryByServiceName } from './functions';
 import { CostQuery, Report } from './types';
 
