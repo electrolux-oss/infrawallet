@@ -1,4 +1,4 @@
-import { Report } from '../api/types';
+import { Report, Filters } from '../api/types';
 
 export type TrendBarComponentProps = {
   categories: any[];
@@ -18,6 +18,12 @@ export type TopbarComponentProps = {
   tags: string[];
   monthRange: MonthRange;
   monthRangeSetter: any;
+};
+
+export type FiltersComponentProps = {
+  reports: Report[];
+  filters: Filters;
+  filtersSetter: any;
 };
 
 export type QueryComponentProps = {
