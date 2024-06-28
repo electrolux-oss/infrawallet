@@ -5,22 +5,14 @@ import { CacheService, DatabaseService, LoggerService } from '@backstage/backend
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
-import { InfraWalletApi } from './InfraWalletApi';
-import { getCategoryByServiceName, getCategoryMappings, getReportsFromCache, setReportsToCache } from './functions';
-import { ClientResponse, CloudProviderError, CostQuery, Report } from './types';
+import { InfraWalletClient } from './InfraWalletClient';
+import { getCategoryByServiceName } from './functions';
+import { CostQuery, Report } from './types';
 
-export class AzureClient implements InfraWalletApi {
+export class AzureClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
     return new AzureClient('Azure', config, database, cache, logger);
   }
-
-  constructor(
-    private readonly providerName: string,
-    private readonly config: Config,
-    private readonly database: DatabaseService,
-    private readonly cache: CacheService,
-    private readonly logger: LoggerService,
-  ) {}
 
   convertServiceName(serviceName: string): string {
     let convertedName = serviceName;
@@ -118,143 +110,120 @@ export class AzureClient implements InfraWalletApi {
     return allResults;
   }
 
-  async fetchCostsFromCloud(query: CostQuery): Promise<ClientResponse> {
-    const conf = this.config.getOptionalConfigArray('backend.infraWallet.integrations.azure');
-    if (!conf) {
-      return { reports: [], errors: [] };
-    }
+  async initCloudClient(config: Config): Promise<any> {
+    const tenantId = config.getString('tenantId');
+    const clientId = config.getString('clientId');
+    const clientSecret = config.getString('clientSecret');
+    const credential = new ClientSecretCredential(tenantId as string, clientId as string, clientSecret as string);
+    const client = new CostManagementClient(credential);
 
-    const categoryMappings = await getCategoryMappings(this.database, this.providerName);
+    return client;
+  }
 
-    const promises = [];
-    const results: Report[] = [];
-    const errors: CloudProviderError[] = [];
+  async fetchCostsFromCloud(subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
+    // Azure SDK doesn't support pagination, so sending HTTP request directly
+    const subscriptionId = subAccountConfig.getString('subscriptionId');
+    const url = `https://management.azure.com/subscriptions/${subscriptionId}/providers/Microsoft.CostManagement/query?api-version=2022-10-01`;
 
     const groupPairs = [{ type: 'Dimension', name: 'ServiceName' }];
-    for (const c of conf) {
-      const accountName = c.getString('name');
-
-      // first check if there is any cached
-      const cachedCosts = await getReportsFromCache(this.cache, this.providerName, accountName, query);
-      if (cachedCosts) {
-        this.logger.debug(`${this.providerName}/${accountName} costs from cache`);
-        cachedCosts.map(cost => {
-          results.push(cost);
-        });
-        continue;
-      }
-
-      const subscriptionId = c.getString('subscriptionId');
-      const tenantId = c.getString('tenantId');
-      const clientId = c.getString('clientId');
-      const clientSecret = c.getString('clientSecret');
-      const credential = new ClientSecretCredential(tenantId as string, clientId as string, clientSecret as string);
-      const client = new CostManagementClient(credential);
-      const tags = c.getOptionalStringArray('tags');
-      const tagKeyValues: { [key: string]: string } = {};
-      tags?.forEach(tag => {
-        const [k, v] = tag.split(':');
-        tagKeyValues[k.trim()] = v.trim();
-      });
-
-      const promise = (async () => {
-        try {
-          const costResponse = await this.queryAzureCostExplorer(
-            client,
-            subscriptionId as string,
-            query.granularity,
-            groupPairs,
-            moment(parseInt(query.startTime, 10)),
-            moment(parseInt(query.endTime, 10)),
-          );
-
-          /* 
-            Monthly cost sample:
-              [
-                123.456,
-                "2024-04-07T00:00:00",  // BillingMonth
-                "Azure App Service",
-                "EUR"
-              ]
-  
-            Daily cost sample:
-              [
-                12.3456,
-                20240407,  // UsageDate
-                "Azure App Service",
-                "EUR"
-              ]
-          */
-          const transformedData = reduce(
-            costResponse,
-            (accumulator: { [key: string]: Report }, row) => {
-              const cost = row[0];
-              let date = row[1];
-              const serviceName = row[2];
-
-              if (query.granularity.toUpperCase() === 'DAILY') {
-                // 20240407 -> "2024-04-07"
-                date = this.formatDate(date);
-              }
-
-              let keyName = accountName;
-              for (let i = 0; i < groupPairs.length; i++) {
-                keyName += `->${row[i + 2]}`;
-              }
-
-              if (!accumulator[keyName]) {
-                accumulator[keyName] = {
-                  id: keyName,
-                  name: `${this.providerName}/${accountName}`,
-                  service: this.convertServiceName(serviceName),
-                  category: getCategoryByServiceName(serviceName, categoryMappings),
-                  provider: this.providerName,
-                  reports: {},
-                  ...tagKeyValues,
-                };
-              }
-
-              if (!moment(date).isBefore(moment(parseInt(query.startTime, 10)))) {
-                if (query.granularity.toUpperCase() === 'MONTHLY') {
-                  const yearMonth = date.substring(0, 7);
-                  accumulator[keyName].reports[yearMonth] = parseFloat(cost);
-                } else {
-                  accumulator[keyName].reports[date] = parseFloat(cost);
-                }
-              }
-              return accumulator;
-            },
-            {},
-          );
-
-          // cache the results for 2 hours
-          await setReportsToCache(
-            this.cache,
-            Object.values(transformedData),
-            this.providerName,
-            accountName,
-            query,
-            60 * 60 * 2 * 1000,
-          );
-
-          Object.values(transformedData).map((value: Report) => {
-            results.push(value);
-          });
-        } catch (e) {
-          this.logger.error(e);
-          errors.push({
-            provider: this.providerName,
-            name: `${this.providerName}/${accountName}`,
-            error: e.message,
-          });
-        }
-      })();
-      promises.push(promise);
-    }
-    await Promise.all(promises);
-    return {
-      reports: results,
-      errors: errors,
+    const queryDefinition: QueryDefinition = {
+      type: 'ActualCost',
+      dataset: {
+        granularity: query.granularity,
+        aggregation: { totalCostUSD: { name: 'CostUSD', function: 'Sum' } },
+        grouping: groupPairs,
+      },
+      timeframe: 'Custom',
+      timePeriod: {
+        from: moment(parseInt(query.startTime, 10)).toDate(),
+        to: moment(parseInt(query.endTime, 10)).toDate(),
+      },
     };
+
+    let result = await this.fetchDataWithRetry(client, url, queryDefinition);
+    let allResults = result.properties.rows;
+
+    while (result.properties.nextLink) {
+      result = await this.fetchDataWithRetry(client, result.properties.nextLink, queryDefinition);
+      allResults = allResults.concat(result.properties.rows);
+    }
+
+    return allResults;
+  }
+
+  async transformCostsData(
+    subAccountConfig: Config,
+    query: CostQuery,
+    costResponse: any,
+    categoryMappings: { [service: string]: string },
+  ): Promise<Report[]> {
+    /*
+      Monthly cost sample:
+        [
+          123.456,
+          "2024-04-07T00:00:00",  // BillingMonth
+          "Azure App Service",
+          "EUR"
+        ]
+
+      Daily cost sample:
+        [
+          12.3456,
+          20240407,  // UsageDate
+          "Azure App Service",
+          "EUR"
+        ]
+    */
+    const accountName = subAccountConfig.getString('name');
+    const groupPairs = [{ type: 'Dimension', name: 'ServiceName' }];
+    const tags = subAccountConfig.getOptionalStringArray('tags');
+    const tagKeyValues: { [key: string]: string } = {};
+    tags?.forEach(tag => {
+      const [k, v] = tag.split(':');
+      tagKeyValues[k.trim()] = v.trim();
+    });
+    const transformedData = reduce(
+      costResponse,
+      (accumulator: { [key: string]: Report }, row) => {
+        const cost = row[0];
+        let date = row[1];
+        const serviceName = row[2];
+
+        if (query.granularity.toUpperCase() === 'DAILY') {
+          // 20240407 -> "2024-04-07"
+          date = this.formatDate(date);
+        }
+
+        let keyName = accountName;
+        for (let i = 0; i < groupPairs.length; i++) {
+          keyName += `->${row[i + 2]}`;
+        }
+
+        if (!accumulator[keyName]) {
+          accumulator[keyName] = {
+            id: keyName,
+            name: `${this.providerName}/${accountName}`,
+            service: this.convertServiceName(serviceName),
+            category: getCategoryByServiceName(serviceName, categoryMappings),
+            provider: this.providerName,
+            reports: {},
+            ...tagKeyValues,
+          };
+        }
+
+        if (!moment(date).isBefore(moment(parseInt(query.startTime, 10)))) {
+          if (query.granularity.toUpperCase() === 'MONTHLY') {
+            const yearMonth = date.substring(0, 7);
+            accumulator[keyName].reports[yearMonth] = parseFloat(cost);
+          } else {
+            accumulator[keyName].reports[date] = parseFloat(cost);
+          }
+        }
+        return accumulator;
+      },
+      {},
+    );
+
+    return Object.values(transformedData);
   }
 }

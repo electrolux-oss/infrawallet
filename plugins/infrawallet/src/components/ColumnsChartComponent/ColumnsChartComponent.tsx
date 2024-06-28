@@ -60,7 +60,7 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
       display: 'flex',
       overflow: 'auto',
       flexDirection: 'column',
-      height: height ? height - 50 : 100,
+      height: height ? height - 70 : 80,
     },
   });
   const classes = useStyles();
@@ -198,7 +198,7 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
         </Grid>
         <Grid item>Daily</Grid>
       </Grid>
-      <Chart options={state.options} series={state.series} type="bar" height={height ? height - 50 : 250} />
+      <Chart options={state.options} series={state.series} type="bar" height={height ? height - 70 : 230} />
     </Paper>
   );
 };
