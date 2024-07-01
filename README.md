@@ -267,7 +267,7 @@ For example, here is a report returned from InfraWallet backend:
 
 The aggregation is done by the frontend after getting all the needed cost reports. This means that as long as the backend returns more cost reports in the same format, InfraWallet can always aggregate and visualize the costs.
 
-When adding a new cloud vendor, you need to implement a client based on the interface [InfraWalletApi](plugins/infrawallet-backend/src/service/InfraWalletApi.ts). Check [AwsClient.ts](plugins/infrawallet-backend/src/service/AwsClient.ts) and [AzureClient.ts](plugins/infrawallet-backend/src/service/AzureClient.ts) as examples.
+When adding a new cloud vendor, you need to implement a client based on the abstract class [InfraWalletClient](plugins/infrawallet-backend/src/service/InfraWalletClient.ts). Check [AwsClient.ts](plugins/infrawallet-backend/src/service/AwsClient.ts) and [AzureClient.ts](plugins/infrawallet-backend/src/service/AzureClient.ts) as examples.
 
 ## Roadmap
 
