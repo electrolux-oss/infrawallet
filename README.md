@@ -273,7 +273,7 @@ When adding a new cloud vendor, you need to implement a client based on the inte
 
 - [x] Make IAM user optional for AWS credentials
 - [x] Support Google Cloud Costs
-- [ ] Support filters besides grouping bys
+- [x] Support filters besides grouping bys
 - [ ] WebUI for managing category mappings
 - [ ] Enable users to select a subset of configured cloud accounts as a wallet
 - [ ] Support different currencies
