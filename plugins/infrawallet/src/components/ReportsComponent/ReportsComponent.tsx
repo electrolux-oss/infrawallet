@@ -1,14 +1,26 @@
 import { Content, Header, Page, Progress } from '@backstage/core-components';
 import { alertApiRef, useApi } from '@backstage/core-plugin-api';
-import { Grid } from '@material-ui/core';
+import { Chip, Grid } from '@material-ui/core';
+import Accordion from '@material-ui/core/Accordion';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import Typography from '@material-ui/core/Typography';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { addMonths, endOfMonth, startOfMonth } from 'date-fns';
 import React, { useCallback, useEffect, useState } from 'react';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
-import { aggregateCostReports, getAllReportTags, getPeriodStrings, mergeCostReports } from '../../api/functions';
-import { CloudProviderError, Report } from '../../api/types';
+import {
+  aggregateCostReports,
+  filterCostReports,
+  getAllReportTags,
+  getPeriodStrings,
+  mergeCostReports,
+} from '../../api/functions';
+import { CloudProviderError, Filters, Report } from '../../api/types';
 import { ColumnsChartComponent } from '../ColumnsChartComponent';
 import { CostReportsTableComponent } from '../CostReportsTableComponent';
 import { ErrorsAlertComponent } from '../ErrorsAlertComponent';
+import { FiltersComponent } from '../FiltersComponent';
 import { PieChartComponent } from '../PieChartComponent';
 import { TopbarComponent } from '../TopbarComponent';
 import { MonthRange } from '../types';
@@ -33,17 +45,27 @@ const rearrangeData = (report: Report, periods: string[]): any[] => {
   return costs;
 };
 
+const checkIfFiltersActivated = (filters: Filters): boolean => {
+  let activated = false;
+  Object.keys(filters).forEach((key: string) => {
+    if (filters[key].length > 0) {
+      activated = true;
+    }
+  });
+  return activated;
+};
+
 export const ReportsComponent = () => {
   const MERGE_THRESHOLD = 8;
   const [submittingState, setSubmittingState] = useState<Boolean>(false);
   const [reports, setReports] = useState<Report[]>([]);
+  const [filters, setFilters] = useState<Filters>({});
   const [cloudProviderErrors, setCloudProviderErrors] = useState<CloudProviderError[]>([]);
   const [reportsAggregated, setReportsAggregated] = useState<Report[]>([]);
   const [reportsAggregatedAndMerged, setReportsAggregatedAndMerged] = useState<Report[]>([]);
   const [reportTags, setReportTags] = useState<string[]>([]);
   const [granularity, setGranularity] = useState<string>('monthly');
   const [aggregatedBy, setAggregatedBy] = useState<string>('none');
-  const [filters, _setFilters] = useState<string>('');
   const [groups, _setGroups] = useState<string>('');
   const [monthRangeState, setMonthRangeState] = React.useState<MonthRange>({
     startMonth: startOfMonth(addMonths(new Date(), -2)),
@@ -57,7 +79,7 @@ export const ReportsComponent = () => {
   const fetchCostReportsCallback = useCallback(async () => {
     setSubmittingState(true);
     await infraWalletApi
-      .getCostReports(filters, groups, granularity, monthRangeState.startMonth, monthRangeState.endMonth)
+      .getCostReports('', groups, granularity, monthRangeState.startMonth, monthRangeState.endMonth)
       .then(reportsResponse => {
         if (reportsResponse.data && reportsResponse.data.length > 0) {
           setReports(reportsResponse.data);
@@ -69,18 +91,19 @@ export const ReportsComponent = () => {
       })
       .catch(e => alertApi.post({ message: `${e.message}`, severity: 'error' }));
     setSubmittingState(false);
-  }, [filters, groups, monthRangeState, granularity, infraWalletApi, alertApi]);
+  }, [groups, monthRangeState, granularity, infraWalletApi, alertApi]);
 
   useEffect(() => {
     if (reports.length !== 0) {
-      const arrgegatedReports = aggregateCostReports(reports, aggregatedBy);
+      const filteredReports = filterCostReports(reports, filters);
+      const arrgegatedReports = aggregateCostReports(filteredReports, aggregatedBy);
       const aggregatedAndMergedReports = mergeCostReports(arrgegatedReports, MERGE_THRESHOLD);
       const allTags = getAllReportTags(reports);
       setReportsAggregated(arrgegatedReports);
       setReportsAggregatedAndMerged(aggregatedAndMergedReports);
       setReportTags(allTags);
     }
-  }, [reports, aggregatedBy, granularity, monthRangeState]);
+  }, [filters, reports, aggregatedBy, granularity, monthRangeState]);
 
   useEffect(() => {
     fetchCostReportsCallback();
@@ -90,6 +113,7 @@ export const ReportsComponent = () => {
     <Page themeId="tool">
       <Header title="InfraWallet" />
       <Content>
+        {submittingState ? <Progress /> : null}
         <Grid container spacing={3}>
           {cloudProviderErrors.length > 0 && (
             <Grid item xs={12}>
@@ -106,7 +130,16 @@ export const ReportsComponent = () => {
             />
           </Grid>
           <Grid item xs={12}>
-            {submittingState ? <Progress /> : null}
+            <Accordion>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="filters-content" id="filters-header">
+                <Typography>
+                  Filters {checkIfFiltersActivated(filters) && <Chip size="small" label="active" color="primary" />}
+                </Typography>
+              </AccordionSummary>
+              <AccordionDetails>
+                <FiltersComponent reports={reports} filters={filters} filtersSetter={setFilters} />
+              </AccordionDetails>
+            </Accordion>
           </Grid>
           <Grid item xs={12} md={4} lg={3}>
             {reportsAggregatedAndMerged.length > 0 && (

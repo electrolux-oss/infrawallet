@@ -6,6 +6,10 @@ export type Report = {
   };
 };
 
+export type Filters = {
+  [key: string]: string[];
+};
+
 export type CloudProviderError = {
   provider: string; // AWS, GCP or Azure
   name: string; // the name defined in the configuration file
