@@ -1,7 +1,7 @@
 import { format, parse, subMonths } from 'date-fns';
 import { reduce } from 'lodash';
 import moment from 'moment';
-import { Report } from './types';
+import { Report, Filters } from './types';
 
 export const mergeCostReports = (reports: Report[], threshold: number): Report[] => {
   const totalCosts: { id: string; total: number }[] = [];
@@ -44,6 +44,20 @@ export const mergeCostReports = (reports: Report[], threshold: number): Report[]
   return Object.values(mergedReports);
 };
 
+export const filterCostReports = (reports: Report[], filters: Filters): Report[] => {
+  const filteredReports = reports.filter(report => {
+    let match = true;
+    Object.keys(filters).forEach(key => {
+      if (filters[key].length > 0 && !filters[key].includes(report[key] as string)) {
+        match = false;
+      }
+    });
+    return match;
+  });
+
+  return filteredReports;
+};
+
 export const aggregateCostReports = (reports: Report[], aggregatedBy?: string): Report[] => {
   const aggregatedReports: { [key: string]: Report } = reduce(
     reports,
@@ -82,6 +96,28 @@ export const aggregateCostReports = (reports: Report[], aggregatedBy?: string): 
     {} as { [key: string]: Report },
   );
   return Object.values(aggregatedReports);
+};
+
+export const getReportKeyAndValues = (reports: Report[]): { [key: string]: string[] } => {
+  const excludedKeys = ['id', 'reports'];
+  const keyValueSets: { [key: string]: Set<string> } = {};
+  reports.forEach(report => {
+    Object.keys(report).forEach(key => {
+      if (!excludedKeys.includes(key)) {
+        if (keyValueSets[key] === undefined) {
+          keyValueSets[key] = new Set<string>();
+        } else {
+          keyValueSets[key].add(report[key] as string);
+        }
+      }
+    });
+  });
+
+  const keyValues: { [key: string]: string[] } = {};
+  Object.keys(keyValueSets).forEach((key: string) => {
+    keyValues[key] = Array.from(keyValueSets[key]);
+  });
+  return keyValues;
 };
 
 export const getAllReportTags = (reports: Report[]): string[] => {
