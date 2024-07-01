@@ -48,7 +48,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({ reports, filters, 
           />
         </FormControl>
       ))}
-      <FormControl className={classes.formControl} style={{marginTop: 10}}>
+      <FormControl className={classes.formControl} style={{ marginTop: 10 }}>
         <Button variant="contained" color="primary" onClick={() => filtersSetter({})}>
           Clear filters
         </Button>
