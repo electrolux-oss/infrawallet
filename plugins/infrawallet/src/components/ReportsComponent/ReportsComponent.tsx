@@ -1,6 +1,6 @@
 import { Content, Header, Page, Progress } from '@backstage/core-components';
 import { alertApiRef, useApi } from '@backstage/core-plugin-api';
-import { Grid } from '@material-ui/core';
+import { Chip, Grid } from '@material-ui/core';
 import Accordion from '@material-ui/core/Accordion';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
@@ -43,6 +43,16 @@ const rearrangeData = (report: Report, periods: string[]): any[] => {
     }
   });
   return costs;
+};
+
+const checkIfFiltersActivated = (filters: Filters): boolean => {
+  let activated = false;
+  Object.keys(filters).forEach((key: string) => {
+    if (filters[key].length > 0) {
+      activated = true;
+    }
+  });
+  return activated;
 };
 
 export const ReportsComponent = () => {
@@ -122,7 +132,9 @@ export const ReportsComponent = () => {
           <Grid item xs={12}>
             <Accordion>
               <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="filters-content" id="filters-header">
-                <Typography>Filters</Typography>
+                <Typography>
+                  Filters {checkIfFiltersActivated(filters) && <Chip size="small" label="active" color="primary" />}
+                </Typography>
               </AccordionSummary>
               <AccordionDetails>
                 <FiltersComponent reports={reports} filters={filters} filtersSetter={setFilters} />
