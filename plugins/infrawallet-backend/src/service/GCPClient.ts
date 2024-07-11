@@ -68,7 +68,6 @@ export class GCPClient extends InfraWalletClient {
       // Run the query as a job
       const [job] = await client.createQueryJob({
         query: sql,
-        location: 'US',
       });
 
       // Wait for the query to finish
