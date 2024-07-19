@@ -52,7 +52,7 @@ export class GCPClient extends InfraWalletClient {
           project.name AS project,
           service.description AS service,
           FORMAT_TIMESTAMP('${periodFormat}', usage_start_time) AS period,
-          SUM(cost) AS total_cost
+          (SUM(CAST(cost AS NUMERIC)) + SUM(IFNULL((SELECT SUM(CAST(c.amount AS NUMERIC)) FROM UNNEST(credits) AS c), 0))) AS total_cost
         FROM
           \`${projectId}.${datasetId}.${tableId}\`
         WHERE
@@ -111,7 +111,7 @@ export class GCPClient extends InfraWalletClient {
           };
         }
 
-        acc[keyName].reports[period] = row.total_cost;
+        acc[keyName].reports[period] = parseFloat(row.total_cost);
 
         return acc;
       },
