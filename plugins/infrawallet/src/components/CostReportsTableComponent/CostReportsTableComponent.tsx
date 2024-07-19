@@ -38,6 +38,30 @@ function CustomToolbar() {
 export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ reports, aggregatedBy, periods }) => {
   const classes = useStyles();
   const customScale = humanFormat.Scale.create(['', 'K', 'M', 'B'], 1000);
+
+  const formatCostValue = (params: GridRenderCellParams, period: string): string => {
+    const value = params.value;
+    if (typeof value === 'number') {
+      const previousPeriod = period.length === 7 ? getPreviousMonth(params.field) : '';
+      const formattedValue = humanFormat(value, {
+        scale: customScale,
+        separator: '',
+        decimals: 2,
+      });
+      if (periods.includes(previousPeriod) && params.row.reports[previousPeriod] > 0) {
+        const diff = params.row.reports[params.field] - params.row.reports[previousPeriod];
+        const percentage = Math.round((diff / params.row.reports[previousPeriod]) * 100);
+        const mark = diff > 0 ? '+' : '';
+        // only display percentage change if it is larger than 1% or less than -1%
+        if (percentage >= 1 || percentage <= -1) {
+          return `$${formattedValue} (${mark}${percentage}%)`;
+        }
+      }
+      return `$${formattedValue}`;
+    }
+    return '-';
+  };
+
   const columns: GridColDef[] = [
     {
       field: aggregatedBy,
@@ -97,33 +121,12 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
       valueGetter: (_, row) => {
         return row.reports[period] ? row.reports[period] : null;
       },
-      valueFormatter: (value, row, column) => {
-        if (typeof value === 'number') {
-          const previousPeriod = period.length === 7 ? getPreviousMonth(column.field) : '';
-          const formattedValue = humanFormat(value, {
-            scale: customScale,
-            separator: '',
-            decimals: 2,
-          });
-          if (periods.includes(previousPeriod) && row.reports[previousPeriod] > 0) {
-            const diff = row.reports[column.field] - row.reports[previousPeriod];
-            const percentage = Math.round((diff / row.reports[previousPeriod]) * 100);
-            const mark = diff > 0 ? '+' : '';
-            // only display percentage change if it is larger than 1% or less than -1%
-            if (percentage >= 1 || percentage <= -1) {
-              return `$${formattedValue} (${mark}${percentage}%)`;
-            }
-          }
-          return `$${formattedValue}`;
-        }
-        return '-';
-      },
       renderCell: (params: GridRenderCellParams): React.ReactNode => {
+        const formattedValue = formatCostValue(params, period);
         let className = '';
-        const percentageIndex = params.formattedValue.indexOf('(');
-        const costStr =
-          percentageIndex === -1 ? params.formattedValue : params.formattedValue.substring(0, percentageIndex);
-        let percentageStr = percentageIndex === -1 ? '' : params.formattedValue.substring(percentageIndex);
+        const percentageIndex = formattedValue.indexOf('(');
+        const costStr = percentageIndex === -1 ? formattedValue : formattedValue.substring(0, percentageIndex);
+        let percentageStr = percentageIndex === -1 ? '' : formattedValue.substring(percentageIndex);
         if (percentageStr.includes('-')) {
           className = classes.decrease;
           percentageStr = percentageStr.replace('-', '▼');
@@ -157,18 +160,16 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
       });
       return total;
     },
-    valueFormatter: value => {
-      if (typeof value === 'number') {
-        return `$${humanFormat(value, {
+    renderCell: (params: GridRenderCellParams): React.ReactNode => {
+      let formattedValue = '-';
+      if (typeof params.value === 'number') {
+        formattedValue = `$${humanFormat(params.value, {
           scale: customScale,
           separator: '',
           decimals: 2,
         })}`;
       }
-      return '-';
-    },
-    renderCell: (params: GridRenderCellParams): React.ReactNode => {
-      return <Typography variant="body2">{params.formattedValue}</Typography>;
+      return <Typography variant="body2">{formattedValue}</Typography>;
     },
   });
 
