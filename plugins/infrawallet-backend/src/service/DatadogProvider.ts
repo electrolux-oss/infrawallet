@@ -29,7 +29,7 @@ export class DatadogProvider extends MetricProvider {
     const params: datadogApiV1.MetricsApiQueryMetricsRequest = {
       from: parseInt(query.startTime, 10) / 1000,
       to: parseInt(query.endTime, 10) / 1000,
-      query: `${query.query}.rollup(avg, ${query.granularity === 'daily' ? 86400 : 2592000})`, // rollup data points based on the granularity
+      query: query.query?.replaceAll('IW_INTERVAL', query.granularity === 'daily' ? '86400' : '2592000') as string,
     };
     return client.queryMetrics(params).then((data: datadogApiV1.MetricsQueryResponse) => {
       if (data.status === 'ok') {
