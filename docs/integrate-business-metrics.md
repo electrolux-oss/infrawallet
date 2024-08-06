@@ -65,7 +65,7 @@ backend:
 
 **Note:**
 
-Similar to Datadog, it is recommended to apply an [<aggregation>_over_time()](https://prometheus.io/docs/prometheus/latest/querying/functions/#aggregation_over_time) for each query considering the granularity. For instance:
+Similar to Datadog, it is recommended to apply an [aggregation_over_time()](https://prometheus.io/docs/prometheus/latest/querying/functions/#aggregation_over_time) for each query considering the granularity. For instance:
 
 ```
 max(max_over_time(active_user[IW_INTERVAL]))

@@ -130,12 +130,25 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
   const initChartCallback = useCallback(async () => {
     const strokeWidth = Array<number>(series.length).fill(0);
     const seriesResult = series.map(s => s);
+    // init a scale here as well, it seems that adding the predefined customScale as a dependency is buggy
+    const scale = humanFormat.Scale.create(['', 'K', 'M', 'B'], 1000);
     const yaxisResult: any[] = [
       {
         seriesName: series.map(s => s.name),
         decimalsInFloat: 2,
         title: {
           text: 'Costs in USD',
+        },
+        labels: {
+          formatter: (value: number) => {
+            if (typeof value !== 'number' || isNaN(value)) {
+              return '';
+            }
+            return `$${humanFormat(value, {
+              scale: scale,
+              separator: '',
+            })}`;
+          },
         },
       },
     ];
@@ -150,6 +163,17 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
           opposite: true,
           title: {
             text: metric.name,
+          },
+          labels: {
+            formatter: (value: number) => {
+              if (typeof value !== 'number' || isNaN(value)) {
+                return '';
+              }
+              return humanFormat(value, {
+                scale: scale,
+                separator: '',
+              });
+            },
           },
         });
       });
