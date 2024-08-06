@@ -1,5 +1,5 @@
 import { CacheService, DatabaseService } from '@backstage/backend-plugin-api';
-import { CategoryMapping, CostQuery, Report } from './types';
+import { CategoryMapping, CostQuery, Metric, MetricQuery, Report } from './types';
 
 export async function getCategoryMappings(
   database: DatabaseService,
@@ -72,6 +72,17 @@ export async function getReportsFromCache(
   return cachedCosts;
 }
 
+export async function getMetricsFromCache(
+  cache: CacheService,
+  provider: string,
+  configKey: string,
+  query: MetricQuery,
+): Promise<Metric[] | undefined> {
+  const cacheKey = [provider, configKey, query.name, query.granularity, query.startTime, query.endTime].join('_');
+  const cachedMetrics = (await cache.get(cacheKey)) as Metric[] | undefined;
+  return cachedMetrics;
+}
+
 export async function setReportsToCache(
   cache: CacheService,
   reports: Report[],
@@ -90,6 +101,20 @@ export async function setReportsToCache(
     query.endTime,
   ].join('_');
   await cache.set(cacheKey, reports, {
+    ttl: ttl ?? 60 * 60 * 2 * 1000,
+  }); // cache for 2 hours by default
+}
+
+export async function setMetricsToCache(
+  cache: CacheService,
+  metrics: Metric[],
+  provider: string,
+  configKey: string,
+  query: MetricQuery,
+  ttl?: number,
+) {
+  const cacheKey = [provider, configKey, query.name, query.granularity, query.startTime, query.endTime].join('_');
+  await cache.set(cacheKey, metrics, {
     ttl: ttl ?? 60 * 60 * 2 * 1000,
   }); // cache for 2 hours by default
 }

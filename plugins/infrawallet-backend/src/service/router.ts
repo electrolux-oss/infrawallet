@@ -4,8 +4,9 @@ import { Config } from '@backstage/config';
 import express from 'express';
 import Router from 'express-promise-router';
 import { InfraWalletClient } from './InfraWalletClient';
-import { PROVIDER_CLIENT_MAPPINGS } from './consts';
-import { CloudProviderError, Report } from './types';
+import { MetricProvider } from './MetricProvider';
+import { COST_CLIENT_MAPPINGS, METRIC_PROVIDER_MAPPINGS } from './consts';
+import { CloudProviderError, Metric, Report } from './types';
 
 export interface RouterOptions {
   logger: LoggerService;
@@ -54,8 +55,8 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
 
     const conf = config.getConfig('backend.infraWallet.integrations');
     conf.keys().forEach((provider: string) => {
-      if (provider in PROVIDER_CLIENT_MAPPINGS) {
-        const client: InfraWalletClient = PROVIDER_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
+      if (provider in COST_CLIENT_MAPPINGS) {
+        const client: InfraWalletClient = COST_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
         const fetchCloudCosts = (async () => {
           try {
             const clientResponse = await client.getCostReports({
@@ -81,6 +82,53 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
           }
         })();
         promises.push(fetchCloudCosts);
+      }
+    });
+
+    await Promise.all(promises);
+
+    if (errors.length > 0) {
+      response.status(207).json({ data: results, errors: errors, status: 207 });
+    } else {
+      response.json({ data: results, errors: errors, status: 200 });
+    }
+  });
+
+  router.get('/metrics', async (request, response) => {
+    const granularity = request.query.granularity as string;
+    const startTime = request.query.startTime as string;
+    const endTime = request.query.endTime as string;
+    const promises: Promise<void>[] = [];
+    const results: Metric[] = [];
+    const errors: CloudProviderError[] = [];
+
+    const conf = config.getConfig('backend.infraWallet.metricProviders');
+    conf.keys().forEach((provider: string) => {
+      if (provider in METRIC_PROVIDER_MAPPINGS) {
+        const client: MetricProvider = METRIC_PROVIDER_MAPPINGS[provider].create(config, cache, logger);
+        const fetchMetrics = (async () => {
+          try {
+            const metricResponse = await client.getMetrics({
+              granularity: granularity,
+              startTime: startTime,
+              endTime: endTime,
+            });
+            metricResponse.errors.forEach((e: CloudProviderError) => {
+              errors.push(e);
+            });
+            metricResponse.metrics.forEach((metric: Metric) => {
+              results.push(metric);
+            });
+          } catch (e) {
+            logger.error(e);
+            errors.push({
+              provider: client.constructor.name,
+              name: client.constructor.name,
+              error: e.message,
+            });
+          }
+        })();
+        promises.push(fetchMetrics);
       }
     });
 

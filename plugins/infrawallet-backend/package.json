@@ -44,6 +44,7 @@
     "@backstage/backend-plugin-api": "^0.6.18",
     "@backstage/config": "^1.2.0",
     "@backstage/types": "^1.1.1",
+    "@datadog/datadog-api-client": "^1.26.0",
     "@google-cloud/bigquery": "7.7.1",
     "@types/express": "*",
     "express": "^4.17.1",
