@@ -30,7 +30,7 @@ export class GrafanaCloudProvider extends MetricProvider {
           datasource: {
             uid: datasourceUid,
           },
-          expr: query.query,
+          expr: query.query?.replaceAll('IW_INTERVAL', query.granularity === 'daily' ? '1d' : '30d'),
           refId: 'A',
         },
       ],
