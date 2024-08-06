@@ -66,7 +66,7 @@ export const aggregateCostReports = (reports: Report[], aggregatedBy?: string): 
       if (aggregatedBy && aggregatedBy in report) {
         keyName = report[aggregatedBy] as string;
       } else if (aggregatedBy === 'none') {
-        keyName = 'Total cloud costs';
+        keyName = 'Total';
       }
 
       if (!accumulator[keyName]) {

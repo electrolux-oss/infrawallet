@@ -34,3 +34,25 @@ export type ClientResponse = {
   reports: Report[];
   errors: CloudProviderError[];
 };
+
+export type MetricQuery = {
+  name?: string;
+  query?: string;
+  startTime: string;
+  endTime: string;
+  granularity: string;
+};
+
+export type Metric = {
+  id: string;
+  provider: string;
+  name: string;
+  reports: {
+    [period: string]: number;
+  };
+};
+
+export type MetricResponse = {
+  metrics: Metric[];
+  errors: CloudProviderError[];
+};

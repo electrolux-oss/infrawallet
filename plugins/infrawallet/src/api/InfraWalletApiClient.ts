@@ -1,7 +1,7 @@
 import { ConfigApi, IdentityApi } from '@backstage/core-plugin-api';
 import fetch from 'node-fetch';
 import { InfraWalletApi } from './InfraWalletApi';
-import { CostReportsResponse } from './types';
+import { CostReportsResponse, MetricsResponse } from './types';
 
 /** @public */
 export class InfraWalletApiClient implements InfraWalletApi {
@@ -37,6 +37,11 @@ export class InfraWalletApiClient implements InfraWalletApi {
     endTime: Date,
   ): Promise<CostReportsResponse> {
     const url = `api/infrawallet/reports?&filters=${filters}&groups=${groups}&granularity=${granularity}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
+    return await this.get(url);
+  }
+
+  async getMetrics(granularity: string, startTime: Date, endTime: Date): Promise<MetricsResponse> {
+    const url = `api/infrawallet/metrics?&granularity=${granularity}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
     return await this.get(url);
   }
 }

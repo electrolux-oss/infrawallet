@@ -1,6 +1,6 @@
 import { createApiRef } from '@backstage/core-plugin-api';
-import { CostReportsResponse } from './types';
 import { Response } from 'node-fetch';
+import { CostReportsResponse, MetricsResponse } from './types';
 
 /** @public */
 export const infraWalletApiRef = createApiRef<InfraWalletApi>({
@@ -17,4 +17,5 @@ export interface InfraWalletApi {
     startTime: Date,
     endTime: Date,
   ): Promise<CostReportsResponse>;
+  getMetrics(granularity: string, startTime: Date, endTime: Date): Promise<MetricsResponse>;
 }
