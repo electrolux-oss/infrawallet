@@ -18,6 +18,19 @@
 
 ## Getting started
 
+### Default Settings for Frontend
+
+Site admins can configure the default view for InfraWallet, including the default group by dimension, and the default
+query period. Add the following configurations to your `app-config.yaml` file if the default view needs to be changed.
+
+```yaml
+# note that infraWallet exists at the root level, it is not the same one for backend configurations
+infraWallet:
+  settings:
+    defaultGroupBy: none # none by default, or provider, category, service, tag:<tag_key>
+    defaultShowLastXMonths: 3 # 3 by default, or other numbers, we recommend it less than 12
+```
+
 ### Define Cloud Accounts in app-config.yaml
 
 The configuration schema of InfraWallet is defined in the [plugins/infrawallet-backend/config.d.ts](plugins/infrawallet-backend/config.d.ts) file. Users need to configure their cloud accounts in the `app-config.yaml` in the root folder.
