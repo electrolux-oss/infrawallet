@@ -1,5 +1,5 @@
 import { Content, Header, Page, Progress } from '@backstage/core-components';
-import { alertApiRef, useApi } from '@backstage/core-plugin-api';
+import { alertApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { Chip, Grid } from '@material-ui/core';
 import Accordion from '@material-ui/core/Accordion';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
@@ -56,6 +56,11 @@ const checkIfFiltersActivated = (filters: Filters): boolean => {
 };
 
 export const ReportsComponent = () => {
+  const configApi = useApi(configApiRef);
+
+  const defaultGroupBy = configApi.getOptionalString('infraWallet.settings.defaultGroupBy') ?? 'none';
+  const defaultShowLastXMonths = configApi.getOptionalNumber('infraWallet.settings.defaultShowLastXMonths') ?? 3;
+
   const MERGE_THRESHOLD = 8;
   const [submittingState, setSubmittingState] = useState<Boolean>(false);
   const [reports, setReports] = useState<Report[]>([]);
@@ -65,10 +70,10 @@ export const ReportsComponent = () => {
   const [reportsAggregatedAndMerged, setReportsAggregatedAndMerged] = useState<Report[]>([]);
   const [reportTags, setReportTags] = useState<string[]>([]);
   const [granularity, setGranularity] = useState<string>('monthly');
-  const [aggregatedBy, setAggregatedBy] = useState<string>('none');
+  const [aggregatedBy, setAggregatedBy] = useState<string>(defaultGroupBy);
   const [groups, _setGroups] = useState<string>('');
   const [monthRangeState, setMonthRangeState] = React.useState<MonthRange>({
-    startMonth: startOfMonth(addMonths(new Date(), -2)),
+    startMonth: startOfMonth(addMonths(new Date(), defaultShowLastXMonths * -1 + 1)),
     endMonth: endOfMonth(new Date()),
   });
   const [periods, setPeriods] = useState<string[]>([]);
