@@ -3,10 +3,16 @@ import { CacheService, DatabaseService, LoggerService, resolvePackagePath } from
 import { Config } from '@backstage/config';
 import express from 'express';
 import Router from 'express-promise-router';
+import {
+  deleteWalletMetricSetting,
+  getWallet,
+  getWalletMetricSettings,
+  updateOrInsertWalletMetricSetting,
+} from '../controllers/MetricSettingController';
 import { InfraWalletClient } from './InfraWalletClient';
 import { MetricProvider } from './MetricProvider';
 import { COST_CLIENT_MAPPINGS, METRIC_PROVIDER_MAPPINGS } from './consts';
-import { CloudProviderError, Metric, Report } from './types';
+import { CloudProviderError, Metric, MetricSetting, Report } from './types';
 
 export interface RouterOptions {
   logger: LoggerService;
@@ -94,7 +100,8 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     }
   });
 
-  router.get('/metrics', async (request, response) => {
+  router.get('/:walletName/metrics', async (request, response) => {
+    const walletName = request.params.walletName;
     const granularity = request.query.granularity as string;
     const startTime = request.query.startTime as string;
     const endTime = request.query.endTime as string;
@@ -105,10 +112,11 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     const conf = config.getConfig('backend.infraWallet.metricProviders');
     conf.keys().forEach((provider: string) => {
       if (provider in METRIC_PROVIDER_MAPPINGS) {
-        const client: MetricProvider = METRIC_PROVIDER_MAPPINGS[provider].create(config, cache, logger);
+        const client: MetricProvider = METRIC_PROVIDER_MAPPINGS[provider].create(config, database, cache, logger);
         const fetchMetrics = (async () => {
           try {
             const metricResponse = await client.getMetrics({
+              walletName: walletName,
               granularity: granularity,
               startTime: startTime,
               endTime: endTime,
@@ -139,6 +147,48 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     } else {
       response.json({ data: results, errors: errors, status: 200 });
     }
+  });
+
+  router.get('/:walletName', async (request, response) => {
+    const walletName = request.params.walletName;
+    const wallet = await getWallet(database, walletName);
+    if (wallet === undefined) {
+      response.status(404).json({ error: 'Wallet not found', status: 404 });
+      return;
+    }
+
+    response.json({ data: wallet, status: 200 });
+  });
+
+  router.get('/:walletName/metrics_setting', async (request, response) => {
+    const walletName = request.params.walletName;
+    const metricSettings = await getWalletMetricSettings(database, walletName);
+    response.json({ data: metricSettings, status: 200 });
+  });
+
+  router.get('/metric/metric_configs', async (_request, response) => {
+    const conf = config.getConfig('backend.infraWallet.metricProviders');
+    const configNames: { metric_provider: string; config_name: string }[] = [];
+    conf.keys().forEach((provider: string) => {
+      const configs = conf.getOptionalConfigArray(provider);
+      if (configs) {
+        configs.forEach(c => {
+          configNames.push({ metric_provider: provider, config_name: c.getString('name') });
+        });
+      }
+    });
+
+    response.json({ data: configNames, status: 200 });
+  });
+
+  router.put('/:walletName/metrics_setting', async (request, response) => {
+    const updatedMetricSetting = await updateOrInsertWalletMetricSetting(database, request.body as MetricSetting);
+    response.json({ updated: updatedMetricSetting, status: 200 });
+  });
+
+  router.delete('/:walletName/metrics_setting', async (request, response) => {
+    const deletedMetricSetting = await deleteWalletMetricSetting(database, request.body as MetricSetting);
+    response.json({ deleted: deletedMetricSetting, status: 200 });
   });
 
   router.use(errorHandler());

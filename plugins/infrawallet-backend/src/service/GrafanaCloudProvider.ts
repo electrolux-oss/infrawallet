@@ -1,4 +1,4 @@
-import { CacheService, LoggerService } from '@backstage/backend-plugin-api';
+import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import moment from 'moment';
 import fetch from 'node-fetch';
@@ -6,8 +6,8 @@ import { MetricProvider } from './MetricProvider';
 import { Metric, MetricQuery } from './types';
 
 export class GrafanaCloudProvider extends MetricProvider {
-  static create(config: Config, cache: CacheService, logger: LoggerService) {
-    return new GrafanaCloudProvider('GrafanaCloud', config, cache, logger);
+  static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
+    return new GrafanaCloudProvider('GrafanaCloud', config, database, cache, logger);
   }
 
   async initProviderClient(_config: Config): Promise<any> {

@@ -8,6 +8,7 @@ import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { addMonths, endOfMonth, startOfMonth } from 'date-fns';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import {
   aggregateCostReports,
@@ -16,7 +17,7 @@ import {
   getPeriodStrings,
   mergeCostReports,
 } from '../../api/functions';
-import { CloudProviderError, Filters, Report, Metric } from '../../api/types';
+import { CloudProviderError, Filters, Metric, Report } from '../../api/types';
 import { ColumnsChartComponent } from '../ColumnsChartComponent';
 import { CostReportsTableComponent } from '../CostReportsTableComponent';
 import { ErrorsAlertComponent } from '../ErrorsAlertComponent';
@@ -57,6 +58,7 @@ const checkIfFiltersActivated = (filters: Filters): boolean => {
 
 export const ReportsComponent = () => {
   const configApi = useApi(configApiRef);
+  const params = useParams();
 
   const defaultGroupBy = configApi.getOptionalString('infraWallet.settings.defaultGroupBy') ?? 'none';
   const defaultShowLastXMonths = configApi.getOptionalNumber('infraWallet.settings.defaultShowLastXMonths') ?? 3;
@@ -101,7 +103,7 @@ export const ReportsComponent = () => {
 
   const fetchMetricsCallback = useCallback(async () => {
     await infraWalletApi
-      .getMetrics(granularity, monthRangeState.startMonth, monthRangeState.endMonth)
+      .getMetrics(params.name ?? 'default', granularity, monthRangeState.startMonth, monthRangeState.endMonth)
       .then(metricsResponse => {
         if (metricsResponse.data && metricsResponse.data.length > 0) {
           setMetrics(metricsResponse.data);
@@ -111,7 +113,7 @@ export const ReportsComponent = () => {
         }
       })
       .catch(e => alertApi.post({ message: `${e.message}`, severity: 'error' }));
-  }, [monthRangeState, granularity, infraWalletApi, alertApi]);
+  }, [params.name, monthRangeState, granularity, infraWalletApi, alertApi]);
 
   useEffect(() => {
     if (reports.length !== 0) {

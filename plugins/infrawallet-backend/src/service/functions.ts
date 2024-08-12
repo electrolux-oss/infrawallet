@@ -78,7 +78,15 @@ export async function getMetricsFromCache(
   configKey: string,
   query: MetricQuery,
 ): Promise<Metric[] | undefined> {
-  const cacheKey = [provider, configKey, query.name, query.granularity, query.startTime, query.endTime].join('_');
+  const cacheKey = [
+    provider,
+    configKey,
+    query.name,
+    query.query,
+    query.granularity,
+    query.startTime,
+    query.endTime,
+  ].join('_');
   const cachedMetrics = (await cache.get(cacheKey)) as Metric[] | undefined;
   return cachedMetrics;
 }
@@ -113,8 +121,17 @@ export async function setMetricsToCache(
   query: MetricQuery,
   ttl?: number,
 ) {
-  const cacheKey = [provider, configKey, query.name, query.granularity, query.startTime, query.endTime].join('_');
-  await cache.set(cacheKey, metrics, {
+  const cacheKey = [
+    provider,
+    configKey,
+    query.name,
+    query.query,
+    query.granularity,
+    query.startTime,
+    query.endTime,
+  ].join('_');
+  const crypto = require('crypto');
+  await cache.set(crypto.createHash('md5').update(cacheKey).digest('hex'), metrics, {
     ttl: ttl ?? 60 * 60 * 2 * 1000,
   }); // cache for 2 hours by default
 }

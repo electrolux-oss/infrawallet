@@ -1,12 +1,13 @@
-import { CacheService, LoggerService } from '@backstage/backend-plugin-api';
+import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { getMetricsFromCache, setMetricsToCache } from './functions';
-import { CloudProviderError, Metric, MetricQuery, MetricResponse } from './types';
+import { CloudProviderError, Metric, MetricQuery, MetricSetting, MetricResponse } from './types';
 
 export abstract class MetricProvider {
   constructor(
     protected readonly providerName: string,
     protected readonly config: Config,
+    protected readonly database: DatabaseService,
     protected readonly cache: CacheService,
     protected readonly logger: LoggerService,
   ) {}
@@ -36,13 +37,24 @@ export abstract class MetricProvider {
     for (const c of conf) {
       const configName = c.getString('name');
       const client = await this.initProviderClient(c);
-      const metrics = c.getOptionalConfigArray('metrics');
-      for (const metric of metrics || []) {
+      const dbClient = await this.database.getClient();
+
+      const metricSettings = await dbClient
+        .where({
+          'wallets.name': query.walletName,
+          'business_metrics.metric_provider': this.providerName.toLowerCase(),
+          'business_metrics.config_name': configName,
+        })
+        .select('business_metrics.*')
+        .from<MetricSetting>('business_metrics')
+        .join('wallets', 'business_metrics.wallet_id', '=', 'wallets.id');
+
+      for (const metric of metricSettings || []) {
         const promise = (async () => {
           try {
             const fullQuery: MetricQuery = {
-              name: metric.getString('metricName'),
-              query: metric.getString('query'),
+              name: metric.metric_name,
+              query: metric.query,
               ...query,
             };
 

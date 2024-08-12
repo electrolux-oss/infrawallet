@@ -32,8 +32,45 @@ export type Metric = {
   };
 };
 
+export type MetricConfig = {
+  metric_provider: string;
+  config_name: string;
+};
+
+export type MetricConfigsResponse = {
+  data?: MetricConfig[];
+  status: number;
+};
+
 export type MetricsResponse = {
   data?: Metric[];
   errors?: CloudProviderError[];
+  status: number;
+};
+
+export type MetricSetting = {
+  id: string;
+  wallet_id: string;
+  metric_provider: string;
+  config_name: string;
+  metric_name: string;
+  description?: string;
+  query: string;
+};
+
+export type MetricsSettingResponse = {
+  data?: MetricSetting[];
+  status: number;
+};
+
+export type Wallet = {
+  id: string;
+  name: string;
+  currenty: string;
+  description?: string;
+};
+
+export type GetWalletResponse = {
+  data?: Wallet;
   status: number;
 };
