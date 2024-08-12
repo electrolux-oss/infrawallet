@@ -1,1 +1,1 @@
-yarn lint-staged && yarn tsc && yarn prettier:check
+yarn lint:type-deps && yarn lint-staged && yarn tsc && yarn prettier:check
