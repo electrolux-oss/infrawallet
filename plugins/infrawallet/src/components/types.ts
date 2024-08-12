@@ -54,3 +54,15 @@ export type CostReportsTableComponentProps = {
   aggregatedBy: string;
   periods: string[];
 };
+
+export type Metric = {
+  metricProvider: 'datadog' | 'grafanacloud';
+  metricName: string;
+  description?: string;
+  query: string;
+};
+
+export type MetricCardProps = {
+  metric: Metric;
+  callback: Function;
+};

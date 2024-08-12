@@ -55,13 +55,6 @@ export interface Config {
              */
             applicationKey: string;
             ddSite: string;
-            metrics?: [
-              {
-                metricName: string;
-                description?: string;
-                query: string;
-              },
-            ];
           },
         ];
         grafanaCloud?: [
@@ -73,13 +66,6 @@ export interface Config {
              * @visibility secret
              */
             token: string;
-            metrics?: [
-              {
-                metricName: string;
-                description?: string;
-                query: string;
-              },
-            ];
           },
         ];
       };

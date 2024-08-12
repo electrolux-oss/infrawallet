@@ -36,6 +36,7 @@ export type ClientResponse = {
 };
 
 export type MetricQuery = {
+  walletName: string;
   name?: string;
   query?: string;
   startTime: string;
@@ -55,4 +56,21 @@ export type Metric = {
 export type MetricResponse = {
   metrics: Metric[];
   errors: CloudProviderError[];
+};
+
+export type MetricSetting = {
+  id: string;
+  wallet_id: string;
+  metric_provider: string;
+  config_name: string;
+  metric_name: string;
+  description?: string;
+  query: string;
+};
+
+export type Wallet = {
+  id: string;
+  name: string;
+  currenty: string;
+  description?: string;
 };

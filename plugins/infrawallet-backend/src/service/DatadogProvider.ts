@@ -1,4 +1,4 @@
-import { CacheService, LoggerService } from '@backstage/backend-plugin-api';
+import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { v1 as datadogApiV1, client as datadogClient } from '@datadog/datadog-api-client';
 import moment from 'moment';
@@ -6,8 +6,8 @@ import { MetricProvider } from './MetricProvider';
 import { Metric, MetricQuery } from './types';
 
 export class DatadogProvider extends MetricProvider {
-  static create(config: Config, cache: CacheService, logger: LoggerService) {
-    return new DatadogProvider('Datadog', config, cache, logger);
+  static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
+    return new DatadogProvider('Datadog', config, database, cache, logger);
   }
 
   async initProviderClient(config: Config): Promise<any> {

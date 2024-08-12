@@ -86,7 +86,7 @@ export const aggregateCostReports = (reports: Report[], aggregatedBy?: string): 
 
       Object.keys(report.reports).forEach(key => {
         if (accumulator[keyName].reports[key]) {
-          accumulator[keyName].reports[key] += report.reports[key] * 0.07;
+          accumulator[keyName].reports[key] += report.reports[key];
         } else {
           accumulator[keyName].reports[key] = report.reports[key];
         }
