@@ -10,7 +10,6 @@ export const PieChartComponent: FC<PieChartComponentProps> = ({ categories, seri
   const useStyles = makeStyles({
     fixedHeightPaper: {
       paddingTop: '10px',
-      overflow: 'hidden',
       height: height ? height : 300,
     },
   });

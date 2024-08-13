@@ -47,7 +47,7 @@ export class DatadogProvider extends MetricProvider {
       const tagSet = series.tagSet;
 
       const metric: Metric = {
-        id: `${metricName} (${tagSet.length === 0 ? '*' : tagSet})`,
+        id: `${metricName} ${tagSet.length === 0 ? '' : tagSet}`,
         provider: this.providerName,
         name: metricName,
         reports: {},
