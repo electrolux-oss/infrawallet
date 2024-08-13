@@ -29,7 +29,6 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
     fixedHeightPaper: {
       padding: '16px',
       display: 'flex',
-      overflow: 'hidden',
       flexDirection: 'column',
       height: height ? height : 300,
     },
@@ -114,6 +113,10 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
                 })}`;
               },
             },
+            fixed: {
+              enabled: true,
+              position: 'topRight',
+            },
           },
           legend: {
             showForSingleSeries: true,
@@ -155,7 +158,7 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
 
     if (metrics && showMetrics) {
       metrics.forEach(metric => {
-        strokeWidth.push(5);
+        strokeWidth.push(3);
         seriesResult.push(metric);
         yaxisResult.push({
           seriesName: [metric.name],
