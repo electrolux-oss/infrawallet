@@ -1,7 +1,14 @@
 import { ConfigApi, IdentityApi } from '@backstage/core-plugin-api';
 import fetch from 'node-fetch';
 import { InfraWalletApi } from './InfraWalletApi';
-import { CostReportsResponse } from './types';
+import {
+  CostReportsResponse,
+  GetWalletResponse,
+  MetricConfigsResponse,
+  MetricSetting,
+  MetricsResponse,
+  MetricsSettingResponse,
+} from './types';
 
 /** @public */
 export class InfraWalletApiClient implements InfraWalletApi {
@@ -13,16 +20,29 @@ export class InfraWalletApiClient implements InfraWalletApi {
     this.backendUrl = options.configApi.getString('backend.baseUrl');
   }
 
-  async get(path: string): Promise<any> {
+  async request(path: string, method?: string, payload?: Record<string, string | undefined>) {
     const url = `${this.backendUrl}/${path}`;
     const { token: idToken } = await this.identityApi.getCredentials();
-    const response = await fetch(url, {
-      headers: idToken ? { Authorization: `Bearer ${idToken}` } : {},
-    });
+    const headers: Record<string, string> = idToken ? { Authorization: `Bearer ${idToken}` } : {};
+
+    if (method !== undefined && method !== 'GET') {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    const request: any = {
+      headers: headers,
+      method: method ?? 'GET',
+    };
+
+    if (payload) {
+      request.body = JSON.stringify(payload);
+    }
+
+    const response = await fetch(url, request);
 
     if (!response.ok) {
-      const payload = await response.text();
-      const message = `Request failed with ${response.status} ${response.statusText}, ${payload}`;
+      const res = await response.text();
+      const message = `Request failed with ${response.status} ${response.statusText}, ${res}`;
       throw new Error(message);
     }
 
@@ -37,6 +57,41 @@ export class InfraWalletApiClient implements InfraWalletApi {
     endTime: Date,
   ): Promise<CostReportsResponse> {
     const url = `api/infrawallet/reports?&filters=${filters}&groups=${groups}&granularity=${granularity}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
-    return await this.get(url);
+    return await this.request(url);
+  }
+
+  async getWalletByName(walletName: string): Promise<GetWalletResponse> {
+    const url = `api/infrawallet/${walletName}`;
+    return await this.request(url);
+  }
+
+  async getMetrics(walletName: string, granularity: string, startTime: Date, endTime: Date): Promise<MetricsResponse> {
+    const url = `api/infrawallet/${walletName}/metrics?&granularity=${granularity}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
+    return await this.request(url);
+  }
+
+  async getMetricConfigs(): Promise<MetricConfigsResponse> {
+    const url = 'api/infrawallet/metric/metric_configs';
+    return await this.request(url);
+  }
+
+  async getWalletMetricsSetting(walletName: string): Promise<MetricsSettingResponse> {
+    const url = `api/infrawallet/${walletName}/metrics_setting`;
+    return await this.request(url);
+  }
+  async updateWalletMetricSetting(
+    walletName: string,
+    metricSetting: MetricSetting,
+  ): Promise<{ updated: boolean; status: number }> {
+    const url = `api/infrawallet/${walletName}/metrics_setting`;
+    return await this.request(url, 'PUT', metricSetting);
+  }
+
+  async deleteWalletMetricSetting(
+    walletName: string,
+    metricSetting: MetricSetting,
+  ): Promise<{ deleted: boolean; status: number }> {
+    const url = `api/infrawallet/${walletName}/metrics_setting`;
+    return await this.request(url, 'DELETE', metricSetting);
   }
 }
