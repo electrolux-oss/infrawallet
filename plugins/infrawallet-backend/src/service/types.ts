@@ -34,3 +34,43 @@ export type ClientResponse = {
   reports: Report[];
   errors: CloudProviderError[];
 };
+
+export type MetricQuery = {
+  walletName: string;
+  name?: string;
+  query?: string;
+  startTime: string;
+  endTime: string;
+  granularity: string;
+};
+
+export type Metric = {
+  id: string;
+  provider: string;
+  name: string;
+  reports: {
+    [period: string]: number;
+  };
+};
+
+export type MetricResponse = {
+  metrics: Metric[];
+  errors: CloudProviderError[];
+};
+
+export type MetricSetting = {
+  id: string;
+  wallet_id: string;
+  metric_provider: string;
+  config_name: string;
+  metric_name: string;
+  description?: string;
+  query: string;
+};
+
+export type Wallet = {
+  id: string;
+  name: string;
+  currenty: string;
+  description?: string;
+};

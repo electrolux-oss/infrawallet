@@ -8,6 +8,7 @@ import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import { addMonths, endOfMonth, startOfMonth } from 'date-fns';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import {
   aggregateCostReports,
@@ -16,7 +17,7 @@ import {
   getPeriodStrings,
   mergeCostReports,
 } from '../../api/functions';
-import { CloudProviderError, Filters, Report } from '../../api/types';
+import { CloudProviderError, Filters, Metric, Report } from '../../api/types';
 import { ColumnsChartComponent } from '../ColumnsChartComponent';
 import { CostReportsTableComponent } from '../CostReportsTableComponent';
 import { ErrorsAlertComponent } from '../ErrorsAlertComponent';
@@ -57,6 +58,7 @@ const checkIfFiltersActivated = (filters: Filters): boolean => {
 
 export const ReportsComponent = () => {
   const configApi = useApi(configApiRef);
+  const params = useParams();
 
   const defaultGroupBy = configApi.getOptionalString('infraWallet.settings.defaultGroupBy') ?? 'none';
   const defaultShowLastXMonths = configApi.getOptionalNumber('infraWallet.settings.defaultShowLastXMonths') ?? 3;
@@ -64,6 +66,7 @@ export const ReportsComponent = () => {
   const MERGE_THRESHOLD = 8;
   const [submittingState, setSubmittingState] = useState<Boolean>(false);
   const [reports, setReports] = useState<Report[]>([]);
+  const [metrics, setMetrics] = useState<Metric[]>([]);
   const [filters, setFilters] = useState<Filters>({});
   const [cloudProviderErrors, setCloudProviderErrors] = useState<CloudProviderError[]>([]);
   const [reportsAggregated, setReportsAggregated] = useState<Report[]>([]);
@@ -98,6 +101,20 @@ export const ReportsComponent = () => {
     setSubmittingState(false);
   }, [groups, monthRangeState, granularity, infraWalletApi, alertApi]);
 
+  const fetchMetricsCallback = useCallback(async () => {
+    await infraWalletApi
+      .getMetrics(params.name ?? 'default', granularity, monthRangeState.startMonth, monthRangeState.endMonth)
+      .then(metricsResponse => {
+        if (metricsResponse.data && metricsResponse.data.length > 0) {
+          setMetrics(metricsResponse.data);
+        }
+        if (metricsResponse.status === 207 && metricsResponse.errors) {
+          setCloudProviderErrors(metricsResponse.errors);
+        }
+      })
+      .catch(e => alertApi.post({ message: `${e.message}`, severity: 'error' }));
+  }, [params.name, monthRangeState, granularity, infraWalletApi, alertApi]);
+
   useEffect(() => {
     if (reports.length !== 0) {
       const filteredReports = filterCostReports(reports, filters);
@@ -112,7 +129,8 @@ export const ReportsComponent = () => {
 
   useEffect(() => {
     fetchCostReportsCallback();
-  }, [fetchCostReportsCallback]);
+    fetchMetricsCallback();
+  }, [fetchCostReportsCallback, fetchMetricsCallback]);
 
   return (
     <Page themeId="tool">
@@ -162,6 +180,12 @@ export const ReportsComponent = () => {
                 categories={periods}
                 series={reportsAggregatedAndMerged.map((item: any) => ({
                   name: item.id,
+                  type: 'column',
+                  data: rearrangeData(item, periods),
+                }))}
+                metrics={metrics.map((item: any) => ({
+                  name: item.id,
+                  type: 'line',
                   data: rearrangeData(item, periods),
                 }))}
                 height={350}

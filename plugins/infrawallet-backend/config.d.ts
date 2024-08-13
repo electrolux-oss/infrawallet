@@ -42,6 +42,33 @@ export interface Config {
           },
         ];
       };
+      metricProviders?: {
+        datadog?: [
+          {
+            name: string;
+            /**
+             * @visibility secret
+             */
+            apiKey: string;
+            /**
+             * @visibility secret
+             */
+            applicationKey: string;
+            ddSite: string;
+          },
+        ];
+        grafanaCloud?: [
+          {
+            name: string;
+            url: string;
+            datasourceUid: string;
+            /**
+             * @visibility secret
+             */
+            token: string;
+          },
+        ];
+      };
     };
   };
 }
