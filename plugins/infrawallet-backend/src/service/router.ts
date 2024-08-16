@@ -182,11 +182,25 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
   });
 
   router.put('/:walletName/metrics_setting', async (request, response) => {
+    const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
+
+    if (readOnly) {
+      response.status(403).json({ error: 'API not enabled in read-only mode', status: 403 });
+      return;
+    }
+
     const updatedMetricSetting = await updateOrInsertWalletMetricSetting(database, request.body as MetricSetting);
     response.json({ updated: updatedMetricSetting, status: 200 });
   });
 
   router.delete('/:walletName/metrics_setting', async (request, response) => {
+    const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
+
+    if (readOnly) {
+      response.status(403).json({ error: 'API not enabled in read-only mode', status: 403 });
+      return;
+    }
+
     const deletedMetricSetting = await deleteWalletMetricSetting(database, request.body as MetricSetting);
     response.json({ deleted: deletedMetricSetting, status: 200 });
   });
