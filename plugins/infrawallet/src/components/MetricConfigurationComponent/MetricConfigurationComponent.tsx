@@ -1,4 +1,4 @@
-import { alertApiRef, useApi } from '@backstage/core-plugin-api';
+import { alertApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import AddIcon from '@material-ui/icons/Add';
 import CancelIcon from '@material-ui/icons/Close';
 import DeleteIcon from '@material-ui/icons/DeleteOutlined';
@@ -28,11 +28,14 @@ import {
 } from '@mui/x-data-grid';
 
 export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }) => {
+  const configApi = useApi(configApiRef);
   const alertApi = useApi(alertApiRef);
   const infraWalletApi = useApi(infraWalletApiRef);
   const [rows, setRows] = useState<GridRowsProp>([]);
   const [metricConfigs, setMetricConfigs] = useState<MetricConfig[]>();
   const [rowModesModel, setRowModesModel] = useState<GridRowModesModel>({});
+
+  const readOnly = configApi.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
 
   function EditToolbar() {
     const handleClick = () => {
@@ -136,7 +139,7 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
       field: 'metric_provider',
       headerName: 'Provider',
       width: 220,
-      editable: true,
+      editable: !readOnly,
       type: 'singleSelect',
       valueOptions: () => {
         const options: ValueOptions[] = [];
@@ -155,7 +158,7 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
       field: 'config_name',
       headerName: 'ConfigName',
       width: 180,
-      editable: true,
+      editable: !readOnly,
       type: 'singleSelect',
       valueOptions: params => {
         const options: ValueOptions[] = [];
@@ -173,21 +176,24 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
       field: 'metric_name',
       headerName: 'MetricName',
       width: 220,
-      editable: true,
+      editable: !readOnly,
     },
     {
       field: 'description',
       headerName: 'Description',
       width: 220,
-      editable: true,
+      editable: !readOnly,
     },
     {
       field: 'query',
       headerName: 'Query',
       flex: 1,
-      editable: true,
+      editable: !readOnly,
     },
-    {
+  ];
+
+  if (!readOnly) {
+    columns.push({
       field: 'actions',
       type: 'actions',
       headerName: 'Actions',
@@ -227,8 +233,8 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
           <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={handleDeleteClick(row)} color="inherit" />,
         ];
       },
-    },
-  ];
+    });
+  }
 
   const getWalletMetricSettings = useCallback(async () => {
     if (wallet) {
@@ -281,7 +287,7 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
         onRowEditStop={handleRowEditStop}
         processRowUpdate={processRowUpdate}
         slots={{
-          toolbar: EditToolbar as GridSlots['toolbar'],
+          toolbar: readOnly ? null : (EditToolbar as GridSlots['toolbar']),
         }}
       />
     </Box>
