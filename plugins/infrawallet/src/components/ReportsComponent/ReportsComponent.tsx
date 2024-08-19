@@ -26,6 +26,11 @@ import { PieChartComponent } from '../PieChartComponent';
 import { TopbarComponent } from '../TopbarComponent';
 import { MonthRange } from '../types';
 
+export interface ReportsComponentProps {
+  title?: string;
+  subTitle?: string;
+};
+
 const getTotalCost = (report: Report): number => {
   let total = 0;
   Object.keys(report.reports).forEach((s: string) => {
@@ -56,7 +61,8 @@ const checkIfFiltersActivated = (filters: Filters): boolean => {
   return activated;
 };
 
-export const ReportsComponent = () => {
+export const ReportsComponent = (props: ReportsComponentProps) => {
+  const { title, subTitle } = props;
   const configApi = useApi(configApiRef);
   const params = useParams();
 
@@ -134,7 +140,10 @@ export const ReportsComponent = () => {
 
   return (
     <Page themeId="tool">
-      <Header title="InfraWallet" />
+      <Header
+        title={title ?? 'InfraWallet'}
+        subtitle={subTitle ?? ''}
+      />
       <Content>
         {submittingState ? <Progress /> : null}
         <Grid container spacing={3}>

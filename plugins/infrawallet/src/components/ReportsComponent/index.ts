@@ -1,1 +1,1 @@
-export { ReportsComponent } from './ReportsComponent';
+export * from './ReportsComponent';

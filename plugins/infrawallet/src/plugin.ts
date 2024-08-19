@@ -6,7 +6,7 @@ import {
   configApiRef,
 } from '@backstage/core-plugin-api';
 
-import { rootRouteRef } from './routes';
+import { rootRouteRef, settingsRouteRef } from './routes';
 import { infraWalletApiRef } from './api/InfraWalletApi';
 import { InfraWalletApiClient } from './api/InfraWalletApiClient';
 
@@ -14,6 +14,7 @@ export const infraWalletPlugin = createPlugin({
   id: 'infrawallet',
   routes: {
     root: rootRouteRef,
+    settings: settingsRouteRef
   },
   apis: [
     createApiFactory({
@@ -27,7 +28,7 @@ export const infraWalletPlugin = createPlugin({
 export const InfraWalletPage = infraWalletPlugin.provide(
   createRoutableExtension({
     name: 'InfraWalletPage',
-    component: () => import('./routes').then(m => m.RootRoute),
+    component: () => import('./components/Router').then(m => m.Router),
     mountPoint: rootRouteRef,
   }),
 );
