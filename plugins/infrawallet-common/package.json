@@ -1,0 +1,56 @@
+{
+  "name": "@electrolux-oss/plugin-infrawallet-common",
+  "version": "0.1.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public",
+    "main": "dist/index.esm.js",
+    "types": "dist/index.d.ts"
+  },
+  "homepage": "https://opensource.electrolux.one",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/electrolux-oss/infrawallet",
+    "directory": "plugins/infrawallet-common"
+  },
+  "backstage": {
+    "role": "common-library"
+  },
+  "sideEffects": false,
+  "scripts": {
+    "start": "backstage-cli package start",
+    "build": "backstage-cli package build",
+    "lint": "backstage-cli package lint",
+    "test": "backstage-cli package test",
+    "clean": "backstage-cli package clean",
+    "prepack": "backstage-cli package prepack",
+    "postpack": "backstage-cli package postpack"
+  },
+  "dependencies": {
+    "@backstage/core-components": "^0.14.7",
+    "@backstage/core-plugin-api": "^1.9.2",
+    "@backstage/theme": "^0.5.4",
+    "@material-ui/core": "^4.9.13",
+    "@material-ui/icons": "^4.9.1",
+    "@material-ui/lab": "^4.0.0-alpha.61",
+    "react-use": "^17.2.4"
+  },
+  "peerDependencies": {
+    "react": "^16.13.1 || ^17.0.0 || ^18.0.0"
+  },
+  "devDependencies": {
+    "@backstage/cli": "^0.26.5",
+    "@backstage/core-app-api": "^1.12.5",
+    "@backstage/dev-utils": "^1.0.32",
+    "@backstage/test-utils": "^1.5.5",
+    "@testing-library/jest-dom": "^6.0.0",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.0.0",
+    "msw": "^1.0.0"
+  },
+  "files": [
+    "dist"
+  ]
+}

@@ -16,14 +16,20 @@ export const infraWalletPlugin = createBackendPlugin({
         config: coreServices.rootConfig,
         cache: coreServices.cache,
         database: coreServices.database,
+        permissions: coreServices.permissions,
+        discovery: coreServices.discovery,
+        httpAuth: coreServices.httpAuth,
       },
-      async init({ httpRouter, logger, config, cache, database }) {
+      async init({ httpRouter, logger, config, cache, database, permissions, discovery, httpAuth }) {
         httpRouter.use(
           await createRouter({
             logger,
             config,
             cache,
             database,
+            permissions,
+            discovery,
+            httpAuth,
           }),
         );
         httpRouter.addAuthPolicy({

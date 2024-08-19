@@ -7,6 +7,7 @@
  */
 
 import { createBackend } from '@backstage/backend-defaults';
+import { legacyPlugin } from '@backstage/backend-common';
 
 const backend = createBackend();
 
@@ -27,7 +28,8 @@ backend.add(import('@backstage/plugin-catalog-backend-module-scaffolder-entity-m
 
 // permission plugin
 backend.add(import('@backstage/plugin-permission-backend/alpha'));
-backend.add(import('@backstage/plugin-permission-backend-module-allow-all-policy'));
+//backend.add(import('@backstage/plugin-permission-backend-module-allow-all-policy'));
+backend.add(import('./permissionPolicyModule'));
 
 // search plugin
 backend.add(import('@backstage/plugin-search-backend/alpha'));
