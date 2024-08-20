@@ -27,7 +27,6 @@ backend.add(import('@backstage/plugin-catalog-backend-module-scaffolder-entity-m
 
 // permission plugin
 backend.add(import('@backstage/plugin-permission-backend/alpha'));
-//backend.add(import('@backstage/plugin-permission-backend-module-allow-all-policy'));
 backend.add(import('./permissionPolicyModule'));
 
 // search plugin
