@@ -11,6 +11,20 @@ infraWallet:
     defaultShowLastXMonths: 3 # 3 by default, or other numbers, we recommend it less than 12
 ```
 
+### Customizing the InfraWalletPage Title and Subtitle
+
+By default, the `InfraWalletPage` component is configured in the `packages/app/src/App.tsx` file as follows:
+
+```ts
+<Route path="/infrawallet" element={<InfraWalletPage />} />
+```
+
+To customize the title and subtitle of the InfraWalletPage, you can modify the route in the same file as shown below:
+
+```ts
+<Route path="/infrawallet" element={<InfraWalletPage title="Custom title" subTitle="Custom subTitle" />} />
+```
+
 ## Define Cloud Accounts in app-config.yaml
 
 The configuration schema of InfraWallet is defined in the [plugins/infrawallet-backend/config.d.ts](../plugins/infrawallet-backend/config.d.ts) file. Users need to configure their cloud accounts in the `app-config.yaml` in the root folder.
