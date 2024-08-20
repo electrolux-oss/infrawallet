@@ -50,5 +50,5 @@ export const permissions = {
   infraWalletMetricSettingsRead,
   infraWalletMetricSettingsCreate,
   infraWalletMetricSettingsUpdate,
-  infraWalletMetricSettingsDelete
+  infraWalletMetricSettingsDelete,
 };

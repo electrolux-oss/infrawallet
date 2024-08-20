@@ -1,9 +1,15 @@
-import {
-  createLegacyAuthAdapters,
-  errorHandler,
-} from '@backstage/backend-common';
+import { createLegacyAuthAdapters, errorHandler } from '@backstage/backend-common';
 import { NotAllowedError } from '@backstage/errors';
-import { AuthService, CacheService, DatabaseService, DiscoveryService, HttpAuthService, LoggerService, PermissionsService, resolvePackagePath } from '@backstage/backend-plugin-api';
+import {
+  AuthService,
+  CacheService,
+  DatabaseService,
+  DiscoveryService,
+  HttpAuthService,
+  LoggerService,
+  PermissionsService,
+  resolvePackagePath,
+} from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import express from 'express';
 import Router from 'express-promise-router';
@@ -24,7 +30,6 @@ import {
 } from '@backstage/plugin-permission-common';
 import { permissions } from '@electrolux-oss/plugin-infrawallet-common';
 import { createPermissionIntegrationRouter } from '@backstage/plugin-permission-node';
-
 
 export interface RouterOptions {
   logger: LoggerService;
@@ -53,7 +58,7 @@ async function setUpDatabase(database: DatabaseService) {
 }
 
 export async function createRouter(options: RouterOptions): Promise<express.Router> {
-  const { logger, config, cache, database, permissions: permissionEvaluator, } = options;
+  const { logger, config, cache, database, permissions: permissionEvaluator } = options;
   const { httpAuth } = createLegacyAuthAdapters(options);
 
   const evaluateRequestPermission = async (
@@ -65,13 +70,8 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     });
 
     const decision = permissions
-    ? (
-        await permissionEvaluator.authorize(
-          [permission as AuthorizePermissionRequest],
-          { credentials },
-        )
-      )[0]
-    : undefined;
+      ? (await permissionEvaluator.authorize([permission as AuthorizePermissionRequest], { credentials }))[0]
+      : undefined;
 
     if (decision && decision.result === AuthorizeResult.DENY) {
       throw new NotAllowedError('Unauthorized');
