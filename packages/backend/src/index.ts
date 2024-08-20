@@ -7,7 +7,6 @@
  */
 
 import { createBackend } from '@backstage/backend-defaults';
-import { legacyPlugin } from '@backstage/backend-common';
 
 const backend = createBackend();
 
