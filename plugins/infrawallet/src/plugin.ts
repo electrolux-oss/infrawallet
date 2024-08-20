@@ -14,7 +14,7 @@ export const infraWalletPlugin = createPlugin({
   id: 'infrawallet',
   routes: {
     root: rootRouteRef,
-    settings: settingsRouteRef
+    settings: settingsRouteRef,
   },
   apis: [
     createApiFactory({

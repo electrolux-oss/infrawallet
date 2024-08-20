@@ -29,7 +29,7 @@ import { MonthRange } from '../types';
 export interface ReportsComponentProps {
   title?: string;
   subTitle?: string;
-};
+}
 
 const getTotalCost = (report: Report): number => {
   let total = 0;
@@ -70,7 +70,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
   const defaultShowLastXMonths = configApi.getOptionalNumber('infraWallet.settings.defaultShowLastXMonths') ?? 3;
 
   const MERGE_THRESHOLD = 8;
-  const [submittingState, setSubmittingState] = useState<Boolean>(false);
+  const [submittingState, setSubmittingState] = useState<boolean>(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [filters, setFilters] = useState<Filters>({});
@@ -80,7 +80,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
   const [reportTags, setReportTags] = useState<string[]>([]);
   const [granularity, setGranularity] = useState<string>('monthly');
   const [aggregatedBy, setAggregatedBy] = useState<string>(defaultGroupBy);
-  const [groups, _setGroups] = useState<string>('');
+  const [groups] = useState<string>('');
   const [monthRangeState, setMonthRangeState] = React.useState<MonthRange>({
     startMonth: startOfMonth(addMonths(new Date(), defaultShowLastXMonths * -1 + 1)),
     endMonth: endOfMonth(new Date()),
@@ -140,10 +140,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
 
   return (
     <Page themeId="tool">
-      <Header
-        title={title ?? 'InfraWallet'}
-        subtitle={subTitle ?? ''}
-      />
+      <Header title={title ?? 'InfraWallet'} subtitle={subTitle ?? ''} />
       <Content>
         {submittingState ? <Progress /> : null}
         <Grid container spacing={3}>
