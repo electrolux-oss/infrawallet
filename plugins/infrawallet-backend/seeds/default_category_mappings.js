@@ -115,11 +115,7 @@ exports.seed = async knex => {
     {
       provider: 'aws',
       category: 'Artificial Intelligence',
-      cloud_service_names: JSON.stringify([
-        'Amazon Kendra',
-        'Amazon SageMaker',
-        'Amazon Bedrock',
-      ]),
+      cloud_service_names: JSON.stringify(['Amazon Kendra', 'Amazon SageMaker', 'Amazon Bedrock']),
     },
     {
       provider: 'aws',
