@@ -7,39 +7,37 @@ export async function getCategoryMappings(
 ): Promise<{ [service: string]: string }> {
   const result: { [service: string]: string } = {};
   const client = await database.getClient();
-  const default_mappings = await client
+  const defaultMappings = await client
     .where({ provider: provider.toLowerCase() })
     .select()
     .from<CategoryMapping>('category_mappings_default');
-  default_mappings.forEach(mapping => {
-    if (typeof mapping.cloud_service_names === 'string') {
+  defaultMappings.forEach(mapping => {
+    let services = mapping.cloud_service_names;
+    if (typeof services === 'string') {
       // just in case if the database such as sqlite does not support JSON column
-      JSON.parse(mapping.cloud_service_names).forEach((service: string) => {
-        result[service] = mapping.category;
-      });
-    } else {
-      mapping.cloud_service_names.forEach((service: string) => {
-        result[service] = mapping.category;
-      });
+      services = JSON.parse(services);
     }
+
+    services.forEach((service: string) => {
+      result[service] = mapping.category;
+    });
   });
 
   // check if there are any records defined by user
-  const override_mappings = await client
+  const overrideMappings = await client
     .where({ provider: provider })
     .select()
     .from<CategoryMapping>('category_mappings_override');
-  override_mappings.forEach(mapping => {
-    if (typeof mapping.cloud_service_names === 'string') {
+  overrideMappings.forEach(mapping => {
+    let services = mapping.cloud_service_names;
+    if (typeof services === 'string') {
       // just in case if the database such as sqlite does not support JSON column
-      JSON.parse(mapping.cloud_service_names).forEach((service: string) => {
-        result[service] = mapping.category;
-      });
-    } else {
-      mapping.cloud_service_names.forEach((service: string) => {
-        result[service] = mapping.category;
-      });
+      services = JSON.parse(services);
     }
+
+    services.forEach((service: string) => {
+      result[service] = mapping.category;
+    });
   });
 
   return result;
@@ -48,6 +46,14 @@ export async function getCategoryMappings(
 export function getCategoryByServiceName(serviceName: string, categoryMappings: { [service: string]: string }): string {
   if (serviceName in categoryMappings) {
     return categoryMappings[serviceName];
+  }
+
+  // do a regex match with service name
+  for (const service in categoryMappings) {
+    const regex = new RegExp(service);
+    if (regex.test(serviceName)) {
+      return categoryMappings[service];
+    }
   }
 
   return 'Uncategorized';
