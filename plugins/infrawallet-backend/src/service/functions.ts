@@ -50,9 +50,11 @@ export function getCategoryByServiceName(serviceName: string, categoryMappings: 
 
   // do a regex match with service name
   for (const service in categoryMappings) {
-    const regex = new RegExp(service);
-    if (regex.test(serviceName)) {
-      return categoryMappings[service];
+    if (Object.hasOwn(categoryMappings, service)) {
+      const regex = new RegExp(service);
+      if (regex.test(serviceName)) {
+        return categoryMappings[service];
+      }
     }
   }
 
