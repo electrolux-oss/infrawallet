@@ -1,5 +1,15 @@
-import { errorHandler } from '@backstage/backend-common';
-import { CacheService, DatabaseService, LoggerService, resolvePackagePath } from '@backstage/backend-plugin-api';
+import { createLegacyAuthAdapters, errorHandler } from '@backstage/backend-common';
+import { NotAllowedError } from '@backstage/errors';
+import {
+  AuthService,
+  CacheService,
+  DatabaseService,
+  DiscoveryService,
+  HttpAuthService,
+  LoggerService,
+  PermissionsService,
+  resolvePackagePath,
+} from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import express from 'express';
 import Router from 'express-promise-router';
@@ -13,12 +23,23 @@ import { InfraWalletClient } from './InfraWalletClient';
 import { MetricProvider } from './MetricProvider';
 import { COST_CLIENT_MAPPINGS, METRIC_PROVIDER_MAPPINGS } from './consts';
 import { CloudProviderError, Metric, MetricSetting, Report } from './types';
+import {
+  AuthorizePermissionRequest,
+  AuthorizeResult,
+  QueryPermissionRequest,
+} from '@backstage/plugin-permission-common';
+import { permissions } from '@electrolux-oss/plugin-infrawallet-common';
+import { createPermissionIntegrationRouter } from '@backstage/plugin-permission-node';
 
 export interface RouterOptions {
   logger: LoggerService;
   config: Config;
   cache: CacheService;
   database: DatabaseService;
+  permissions: PermissionsService;
+  discovery: DiscoveryService;
+  auth?: AuthService;
+  httpAuth?: HttpAuthService;
 }
 
 async function setUpDatabase(database: DatabaseService) {
@@ -37,12 +58,38 @@ async function setUpDatabase(database: DatabaseService) {
 }
 
 export async function createRouter(options: RouterOptions): Promise<express.Router> {
-  const { logger, config, cache, database } = options;
+  const { logger, config, cache, database, permissions: permissionEvaluator } = options;
+  const { httpAuth } = createLegacyAuthAdapters(options);
+
+  const evaluateRequestPermission = async (
+    request: express.Request,
+    permission: AuthorizePermissionRequest | QueryPermissionRequest,
+  ) => {
+    const credentials = await httpAuth.credentials(request, {
+      allow: ['user'],
+    });
+
+    const decision = permissions
+      ? (await permissionEvaluator.authorize([permission as AuthorizePermissionRequest], { credentials }))[0]
+      : undefined;
+
+    if (decision && decision.result === AuthorizeResult.DENY) {
+      throw new NotAllowedError('Unauthorized');
+    }
+
+    return { decision, user: credentials.principal };
+  };
+
   // do database migrations here to support the legacy backend system
   await setUpDatabase(database);
 
   const router = Router();
   router.use(express.json());
+  router.use(
+    createPermissionIntegrationRouter({
+      permissions: Object.values(permissions),
+    }),
+  );
 
   router.get('/health', (_, response) => {
     logger.info('PONG!');
@@ -50,6 +97,10 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
   });
 
   router.get('/reports', async (request, response) => {
+    await evaluateRequestPermission(request, {
+      permission: permissions.infraWalletReportRead,
+    });
+
     const filters = request.query.filters as string;
     const groups = request.query.groups as string;
     const granularity = request.query.granularity as string;
@@ -161,12 +212,20 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
   });
 
   router.get('/:walletName/metrics_setting', async (request, response) => {
+    await evaluateRequestPermission(request, {
+      permission: permissions.infraWalletMetricSettingsRead,
+    });
+
     const walletName = request.params.walletName;
     const metricSettings = await getWalletMetricSettings(database, walletName);
     response.json({ data: metricSettings, status: 200 });
   });
 
-  router.get('/metric/metric_configs', async (_request, response) => {
+  router.get('/metric/metric_configs', async (request, response) => {
+    await evaluateRequestPermission(request, {
+      permission: permissions.infraWalletMetricSettingsRead,
+    });
+
     const conf = config.getConfig('backend.infraWallet.metricProviders');
     const configNames: { metric_provider: string; config_name: string }[] = [];
     conf.keys().forEach((provider: string) => {
@@ -182,6 +241,10 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
   });
 
   router.put('/:walletName/metrics_setting', async (request, response) => {
+    await evaluateRequestPermission(request, {
+      permission: permissions.infraWalletMetricSettingsCreate,
+    });
+
     const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
 
     if (readOnly) {
@@ -194,6 +257,10 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
   });
 
   router.delete('/:walletName/metrics_setting', async (request, response) => {
+    await evaluateRequestPermission(request, {
+      permission: permissions.infraWalletMetricSettingsDelete,
+    });
+
     const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
 
     if (readOnly) {
