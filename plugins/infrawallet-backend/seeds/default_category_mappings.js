@@ -96,7 +96,9 @@ exports.seed = async knex => {
       cloud_service_names: JSON.stringify([
         'Amazon Kinesis',
         'Amazon Managed Streaming for Apache Kafka',
+        'Amazon OpenSearch Service',
         'Amazon QuickSight',
+        'Amazon Redshift',
         'AWS Glue',
       ]),
     },
@@ -109,6 +111,11 @@ exports.seed = async knex => {
         'Amazon Simple Queue Service',
         'AWS Step Functions',
       ]),
+    },
+    {
+      provider: 'aws',
+      category: 'Artificial Intelligence',
+      cloud_service_names: JSON.stringify(['Amazon Kendra', 'Amazon SageMaker', 'Amazon Bedrock']),
     },
     {
       provider: 'aws',
@@ -135,6 +142,7 @@ exports.seed = async knex => {
       cloud_service_names: JSON.stringify([
         'Amazon DynamoDB',
         'Amazon ElastiCache',
+        'Amazon Neptune',
         'Amazon Relational Database Service',
         'Amazon Timestream',
         'DynamoDB Accelerator (DAX)',
@@ -156,6 +164,7 @@ exports.seed = async knex => {
       cloud_service_names: JSON.stringify([
         'AmazonCloudWatch',
         'CloudWatch Events',
+        'AWS CloudFormation',
         'AWS CloudTrail',
         'AWS Config',
         'AWS Service Catalog',
