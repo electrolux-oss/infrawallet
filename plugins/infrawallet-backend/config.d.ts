@@ -41,6 +41,11 @@ export interface Config {
             tags?: string[];
           },
         ];
+        mock?: [
+          {
+            name: string;
+          },
+        ];
       };
       metricProviders?: {
         datadog?: [
@@ -66,6 +71,11 @@ export interface Config {
              * @visibility secret
              */
             token: string;
+          },
+        ];
+        mock?: [
+          {
+            name: string;
           },
         ];
       };
