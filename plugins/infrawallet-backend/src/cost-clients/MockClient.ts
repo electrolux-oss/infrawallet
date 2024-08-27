@@ -1,6 +1,6 @@
 import { promises as fsPromises } from 'fs';
 import moment from 'moment';
-import { CostQuery, Report } from './types';
+import { CostQuery, Report } from '../service/types';
 import * as upath from 'upath';
 import { InfraWalletClient } from './InfraWalletClient';
 import { CacheService, DatabaseService, LoggerService, resolvePackagePath } from '@backstage/backend-plugin-api';

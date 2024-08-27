@@ -9,8 +9,8 @@ import {
   getWalletMetricSettings,
   updateOrInsertWalletMetricSetting,
 } from '../controllers/MetricSettingController';
-import { InfraWalletClient } from './InfraWalletClient';
-import { MetricProvider } from './MetricProvider';
+import { InfraWalletClient } from '../cost-clients/InfraWalletClient';
+import { MetricProvider } from '../metric-providers/MetricProvider';
 import { COST_CLIENT_MAPPINGS, METRIC_PROVIDER_MAPPINGS } from './consts';
 import { CloudProviderError, Metric, MetricSetting, Report } from './types';
 
