@@ -1,7 +1,7 @@
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { getCategoryMappings, getReportsFromCache, setReportsToCache } from './functions';
-import { ClientResponse, CloudProviderError, CostQuery, Report } from './types';
+import { getCategoryMappings, getReportsFromCache, setReportsToCache } from '../service/functions';
+import { ClientResponse, CloudProviderError, CostQuery, Report } from '../service/types';
 
 export abstract class InfraWalletClient {
   constructor(

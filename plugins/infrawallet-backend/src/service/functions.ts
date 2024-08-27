@@ -95,7 +95,10 @@ export async function getMetricsFromCache(
     query.startTime,
     query.endTime,
   ].join('_');
-  const cachedMetrics = (await cache.get(cacheKey)) as Metric[] | undefined;
+  const crypto = require('crypto');
+  const cachedMetrics = (await cache.get(crypto.createHash('md5').update(cacheKey).digest('hex'))) as
+    | Metric[]
+    | undefined;
   return cachedMetrics;
 }
 

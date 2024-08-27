@@ -3,7 +3,7 @@ import { Config } from '@backstage/config';
 import moment from 'moment';
 import fetch from 'node-fetch';
 import { MetricProvider } from './MetricProvider';
-import { Metric, MetricQuery } from './types';
+import { Metric, MetricQuery } from '../service/types';
 
 export class GrafanaCloudProvider extends MetricProvider {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {

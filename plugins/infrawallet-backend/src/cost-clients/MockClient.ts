@@ -1,6 +1,6 @@
 import { promises as fsPromises } from 'fs';
 import moment from 'moment';
-import { CostQuery, Report } from './types';
+import { CostQuery, Report } from '../service/types';
 import * as upath from 'upath';
 import { InfraWalletClient } from './InfraWalletClient';
 import { CacheService, DatabaseService, LoggerService, resolvePackagePath } from '@backstage/backend-plugin-api';
@@ -12,7 +12,7 @@ export class MockClient extends InfraWalletClient {
   }
 
   async initCloudClient(config: Config): Promise<any> {
-    console.log('initCloudClient called with config:', config);
+    this.logger.debug(`MockClient.initCloudClient called with config: ${JSON.stringify(config)}`);
 
     return null;
   }
@@ -36,7 +36,7 @@ export class MockClient extends InfraWalletClient {
       const currentDate = moment();
 
       if (endD.isAfter(currentDate)) {
-        console.log('End Date is in the future, adjusting to current date.');
+        this.logger.warn('End Date is in the future, adjusting to current date.');
         endD = currentDate.clone();
         endD.add(1, 'day');
       }
@@ -76,7 +76,7 @@ export class MockClient extends InfraWalletClient {
 
       return processedData;
     } catch (err) {
-      console.error('Error while reading a file', err);
+      this.logger.error('Error while reading a file', err);
       throw err;
     }
   }

@@ -3,7 +3,7 @@ import { Config } from '@backstage/config';
 import { v1 as datadogApiV1, client as datadogClient } from '@datadog/datadog-api-client';
 import moment from 'moment';
 import { MetricProvider } from './MetricProvider';
-import { Metric, MetricQuery } from './types';
+import { Metric, MetricQuery } from '../service/types';
 
 export class DatadogProvider extends MetricProvider {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
