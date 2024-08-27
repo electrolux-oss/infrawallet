@@ -20,7 +20,9 @@
 
 To start using InfraWallet, see the [Getting Started documentation](./docs/getting-started.md).
 
-From `v0.1.8`, InfraWallet also supports displaying business metrics as line charts on the same cost graph (beta feature for now). Currently the supported metric providers include Datadog and GrafanaCloud. See the steps on [this page](./docs/integrate-business-metrics.md) if you would like to try it out.
+For the latest version of InfraWallet, it also supports displaying business metrics as line charts on the same cost graph. Currently the supported metric providers include Datadog and GrafanaCloud. See the steps on [this page](./docs/integrate-business-metrics.md) if you would like to try it out.
+
+![business-metrics](./docs/images/business_metrics_example.png)
 
 ## Contributing to InfraWallet
 
