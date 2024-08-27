@@ -1,9 +1,10 @@
-import { AwsClient } from './AwsClient';
-import { AzureClient } from './AzureClient';
-import { DatadogProvider } from './DatadogProvider';
-import { GCPClient } from './GCPClient';
-import { GrafanaCloudProvider } from './GrafanaCloudProvider';
-import { MockClient } from './MockClient';
+import { AwsClient } from '../cost-clients/AwsClient';
+import { AzureClient } from '../cost-clients/AzureClient';
+import { GCPClient } from '../cost-clients/GCPClient';
+import { DatadogProvider } from '../metric-providers/DatadogProvider';
+import { GrafanaCloudProvider } from '../metric-providers/GrafanaCloudProvider';
+import { MockProvider } from '../metric-providers/MockProvider';
+import { MockClient } from '../cost-clients/MockClient';
 
 export const COST_CLIENT_MAPPINGS: {
   [provider: string]: any;
@@ -19,4 +20,5 @@ export const METRIC_PROVIDER_MAPPINGS: {
 } = {
   datadog: DatadogProvider,
   grafanacloud: GrafanaCloudProvider,
+  mock: MockProvider,
 };

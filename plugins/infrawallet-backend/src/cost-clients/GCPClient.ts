@@ -2,9 +2,9 @@ import { CacheService, DatabaseService, LoggerService } from '@backstage/backend
 import { Config } from '@backstage/config';
 import { BigQuery } from '@google-cloud/bigquery';
 import { reduce } from 'lodash';
+import { getCategoryByServiceName } from '../service/functions';
+import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
-import { getCategoryByServiceName } from './functions';
-import { CostQuery, Report } from './types';
 
 export class GCPClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {

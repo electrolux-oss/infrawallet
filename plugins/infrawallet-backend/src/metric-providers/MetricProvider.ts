@@ -1,7 +1,7 @@
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { getMetricsFromCache, setMetricsToCache } from './functions';
-import { CloudProviderError, Metric, MetricQuery, MetricSetting, MetricResponse } from './types';
+import { getMetricsFromCache, setMetricsToCache } from '../service/functions';
+import { CloudProviderError, Metric, MetricQuery, MetricSetting, MetricResponse } from '../service/types';
 
 export abstract class MetricProvider {
   constructor(
