@@ -6,6 +6,16 @@ You can also serve the plugin in isolation by running `yarn start` in the plugin
 This method of serving the plugin provides quicker iteration speed and a faster startup and hot reloads.
 It is only meant for local development, and the setup for it can be found inside a plugin's `dev` directory (e.g., [plugins/infrawallet/dev](../plugins/infrawallet/dev)).
 
+In case you would like to contribute to the frontend part of InfraWallet, you can use the MockClient for cost data generation and there is no need to have real cloud integrations. To do this you can add the following configuration to your `app-config.local.yaml` file:
+
+```yaml
+backend:
+  infraWallet:
+    integrations:
+      mock:
+        - name: demo-mock-data
+```
+
 ## How to Support a New Cloud Vendor?
 
 In InfraWallet, all the cost data fetched from different cloud providers are transformed into a generic format:
