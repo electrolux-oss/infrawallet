@@ -41,6 +41,21 @@ export interface Config {
             tags?: string[];
           },
         ];
+        mongoatlas?: [
+          {
+            name: string;
+            orgId: string;
+            /**
+             * @visibility secret
+             */
+            publicKey: string;
+            /**
+             * @visibility secret
+             */
+            privateKey: string;
+            tags?: string[];
+          },
+        ];
         mock?: [
           {
             name: string;

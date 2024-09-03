@@ -25,7 +25,7 @@ export type Report = {
 };
 
 export type CloudProviderError = {
-  provider: string; // AWS, GCP or Azure
+  provider: string; // AWS, GCP, Azure or MongoAtlas
   name: string; // the name defined in the configuration file
   error: string; // error message from the cloud provider
 };

@@ -112,6 +112,10 @@ backend:
           tableId: <big_query_table_id>
 ```
 
+#### Mongo Atlas
+
+TODO: add doc here.
+
 ### Adjust Category Mappings if Needed
 
 The category mappings are stored in the plugin's database. If there is no mapping found in the DB when initializing the plugin, the default mappings will be used. The default mappings can be found in the [plugins/infrawallet-backend/seeds/init.js](plugins/infrawallet-backend/seeds/init.js) file. You can adjust this seed file to fit your needs, or update the database directly later on.
