@@ -10658,9 +10658,9 @@
     "category": "Compute",
     "provider": "MongoAtlas",
     "reports": {
-        "2024-09": 223.6552,
-        "2024-08": 334.0513,
-        "2024-07": 641.0513
+      "2024-09": 223.6552,
+      "2024-08": 334.0513,
+      "2024-07": 641.0513
     },
     "project": "atlas-project-1",
     "cluster": "atlas-cluster-1"
@@ -10672,9 +10672,9 @@
     "category": "Networking",
     "provider": "MongoAtlas",
     "reports": {
-        "2024-09": 165.1982,
-        "2024-08": 482.8273,
-        "2024-07": 283.2673
+      "2024-09": 165.1982,
+      "2024-08": 482.8273,
+      "2024-07": 283.2673
     },
     "project": "atlas-project-1",
     "cluster": "atlas-cluster-1"
@@ -10686,9 +10686,9 @@
     "category": "Storage",
     "provider": "MongoAtlas",
     "reports": {
-        "2024-09": 255.1689,
-        "2024-08": 122.1252,
-        "2024-07": 96.2252
+      "2024-09": 255.1689,
+      "2024-08": 122.1252,
+      "2024-07": 96.2252
     },
     "project": "atlas-project-1",
     "cluster": "atlas-cluster-1"
@@ -10700,9 +10700,9 @@
     "category": "Compute",
     "provider": "MongoAtlas",
     "reports": {
-        "2024-09": 156.7283,
-        "2024-08": 263.8272,
-        "2024-07": 826.5312
+      "2024-09": 156.7283,
+      "2024-08": 263.8272,
+      "2024-07": 826.5312
     },
     "project": "atlas-project-2",
     "cluster": "atlas-cluster-2"
@@ -10714,9 +10714,9 @@
     "category": "Networking",
     "provider": "MongoAtlas",
     "reports": {
-        "2024-09": 485.8745,
-        "2024-08": 975.1258,
-        "2024-07": 154.4875
+      "2024-09": 485.8745,
+      "2024-08": 975.1258,
+      "2024-07": 154.4875
     },
     "project": "atlas-project-2",
     "cluster": "atlas-cluster-2"
@@ -10728,9 +10728,9 @@
     "category": "Storage",
     "provider": "MongoAtlas",
     "reports": {
-        "2024-09": 115.2332,
-        "2024-08": 255.6432,
-        "2024-07": 648.2321
+      "2024-09": 115.2332,
+      "2024-08": 255.6432,
+      "2024-07": 648.2321
     },
     "project": "atlas-project-2",
     "cluster": "atlas-cluster-2"
