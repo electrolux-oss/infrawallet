@@ -101,7 +101,6 @@ backend:
 
 To manage Mongo Atlas costs, you need to create an API key for your Organization with the 'Organization Billing Viewer' permission, you can find the documentation [here](https://www.mongodb.com/docs/atlas/configure-api-access/#std-label-about-org-api-keys). Once you have your API key details, add the following settings to `app-config.yaml`:
 
-
 ```yaml
 backend:
   infraWallet:
