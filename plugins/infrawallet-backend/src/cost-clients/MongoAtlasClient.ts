@@ -79,9 +79,22 @@ export class MongoAtlasClient extends InfraWalletClient {
           }
 
           const lines = csvResponse.data.split('\n');
+
+          let foundOrganizationIdLine = false;
+
+          // Discard rows from the beginning of the CSV up to and including the row starting with "Organization ID"
           const filteredLines = lines
-            .slice(5) // Discard non-CSV lines
-            .filter((line: string) => line.trim() !== '' && !line.includes('Credit')) // Discard empty lines and lines where SKU is 'Credit'
+            .filter((line: string) => {
+              const trimmedLine = line.trim();
+              if (trimmedLine.startsWith('Organization ID,')) {
+                foundOrganizationIdLine = true;
+                return false;
+              }
+              if (!foundOrganizationIdLine) {
+                return false;
+              }
+              return trimmedLine !== '' && !trimmedLine.includes('Credit'); // Discard empty lines and lines where SKU is 'Credit'
+            })
             .join('\n');
 
           return filteredLines;
