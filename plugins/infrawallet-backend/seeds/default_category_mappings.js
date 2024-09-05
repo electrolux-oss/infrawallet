@@ -477,6 +477,21 @@ exports.seed = async knex => {
       ]),
     },
     {
+      provider: 'confluent',
+      category: 'Integration',
+      cloud_service_names: JSON.stringify(['Kafka Base']),
+    },
+    {
+      provider: 'confluent',
+      category: 'Networking',
+      cloud_service_names: JSON.stringify(['Kafka Network']),
+    },
+    {
+      provider: 'confluent',
+      category: 'Storage',
+      cloud_service_names: JSON.stringify(['Kafka Storage']),
+    },
+    {
       provider: 'mongoatlas',
       category: 'Storage',
       cloud_service_names: JSON.stringify(['Atlas Cloud Backup Storage', 'Atlas Storage']),
