@@ -97,6 +97,21 @@ backend:
           tableId: <big_query_table_id>
 ```
 
+### Mongo Atlas
+
+To manage Mongo Atlas costs, you need to create an API key for your Organization with the 'Organization Billing Viewer' permission, you can find the documentation [here](https://www.mongodb.com/docs/atlas/configure-api-access/#std-label-about-org-api-keys). Once you have your API key details, add the following settings to `app-config.yaml`:
+
+```yaml
+backend:
+  infraWallet:
+    integrations:
+      mongoatlas:
+        - name: <unique_name_of_this_account>
+          orgId: <id_organization_mongo_atlas>
+          publicKey: <public_key_of_your_api_key>
+          privateKey: <private_key_of_your_api_key>
+```
+
 ## Adjust Category Mappings if Needed
 
 The category mappings are stored in the plugin's database. If there is no mapping found in the DB when initializing the plugin, the default mappings will be used. The default mappings can be found in the [plugins/infrawallet-backend/seeds/init.js](../plugins/infrawallet-backend/seeds/init.js) file. You can adjust this seed file to fit your needs, or update the database directly later on.
