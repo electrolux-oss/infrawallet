@@ -476,5 +476,20 @@ exports.seed = async knex => {
         'Service Infrastructure',
       ]),
     },
+    {
+      provider: 'mongoatlas',
+      category: 'Storage',
+      cloud_service_names: JSON.stringify(['Atlas Cloud Backup Storage', 'Atlas Storage']),
+    },
+    {
+      provider: 'mongoatlas',
+      category: 'Networking',
+      cloud_service_names: JSON.stringify(['Data Transfer']),
+    },
+    {
+      provider: 'mongoatlas',
+      category: 'Compute',
+      cloud_service_names: JSON.stringify(['Instance']),
+    },
   ]);
 };
