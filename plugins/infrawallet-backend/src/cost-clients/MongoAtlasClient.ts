@@ -1,12 +1,12 @@
-import moment from 'moment';
-import { Config } from '@backstage/config';
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
-import { InfraWalletClient } from './InfraWalletClient';
-import { getCategoryByServiceName } from '../service/functions';
-import { CostQuery, Report, TagsQuery } from '../service/types';
+import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
+import moment from 'moment';
 import urllib from 'urllib';
+import { CategoryMappingService } from '../service/CategoryMappingService';
 import { CLOUD_PROVIDER } from '../service/consts';
+import { CostQuery, Report, TagsQuery } from '../service/types';
+import { InfraWalletClient } from './InfraWalletClient';
 
 export class MongoAtlasClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -132,8 +132,8 @@ export class MongoAtlasClient extends InfraWalletClient {
     subAccountConfig: Config,
     query: CostQuery,
     costResponse: string,
-    categoryMappings: { [service: string]: string },
   ): Promise<Report[]> {
+    const categoryMappingService = CategoryMappingService.getInstance();
     const accountName = subAccountConfig.getString('name');
     const tags = subAccountConfig.getOptionalStringArray('tags');
     const tagKeyValues: { [key: string]: string } = {};
@@ -176,9 +176,9 @@ export class MongoAtlasClient extends InfraWalletClient {
         const cluster = rowData.Cluster || 'Unknown';
         const project = rowData.Project || 'Unknown';
 
-        const keyName = `${accountName}->${getCategoryByServiceName(
+        const keyName = `${accountName}->${categoryMappingService.getCategoryByServiceName(
+          this.provider,
           serviceName,
-          categoryMappings,
         )}->${project}->${cluster}`;
 
         if (!accumulator[keyName]) {
@@ -186,7 +186,7 @@ export class MongoAtlasClient extends InfraWalletClient {
             id: keyName,
             account: `${this.provider}/${accountName}`,
             service: this.convertServiceName(serviceName),
-            category: getCategoryByServiceName(serviceName, categoryMappings),
+            category: categoryMappingService.getCategoryByServiceName(this.provider, serviceName),
             provider: this.provider,
             reports: {},
             ...{ project: project },

@@ -1,7 +1,7 @@
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
+import { CACHE_CATEGORY, CLOUD_PROVIDER } from '../service/consts';
 import {
-  getCategoryMappings,
   getDefaultCacheTTL,
   getReportsFromCache,
   getTagKeysFromCache,
@@ -11,8 +11,7 @@ import {
   setTagValuesToCache,
   tagExists,
 } from '../service/functions';
-import { ClientResponse, CloudProviderError, CostQuery, TagsQuery, Report, TagsResponse, Tag } from '../service/types';
-import { CACHE_CATEGORY, CLOUD_PROVIDER } from '../service/consts';
+import { ClientResponse, CloudProviderError, CostQuery, Report, Tag, TagsQuery, TagsResponse } from '../service/types';
 
 export abstract class InfraWalletClient {
   constructor(
@@ -50,7 +49,6 @@ export abstract class InfraWalletClient {
     subAccountConfig: Config,
     query: CostQuery,
     costResponse: any,
-    categoryMappings: { [service: string]: string },
   ): Promise<Report[]>;
 
   // Get aggregated unique tag keys across all accounts of this cloud provider
@@ -211,8 +209,7 @@ export abstract class InfraWalletClient {
           const client = await this.initCloudClient(account);
           const costResponse = await this.fetchCosts(account, client, query);
 
-          const categoryMappings = await getCategoryMappings(this.database, this.provider);
-          const transformedReports = await this.transformCostsData(account, query, costResponse, categoryMappings);
+          const transformedReports = await this.transformCostsData(account, query, costResponse);
 
           // cache the results
           await setReportsToCache(
