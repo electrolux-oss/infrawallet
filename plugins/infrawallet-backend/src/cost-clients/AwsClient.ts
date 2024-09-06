@@ -14,10 +14,11 @@ import { CacheService, DatabaseService, LoggerService } from '@backstage/backend
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
-import { getCategoryByServiceName, parseTags } from '../service/functions';
+import { CategoryMappingService } from '../service/CategoryMappingService';
+import { CLOUD_PROVIDER } from '../service/consts';
+import { parseTags } from '../service/functions';
 import { CostQuery, Report, TagsQuery } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
-import { CLOUD_PROVIDER } from '../service/consts';
 
 export class AwsClient extends InfraWalletClient {
   private accounts: Map<string, string> = new Map();
@@ -200,12 +201,8 @@ export class AwsClient extends InfraWalletClient {
     return costAndUsageResults;
   }
 
-  protected async transformCostsData(
-    subAccountConfig: Config,
-    query: CostQuery,
-    costResponse: any,
-    categoryMappings: { [service: string]: string },
-  ): Promise<Report[]> {
+  protected async transformCostsData(subAccountConfig: Config, query: CostQuery, costResponse: any): Promise<Report[]> {
+    const categoryMappingService = CategoryMappingService.getInstance();
     const tags = subAccountConfig.getOptionalStringArray('tags');
     const tagKeyValues: { [key: string]: string } = {};
     tags?.forEach(tag => {
@@ -237,7 +234,7 @@ export class AwsClient extends InfraWalletClient {
                 id: keyName,
                 account: `${this.provider}/${accountName} (${accountId})`,
                 service: this.convertServiceName(serviceName),
-                category: getCategoryByServiceName(serviceName, categoryMappings),
+                category: categoryMappingService.getCategoryByServiceName(this.provider, serviceName),
                 provider: this.provider,
                 reports: {},
                 ...tagKeyValues,

@@ -3,7 +3,7 @@ import { Config } from '@backstage/config';
 import { CostQuery, Report, TagsQuery } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 import moment from 'moment';
-import { getCategoryByServiceName } from '../service/functions';
+import { CategoryMappingService } from '../service/CategoryMappingService';
 import { CLOUD_PROVIDER } from '../service/consts';
 
 export class ConfluentClient extends InfraWalletClient {
@@ -140,12 +140,8 @@ export class ConfluentClient extends InfraWalletClient {
     }
   }
 
-  protected async transformCostsData(
-    subAccountConfig: Config,
-    query: CostQuery,
-    costResponse: any,
-    categoryMappings: { [service: string]: string },
-  ): Promise<Report[]> {
+  protected async transformCostsData(subAccountConfig: Config, query: CostQuery, costResponse: any): Promise<Report[]> {
+    const categoryMappingService = CategoryMappingService.getInstance();
     const accountName = subAccountConfig.getString('name');
     const tags = subAccountConfig.getOptionalStringArray('tags');
     const tagKeyValues: { [key: string]: string } = {};
@@ -178,14 +174,17 @@ export class ConfluentClient extends InfraWalletClient {
       const resourceName = line.resource.display_name || 'Unknown';
       const envDisplayName = line.envDisplayName;
 
-      const keyName = `${accountName}->${getCategoryByServiceName(serviceName, categoryMappings)}->${resourceName}`;
+      const keyName = `${accountName}->${categoryMappingService.getCategoryByServiceName(
+        this.provider,
+        serviceName,
+      )}->${resourceName}`;
 
       if (!accumulator[keyName]) {
         accumulator[keyName] = {
           id: keyName,
           account: `${this.provider}/${accountName}`,
           service: this.convertServiceName(serviceName),
-          category: getCategoryByServiceName(serviceName, categoryMappings),
+          category: categoryMappingService.getCategoryByServiceName(this.provider, serviceName),
           provider: this.provider,
           reports: {},
           ...{ project: envDisplayName },
