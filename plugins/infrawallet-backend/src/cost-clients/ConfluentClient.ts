@@ -50,7 +50,7 @@ export class ConfluentClient extends InfraWalletClient {
   async initCloudClient(subAccountConfig: Config): Promise<any> {
     const apiKey = subAccountConfig.getString('apiKey');
     const apiSecret = subAccountConfig.getString('apiSecret');
-    const auth = 'Basic ' + Buffer.from(apiKey + ':' + apiSecret).toString('base64');
+    const auth = `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString('base64')}`;
 
     const client = {
       headers: {
@@ -66,12 +66,12 @@ export class ConfluentClient extends InfraWalletClient {
     const startDate = moment(parseInt(query.startTime, 10));
     const endDate = moment(parseInt(query.endTime, 10));
 
-    let currentStartDate = startDate.clone();
+    const currentStartDate = startDate.clone();
     let aggregatedData: any[] = [];
 
     try {
       while (currentStartDate.isBefore(endDate) || currentStartDate.isSame(endDate, 'month')) {
-        let currentEndDate = moment.min(currentStartDate.clone().endOf('month'), endDate);
+        const currentEndDate = moment.min(currentStartDate.clone().endOf('month'), endDate);
 
         const url = `https://api.confluent.cloud/billing/v1/costs?start_date=${currentStartDate.format(
           'YYYY-MM-DD',
