@@ -63,7 +63,10 @@ export abstract class MetricProvider {
             if (cachedMetrics) {
               this.logger.debug(`${this.providerName}/${configName}/${fullQuery.name} metrics from cache`);
               cachedMetrics.map(m => {
-                results.push(m);
+                results.push({
+                  yaxis_group: metric.yaxis_group, // add yaxis_group info to the metric
+                  ...m,
+                });
               });
               return;
             }
@@ -82,7 +85,10 @@ export abstract class MetricProvider {
             );
 
             transformedMetrics.map((value: any) => {
-              results.push(value);
+              results.push({
+                yaxis_group: metric.yaxis_group, // add yaxis_group info to the metric
+                ...value,
+              });
             });
           } catch (e) {
             this.logger.error(e);
