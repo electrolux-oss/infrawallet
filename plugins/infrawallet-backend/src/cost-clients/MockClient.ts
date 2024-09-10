@@ -1,26 +1,45 @@
 import { promises as fsPromises } from 'fs';
 import moment from 'moment';
-import { CostQuery, Report } from '../service/types';
+import { CostQuery, Report, TagsQuery } from '../service/types';
 import * as upath from 'upath';
 import { InfraWalletClient } from './InfraWalletClient';
 import { CacheService, DatabaseService, LoggerService, resolvePackagePath } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
+import { CLOUD_PROVIDER } from '../service/consts';
 
 export class MockClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
-    return new MockClient('mock', config, database, cache, logger);
+    return new MockClient(CLOUD_PROVIDER.MOCK, config, database, cache, logger);
   }
 
-  async initCloudClient(config: Config): Promise<any> {
+  protected async initCloudClient(config: Config): Promise<any> {
     this.logger.debug(`MockClient.initCloudClient called with config: ${JSON.stringify(config)}`);
 
     return null;
   }
 
-  async fetchCostsFromCloud(_subAccountConfig: Config, _client: any, _query: CostQuery): Promise<any> {
+  protected async fetchTagKeys(
+    subAccountConfig: Config,
+    client: any,
+    query: TagsQuery,
+  ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
+    return { tagKeys: [], provider: CLOUD_PROVIDER.MOCK };
+  }
+
+  protected async fetchTagValues(
+    subAccountConfig: Config,
+    client: any,
+    query: TagsQuery,
+    tagKey: string,
+  ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
+    return { tagValues: [], provider: CLOUD_PROVIDER.MOCK };
+  }
+
+  protected async fetchCosts(_subAccountConfig: Config, _client: any, _query: CostQuery): Promise<any> {
     return null;
   }
-  async transformCostsData(
+
+  protected async transformCostsData(
     _subAccountConfig: Config,
     query: CostQuery,
     _costResponse: any,

@@ -3,15 +3,16 @@ import { Config } from '@backstage/config';
 import { BigQuery } from '@google-cloud/bigquery';
 import { reduce } from 'lodash';
 import { getCategoryByServiceName } from '../service/functions';
-import { CostQuery, Report } from '../service/types';
+import { CostQuery, Report, TagsQuery } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
+import { CLOUD_PROVIDER } from '../service/consts';
 
 export class GCPClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
-    return new GCPClient('GCP', config, database, cache, logger);
+    return new GCPClient(CLOUD_PROVIDER.GCP, config, database, cache, logger);
   }
 
-  convertServiceName(serviceName: string): string {
+  protected convertServiceName(serviceName: string): string {
     let convertedName = serviceName;
 
     const prefixes = ['Google Cloud'];
@@ -22,10 +23,10 @@ export class GCPClient extends InfraWalletClient {
       }
     }
 
-    return `${this.providerName}/${convertedName}`;
+    return `${this.provider}/${convertedName}`;
   }
 
-  async initCloudClient(subAccountConfig: Config): Promise<any> {
+  protected async initCloudClient(subAccountConfig: Config): Promise<any> {
     const keyFilePath = subAccountConfig.getString('keyFilePath');
     const projectId = subAccountConfig.getString('projectId');
     // Configure a JWT auth client
@@ -40,7 +41,26 @@ export class GCPClient extends InfraWalletClient {
     return bigqueryClient;
   }
 
-  async fetchCostsFromCloud(subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
+  protected async fetchTagKeys(
+    subAccountConfig: Config,
+    client: any,
+    query: TagsQuery,
+  ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
+    // To be implemented
+    return { tagKeys: [], provider: CLOUD_PROVIDER.GCP };
+  }
+
+  protected async fetchTagValues(
+    subAccountConfig: Config,
+    client: any,
+    query: TagsQuery,
+    tagKey: string,
+  ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
+    // To be implemented
+    return { tagValues: [], provider: CLOUD_PROVIDER.GCP };
+  }
+
+  protected async fetchCosts(subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
     const projectId = subAccountConfig.getString('projectId');
     const datasetId = subAccountConfig.getString('datasetId');
     const tableId = subAccountConfig.getString('tableId');
@@ -79,7 +99,7 @@ export class GCPClient extends InfraWalletClient {
     }
   }
 
-  async transformCostsData(
+  protected async transformCostsData(
     subAccountConfig: Config,
     _query: CostQuery,
     costResponse: any,
@@ -101,10 +121,10 @@ export class GCPClient extends InfraWalletClient {
         if (!acc[keyName]) {
           acc[keyName] = {
             id: keyName,
-            name: `${this.providerName}/${accountName}`,
+            name: `${this.provider}/${accountName}`,
             service: this.convertServiceName(row.service),
             category: getCategoryByServiceName(row.service, categoryMappings),
-            provider: this.providerName,
+            provider: this.provider,
             reports: {},
             ...{ project: row.project }, // TODO: how should we handle the project field? for now, we add project name as a field in the report
             ...tagKeyValues, // note that if there is a tag `project:foo` in config, it overrides the project field set above

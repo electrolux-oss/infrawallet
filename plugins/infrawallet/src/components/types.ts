@@ -23,7 +23,10 @@ export type TopbarComponentProps = {
 export type FiltersComponentProps = {
   reports: Report[];
   filters: Filters;
+  monthRange: MonthRange;
   filtersSetter: any;
+  selectedTagsSetter: any;
+  providerErrorsSetter: any;
 };
 
 export type QueryComponentProps = {
