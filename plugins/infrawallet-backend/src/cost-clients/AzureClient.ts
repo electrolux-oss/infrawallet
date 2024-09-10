@@ -1,8 +1,4 @@
-import {
-  CostManagementClient,
-  QueryDefinition,
-  QueryFilter,
-} from '@azure/arm-costmanagement';
+import { CostManagementClient, QueryDefinition, QueryFilter } from '@azure/arm-costmanagement';
 import { createHttpHeaders, createPipelineRequest } from '@azure/core-rest-pipeline';
 import { ClientSecretCredential } from '@azure/identity';
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
