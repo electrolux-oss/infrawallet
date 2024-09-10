@@ -42,19 +42,19 @@ export class GCPClient extends InfraWalletClient {
   }
 
   protected async fetchTagKeys(
-    subAccountConfig: Config,
-    client: any,
-    query: TagsQuery,
+    _subAccountConfig: Config,
+    _client: any,
+    _query: TagsQuery,
   ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
     // To be implemented
     return { tagKeys: [], provider: CLOUD_PROVIDER.GCP };
   }
 
   protected async fetchTagValues(
-    subAccountConfig: Config,
-    client: any,
-    query: TagsQuery,
-    tagKey: string,
+    _subAccountConfig: Config,
+    _client: any,
+    _query: TagsQuery,
+    _tagKey: string,
   ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
     // To be implemented
     return { tagValues: [], provider: CLOUD_PROVIDER.GCP };

@@ -19,18 +19,18 @@ export class MockClient extends InfraWalletClient {
   }
 
   protected async fetchTagKeys(
-    subAccountConfig: Config,
-    client: any,
-    query: TagsQuery,
+    _subAccountConfig: Config,
+    _client: any,
+    _query: TagsQuery,
   ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
     return { tagKeys: [], provider: CLOUD_PROVIDER.MOCK };
   }
 
   protected async fetchTagValues(
-    subAccountConfig: Config,
-    client: any,
-    query: TagsQuery,
-    tagKey: string,
+    _subAccountConfig: Config,
+    _client: any,
+    _query: TagsQuery,
+    _tagKey: string,
   ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
     return { tagValues: [], provider: CLOUD_PROVIDER.MOCK };
   }

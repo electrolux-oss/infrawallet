@@ -1,4 +1,4 @@
-import { Chip, CircularProgress, Divider, FormControl, Grid, Tooltip, Typography } from '@material-ui/core';
+import { Chip, CircularProgress, Divider, FormControl, Grid, Tooltip } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
 import TextField from '@material-ui/core/TextField';
@@ -45,7 +45,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
   const keyValues: { [key: string]: string[] } = getReportKeyAndValues(reports);
 
   // tag providers
-  const [tagProviders, setTagProviders] = useState<string[]>(['AWS', 'Azure']);
+  const [tagProviders, _setTagProviders] = useState<string[]>(['AWS', 'Azure']);
   const [tagProvider, setTagProvider] = useState<string>();
 
   // tag keys
