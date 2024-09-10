@@ -5,6 +5,7 @@ import { DatadogProvider } from '../metric-providers/DatadogProvider';
 import { GrafanaCloudProvider } from '../metric-providers/GrafanaCloudProvider';
 import { MockProvider } from '../metric-providers/MockProvider';
 import { MockClient } from '../cost-clients/MockClient';
+import { ConfluentClient } from '../cost-clients/ConfluentClient';
 import { MongoAtlasClient } from '../cost-clients/MongoAtlasClient';
 
 export const COST_CLIENT_MAPPINGS: {
@@ -13,6 +14,7 @@ export const COST_CLIENT_MAPPINGS: {
   aws: AwsClient,
   azure: AzureClient,
   gcp: GCPClient,
+  confluent: ConfluentClient,
   mongoatlas: MongoAtlasClient,
   mock: MockClient,
 };

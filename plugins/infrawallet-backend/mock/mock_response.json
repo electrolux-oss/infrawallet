@@ -10652,6 +10652,48 @@
     "environment": "prod"
   },
   {
+    "id": "confluent-org->Integration->cluster-1",
+    "name": "Confluent/confluent-org",
+    "service": "Confluent/Kafka Base",
+    "category": "Integration",
+    "provider": "Confluent",
+    "reports": {
+      "2024-07": 4232.12352,
+      "2024-08": 5223.23123,
+      "2024-09": 2522.45322
+    },
+    "project": "projetct-1",
+    "cluster": "cluster-1"
+  },
+  {
+    "id": "confluent-org->Networking->cluster-1",
+    "name": "Confluent/confluent-org",
+    "service": "Confluent/Kafka Network Read",
+    "category": "Networking",
+    "provider": "Confluent",
+    "reports": {
+      "2024-07": 10.0028,
+      "2024-08": 20.0025,
+      "2024-09": 30.0004
+    },
+    "project": "projetct-1",
+    "cluster": "cluster-1"
+  },
+  {
+    "id": "confluent-org->Networking->cluster-1",
+    "name": "Confluent/confluent-org",
+    "service": "Confluent/Kafka Network Write",
+    "category": "Networking",
+    "provider": "Confluent",
+    "reports": {
+      "2024-07": 30.0028,
+      "2024-08": 60.0025,
+      "2024-09": 90.0004
+    },
+    "project": "projetct-1",
+    "cluster": "cluster-1"
+  },
+  {
     "id": "atlas-org->Compute->atlas-project-1->atlas-cluster-1",
     "name": "MongoAtlas/atlas-org",
     "service": "MongoAtlas/M20 Instance - Azure",
