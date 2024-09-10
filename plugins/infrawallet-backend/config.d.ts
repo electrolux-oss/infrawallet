@@ -41,6 +41,20 @@ export interface Config {
             tags?: string[];
           },
         ];
+        confluent?: [
+          {
+            name: string;
+            /**
+             * @visibility secret
+             */
+            apiKey: string;
+            /**
+             * @visibility secret
+             */
+            apiSecret: string;
+            tags?: string[];
+          },
+        ];
         mongoatlas?: [
           {
             name: string;
