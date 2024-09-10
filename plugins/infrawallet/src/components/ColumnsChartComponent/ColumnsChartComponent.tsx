@@ -157,28 +157,59 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
     ];
 
     if (metrics && showMetrics) {
+      const metricYAxisGroups: any = {};
       metrics.forEach(metric => {
         strokeWidth.push(3);
         seriesResult.push(metric);
-        yaxisResult.push({
-          seriesName: [metric.name],
-          decimalsInFloat: 2,
-          opposite: true,
-          title: {
-            text: metric.name,
-          },
-          labels: {
-            formatter: (value: number) => {
-              if (typeof value !== 'number' || isNaN(value)) {
-                return '';
-              }
-              return humanFormat(value, {
-                scale: scale,
-                separator: '',
-              });
+
+        if (metric.group) {
+          if (!metricYAxisGroups[metric.group]) {
+            metricYAxisGroups[metric.group] = {
+              seriesName: [metric.name],
+              decimalsInFloat: 2,
+              opposite: true,
+              title: {
+                text: metric.group,
+              },
+              labels: {
+                formatter: (value: number) => {
+                  if (typeof value !== 'number' || isNaN(value)) {
+                    return '';
+                  }
+                  return humanFormat(value, {
+                    scale: scale,
+                    separator: '',
+                  });
+                },
+              },
+            };
+          } else {
+            metricYAxisGroups[metric.group].seriesName.push(metric.name);
+          }
+        } else {
+          yaxisResult.push({
+            seriesName: [metric.name],
+            decimalsInFloat: 2,
+            opposite: true,
+            title: {
+              text: metric.name,
             },
-          },
-        });
+            labels: {
+              formatter: (value: number) => {
+                if (typeof value !== 'number' || isNaN(value)) {
+                  return '';
+                }
+                return humanFormat(value, {
+                  scale: scale,
+                  separator: '',
+                });
+              },
+            },
+          });
+        }
+      });
+      Object.values(metricYAxisGroups).forEach((group: any) => {
+        yaxisResult.push(group);
       });
     }
 
