@@ -286,7 +286,11 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
       </Grid>
       <Grid item xs={12}>
         {selectedTags.map(tag => (
-          <Chip label={`${tag.provider}/${tag.key}=${tag.value}`} onDelete={handleDeleteTag(tag)} />
+          <Chip
+            key={`${tag.provider}/${tag.key}=${tag.value}`}
+            label={`${tag.provider}/${tag.key}=${tag.value}`}
+            onDelete={handleDeleteTag(tag)}
+          />
         ))}
       </Grid>
     </Grid>
