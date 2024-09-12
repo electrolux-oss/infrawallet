@@ -3,16 +3,17 @@ import { Config } from '@backstage/config';
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { InfraWalletClient } from './InfraWalletClient';
 import { getCategoryByServiceName } from '../service/functions';
-import { CostQuery, Report } from '../service/types';
+import { CostQuery, Report, TagsQuery } from '../service/types';
 import { reduce } from 'lodash';
 import urllib from 'urllib';
+import { CLOUD_PROVIDER } from '../service/consts';
 
 export class MongoAtlasClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
-    return new MongoAtlasClient('MongoAtlas', config, database, cache, logger);
+    return new MongoAtlasClient(CLOUD_PROVIDER.MONGODB_ATLAS, config, database, cache, logger);
   }
 
-  convertServiceName(serviceName: string): string {
+  protected convertServiceName(serviceName: string): string {
     let convertedName = serviceName;
 
     const prefixes = ['Atlas'];
@@ -23,10 +24,10 @@ export class MongoAtlasClient extends InfraWalletClient {
       }
     }
 
-    return `${this.providerName}/${convertedName}`;
+    return `${this.provider}/${convertedName}`;
   }
 
-  async initCloudClient(subAccountConfig: any): Promise<any> {
+  protected async initCloudClient(subAccountConfig: any): Promise<any> {
     const publicKey = subAccountConfig.getString('publicKey');
     const privateKey = subAccountConfig.getString('privateKey');
 
@@ -37,7 +38,26 @@ export class MongoAtlasClient extends InfraWalletClient {
     return client;
   }
 
-  async fetchCostsFromCloud(subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
+  protected async fetchTagKeys(
+    _subAccountConfig: Config,
+    _client: any,
+    _query: TagsQuery,
+  ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
+    // To be implemented
+    return { tagKeys: [], provider: CLOUD_PROVIDER.MONGODB_ATLAS };
+  }
+
+  protected async fetchTagValues(
+    _subAccountConfig: Config,
+    _client: any,
+    _query: TagsQuery,
+    _tagKey: string,
+  ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
+    // To be implemented
+    return { tagValues: [], provider: CLOUD_PROVIDER.MONGODB_ATLAS };
+  }
+
+  protected async fetchCosts(subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
     const orgId = subAccountConfig.getString('orgId');
     const invoicesUrl = `/orgs/${orgId}/invoices?fromDate=${moment(parseInt(query.startTime, 10)).format(
       'YYYY-MM-DD',
@@ -108,7 +128,7 @@ export class MongoAtlasClient extends InfraWalletClient {
     }
   }
 
-  async transformCostsData(
+  protected async transformCostsData(
     subAccountConfig: Config,
     query: CostQuery,
     costResponse: string,
@@ -164,10 +184,10 @@ export class MongoAtlasClient extends InfraWalletClient {
         if (!accumulator[keyName]) {
           accumulator[keyName] = {
             id: keyName,
-            name: `${this.providerName}/${accountName}`,
+            name: `${this.provider}/${accountName}`,
             service: this.convertServiceName(serviceName),
             category: getCategoryByServiceName(serviceName, categoryMappings),
-            provider: this.providerName,
+            provider: this.provider,
             reports: {},
             ...{ project: project },
             ...{ cluster: cluster },

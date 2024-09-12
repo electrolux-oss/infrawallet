@@ -12,7 +12,8 @@ import {
 import { InfraWalletClient } from '../cost-clients/InfraWalletClient';
 import { MetricProvider } from '../metric-providers/MetricProvider';
 import { COST_CLIENT_MAPPINGS, METRIC_PROVIDER_MAPPINGS } from './consts';
-import { CloudProviderError, Metric, MetricSetting, Report } from './types';
+import { CloudProviderError, Metric, MetricSetting, Report, Tag } from './types';
+import { parseTags, tagsToString } from './functions';
 
 export interface RouterOptions {
   logger: LoggerService;
@@ -51,6 +52,7 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
 
   router.get('/reports', async (request, response) => {
     const filters = request.query.filters as string;
+    const tags = parseTags(request.query.tags as string);
     const groups = request.query.groups as string;
     const granularity = request.query.granularity as string;
     const startTime = request.query.startTime as string;
@@ -58,6 +60,17 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     const promises: Promise<void>[] = [];
     const results: Report[] = [];
     const errors: CloudProviderError[] = [];
+
+    // group tags by providers
+    const providerTags: Record<string, Tag[]> = {};
+    for (const tag of tags) {
+      const provider = tag.provider.toLowerCase();
+      if (!providerTags[provider]) {
+        providerTags[provider] = [];
+      }
+
+      providerTags[provider].push(tag);
+    }
 
     const conf = config.getConfig('backend.infraWallet.integrations');
     conf.keys().forEach((provider: string) => {
@@ -67,6 +80,7 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
           try {
             const clientResponse = await client.getCostReports({
               filters: filters,
+              tags: tagsToString(providerTags[provider.toLowerCase()]),
               groups: groups,
               granularity: granularity,
               startTime: startTime,
@@ -97,6 +111,104 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
       response.status(207).json({ data: results, errors: errors, status: 207 });
     } else {
       response.json({ data: results, errors: errors, status: 200 });
+    }
+  });
+
+  router.get('/tag-keys', async (request, response) => {
+    const tags: Tag[] = [];
+    const errors: CloudProviderError[] = [];
+
+    const tagProvider = request.query.provider as string;
+    const startTime = request.query.startTime as string;
+    const endTime = request.query.endTime as string;
+    const promises: Promise<void>[] = [];
+
+    const conf = config.getConfig('backend.infraWallet.integrations');
+    conf.keys().forEach((provider: string) => {
+      if (provider.toLowerCase() === tagProvider.toLowerCase() && provider in COST_CLIENT_MAPPINGS) {
+        const client: InfraWalletClient = COST_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
+        const getTagKeys = (async () => {
+          try {
+            const clientResponse = await client.getTagKeys({
+              startTime: startTime,
+              endTime: endTime,
+            });
+            clientResponse.errors.forEach((e: CloudProviderError) => {
+              errors.push(e);
+            });
+            clientResponse.tags.forEach((tag: Tag) => {
+              tags.push(tag);
+            });
+          } catch (e) {
+            logger.error(e);
+            errors.push({
+              provider: client.constructor.name,
+              name: client.constructor.name,
+              error: e.message,
+            });
+          }
+        })();
+        promises.push(getTagKeys);
+      }
+    });
+
+    await Promise.all(promises);
+
+    if (errors.length > 0) {
+      response.status(207).json({ data: tags, errors: errors, status: 207 });
+    } else {
+      response.json({ data: tags, errors: errors, status: 200 });
+    }
+  });
+
+  router.get('/tag-values', async (request, response) => {
+    const tags: Tag[] = [];
+    const errors: CloudProviderError[] = [];
+
+    const startTime = request.query.startTime as string;
+    const endTime = request.query.endTime as string;
+    const tagKey = request.query.tag as string;
+    const tagProvider = request.query.provider as string;
+    const promises: Promise<void>[] = [];
+
+    const conf = config.getConfig('backend.infraWallet.integrations');
+    conf.keys().forEach((provider: string) => {
+      if (provider in COST_CLIENT_MAPPINGS && provider.toLowerCase() === tagProvider.toLowerCase()) {
+        const client: InfraWalletClient = COST_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
+        const getTagValues = (async () => {
+          try {
+            const clientResponse = await client.getTagValues(
+              {
+                startTime: startTime,
+                endTime: endTime,
+              },
+              tagKey,
+            );
+            clientResponse.errors.forEach((e: CloudProviderError) => {
+              errors.push(e);
+            });
+            clientResponse.tags.forEach((tag: Tag) => {
+              tags.push(tag);
+            });
+          } catch (e) {
+            logger.error(e);
+            errors.push({
+              provider: client.constructor.name,
+              name: client.constructor.name,
+              error: e.message,
+            });
+          }
+        })();
+        promises.push(getTagValues);
+      }
+    });
+
+    await Promise.all(promises);
+
+    if (errors.length > 0) {
+      response.status(207).json({ data: tags, errors: errors, status: 207 });
+    } else {
+      response.json({ data: tags, errors: errors, status: 200 });
     }
   });
 

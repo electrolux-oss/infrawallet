@@ -37,7 +37,7 @@ For AWS, InfraWallet relies on an IAM role to fetch cost and usage data using AW
 {
   "Statement": [
     {
-      "Action": "ce:GetCostAndUsage",
+      "Action": ["ce:GetCostAndUsage", "ce:GetTags"],
       "Effect": "Allow",
       "Resource": "*",
       "Sid": ""
