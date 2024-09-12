@@ -17,7 +17,7 @@ import {
   getPeriodStrings,
   mergeCostReports,
 } from '../../api/functions';
-import { CloudProviderError, Filters, Metric, Report } from '../../api/types';
+import { CloudProviderError, Filters, Metric, Report, Tag } from '../../api/types';
 import { ColumnsChartComponent } from '../ColumnsChartComponent';
 import { CostReportsTableComponent } from '../CostReportsTableComponent';
 import { ErrorsAlertComponent } from '../ErrorsAlertComponent';
@@ -71,6 +71,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
 
   const MERGE_THRESHOLD = 8;
   const [submittingState, setSubmittingState] = useState<boolean>(false);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [filters, setFilters] = useState<Filters>({});
@@ -81,7 +82,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
   const [granularity, setGranularity] = useState<string>('monthly');
   const [aggregatedBy, setAggregatedBy] = useState<string>(defaultGroupBy);
   const [groups] = useState<string>('');
-  const [monthRangeState, setMonthRangeState] = React.useState<MonthRange>({
+  const [monthRange, setMonthRange] = useState<MonthRange>({
     startMonth: startOfMonth(addMonths(new Date(), defaultShowLastXMonths * -1 + 1)),
     endMonth: endOfMonth(new Date()),
   });
@@ -93,11 +94,11 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
   const fetchCostReportsCallback = useCallback(async () => {
     setSubmittingState(true);
     await infraWalletApi
-      .getCostReports('', groups, granularity, monthRangeState.startMonth, monthRangeState.endMonth)
+      .getCostReports('', selectedTags, groups, granularity, monthRange.startMonth, monthRange.endMonth)
       .then(reportsResponse => {
         if (reportsResponse.data && reportsResponse.data.length > 0) {
           setReports(reportsResponse.data);
-          setPeriods(getPeriodStrings(granularity, monthRangeState.startMonth, monthRangeState.endMonth));
+          setPeriods(getPeriodStrings(granularity, monthRange.startMonth, monthRange.endMonth));
         }
         if (reportsResponse.status === 207 && reportsResponse.errors) {
           setCloudProviderErrors(reportsResponse.errors);
@@ -105,11 +106,11 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
       })
       .catch(e => alertApi.post({ message: `${e.message}`, severity: 'error' }));
     setSubmittingState(false);
-  }, [groups, monthRangeState, granularity, infraWalletApi, alertApi]);
+  }, [groups, monthRange, granularity, selectedTags, infraWalletApi, alertApi]);
 
   const fetchMetricsCallback = useCallback(async () => {
     await infraWalletApi
-      .getMetrics(params.name ?? 'default', granularity, monthRangeState.startMonth, monthRangeState.endMonth)
+      .getMetrics(params.name ?? 'default', granularity, monthRange.startMonth, monthRange.endMonth)
       .then(metricsResponse => {
         if (metricsResponse.data && metricsResponse.data.length > 0) {
           setMetrics(metricsResponse.data);
@@ -119,7 +120,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
         }
       })
       .catch(e => alertApi.post({ message: `${e.message}`, severity: 'error' }));
-  }, [params.name, monthRangeState, granularity, infraWalletApi, alertApi]);
+  }, [params.name, monthRange, granularity, infraWalletApi, alertApi]);
 
   useEffect(() => {
     if (reports.length !== 0) {
@@ -131,7 +132,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
       setReportsAggregatedAndMerged(aggregatedAndMergedReports);
       setReportTags(allTags);
     }
-  }, [filters, reports, aggregatedBy, granularity, monthRangeState]);
+  }, [filters, reports, aggregatedBy, granularity, monthRange]);
 
   useEffect(() => {
     fetchCostReportsCallback();
@@ -154,8 +155,8 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
               aggregatedBy={aggregatedBy}
               aggregatedBySetter={setAggregatedBy}
               tags={reportTags}
-              monthRange={monthRangeState}
-              monthRangeSetter={setMonthRangeState}
+              monthRange={monthRange}
+              monthRangeSetter={setMonthRange}
             />
           </Grid>
           <Grid item xs={12}>
@@ -166,7 +167,14 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
                 </Typography>
               </AccordionSummary>
               <AccordionDetails>
-                <FiltersComponent reports={reports} filters={filters} filtersSetter={setFilters} />
+                <FiltersComponent
+                  reports={reports}
+                  filters={filters}
+                  monthRange={monthRange}
+                  filtersSetter={setFilters}
+                  selectedTagsSetter={setSelectedTags}
+                  providerErrorsSetter={setCloudProviderErrors}
+                />
               </AccordionDetails>
             </Accordion>
           </Grid>

@@ -8,7 +8,10 @@ import {
   MetricSetting,
   MetricsResponse,
   MetricsSettingResponse,
+  Tag,
+  TagResponse,
 } from './types';
+import { tagsToString } from './functions';
 
 /** @public */
 export class InfraWalletApiClient implements InfraWalletApi {
@@ -51,12 +54,26 @@ export class InfraWalletApiClient implements InfraWalletApi {
 
   async getCostReports(
     filters: string,
+    tags: Tag[],
     groups: string,
     granularity: string,
     startTime: Date,
     endTime: Date,
   ): Promise<CostReportsResponse> {
-    const url = `api/infrawallet/reports?&filters=${filters}&groups=${groups}&granularity=${granularity}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
+    const tagsString = tagsToString(tags);
+    const url = `api/infrawallet/reports?&filters=${filters}&tags=${tagsString}&groups=${groups}&granularity=${granularity}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
+    return await this.request(url);
+  }
+
+  async getTagKeys(provider: string, startTime: Date, endTime: Date): Promise<TagResponse> {
+    const url = `api/infrawallet/tag-keys?provider=${provider}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
+    return await this.request(url);
+  }
+
+  async getTagValues(tag: Tag, startTime: Date, endTime: Date): Promise<TagResponse> {
+    const url = `api/infrawallet/tag-values?provider=${tag.provider}&tag=${
+      tag.key
+    }&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
     return await this.request(url);
   }
 

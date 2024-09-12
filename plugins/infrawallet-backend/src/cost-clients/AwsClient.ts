@@ -1,7 +1,10 @@
 import {
   CostExplorerClient,
+  Expression,
   GetCostAndUsageCommand,
   GetCostAndUsageCommandInput,
+  GetTagsCommand,
+  GetTagsCommandInput,
   Granularity,
 } from '@aws-sdk/client-cost-explorer';
 import { AssumeRoleCommand, STSClient } from '@aws-sdk/client-sts';
@@ -9,16 +12,17 @@ import { CacheService, DatabaseService, LoggerService } from '@backstage/backend
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
-import { getCategoryByServiceName } from '../service/functions';
-import { CostQuery, Report } from '../service/types';
+import { getCategoryByServiceName, parseTags } from '../service/functions';
+import { CostQuery, Report, TagsQuery } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
+import { CLOUD_PROVIDER } from '../service/consts';
 
 export class AwsClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
-    return new AwsClient('AWS', config, database, cache, logger);
+    return new AwsClient(CLOUD_PROVIDER.AWS, config, database, cache, logger);
   }
 
-  convertServiceName(serviceName: string): string {
+  protected convertServiceName(serviceName: string): string {
     let convertedName = serviceName;
 
     const prefixes = ['Amazon', 'AWS'];
@@ -47,10 +51,10 @@ export class AwsClient extends InfraWalletClient {
       convertedName = aliases.get(convertedName) || convertedName;
     }
 
-    return `${this.providerName}/${convertedName}`;
+    return `${this.provider}/${convertedName}`;
   }
 
-  async initCloudClient(subAccountConfig: Config): Promise<any> {
+  protected async initCloudClient(subAccountConfig: Config): Promise<any> {
     const accountId = subAccountConfig.getString('accountId');
     const assumedRoleName = subAccountConfig.getString('assumedRoleName');
     const accessKeyId = subAccountConfig.getOptionalString('accessKeyId');
@@ -91,10 +95,73 @@ export class AwsClient extends InfraWalletClient {
     return awsCeClient;
   }
 
-  async fetchCostsFromCloud(_subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
+  private async _fetchTags(client: any, query: TagsQuery, tagKey?: string): Promise<string[]> {
+    const results: string[] = [];
+    let nextPageToken = undefined;
+
+    do {
+      const input: GetTagsCommandInput = {
+        TimePeriod: {
+          Start: moment(parseInt(query.startTime, 10)).format('YYYY-MM-DD'),
+          End: moment(parseInt(query.endTime, 10)).format('YYYY-MM-DD'),
+        },
+        TagKey: tagKey,
+      };
+      const command = new GetTagsCommand(input);
+      const response = await client.send(command);
+      for (const tag of response.Tags) {
+        if (tag) {
+          results.push(tag);
+        }
+      }
+
+      nextPageToken = response.NextPageToken;
+    } while (nextPageToken);
+
+    results.sort();
+    return results;
+  }
+
+  protected async fetchTagKeys(
+    _subAccountConfig: Config,
+    client: any,
+    query: TagsQuery,
+  ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
+    const tagKeys = await this._fetchTags(client, query);
+    return { tagKeys: tagKeys, provider: CLOUD_PROVIDER.AWS };
+  }
+
+  protected async fetchTagValues(
+    _subAccountConfig: Config,
+    client: any,
+    query: TagsQuery,
+    tagKey: string,
+  ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
+    const tagValues = await this._fetchTags(client, query, tagKey);
+    return { tagValues: tagValues, provider: CLOUD_PROVIDER.AWS };
+  }
+
+  protected async fetchCosts(_subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
     // query this aws account's cost and usage using @aws-sdk/client-cost-explorer
     let costAndUsageResults: any[] = [];
     let nextPageToken = undefined;
+    let filterExpression: Expression = { Dimensions: { Key: 'RECORD_TYPE', Values: ['Usage'] } };
+    const tags = parseTags(query.tags);
+    if (tags.length) {
+      let tagsExpression: Expression = {};
+
+      if (tags.length === 1) {
+        tagsExpression = { Tags: { Key: tags[0].key, Values: [tags[0].value as string] } };
+      } else {
+        const tagList: Expression[] = [];
+        for (const tag of tags) {
+          tagList.push({ Tags: { Key: tag.key, Values: [tag.value as string] } });
+        }
+        tagsExpression = { Or: tagList };
+      }
+
+      filterExpression = { And: [filterExpression, tagsExpression] };
+    }
 
     do {
       const input: GetCostAndUsageCommandInput = {
@@ -103,7 +170,7 @@ export class AwsClient extends InfraWalletClient {
           End: moment(parseInt(query.endTime, 10)).format('YYYY-MM-DD'),
         },
         Granularity: query.granularity.toUpperCase() as Granularity,
-        Filter: { Dimensions: { Key: 'RECORD_TYPE', Values: ['Usage'] } },
+        Filter: filterExpression,
         GroupBy: [{ Type: 'DIMENSION', Key: 'SERVICE' }],
         Metrics: ['UnblendedCost'],
         NextPageToken: nextPageToken,
@@ -119,7 +186,7 @@ export class AwsClient extends InfraWalletClient {
     return costAndUsageResults;
   }
 
-  async transformCostsData(
+  protected async transformCostsData(
     subAccountConfig: Config,
     query: CostQuery,
     costResponse: any,
@@ -153,10 +220,10 @@ export class AwsClient extends InfraWalletClient {
             if (!accumulator[keyName]) {
               accumulator[keyName] = {
                 id: keyName,
-                name: `${this.providerName}/${accountName}`,
+                name: `${this.provider}/${accountName}`,
                 service: this.convertServiceName(serviceName),
                 category: getCategoryByServiceName(serviceName, categoryMappings),
-                provider: this.providerName,
+                provider: this.provider,
                 reports: {},
                 ...tagKeyValues,
               };

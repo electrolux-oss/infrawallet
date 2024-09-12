@@ -1,16 +1,17 @@
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { CostQuery, Report } from '../service/types';
+import { CostQuery, Report, TagsQuery } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 import moment from 'moment';
 import { getCategoryByServiceName } from '../service/functions';
+import { CLOUD_PROVIDER } from '../service/consts';
 
 export class ConfluentClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
-    return new ConfluentClient('Confluent', config, database, cache, logger);
+    return new ConfluentClient(CLOUD_PROVIDER.CONFLUENT, config, database, cache, logger);
   }
 
-  convertServiceName(serviceName: string): string {
+  protected convertServiceName(serviceName: string): string {
     let convertedName = serviceName;
 
     const prefixes = ['Confluent'];
@@ -21,7 +22,7 @@ export class ConfluentClient extends InfraWalletClient {
       }
     }
 
-    return `${this.providerName}/${convertedName}`;
+    return `${this.provider}/${convertedName}`;
   }
 
   private capitalizeWords(str: string): string {
@@ -32,7 +33,7 @@ export class ConfluentClient extends InfraWalletClient {
       .join(' ');
   }
 
-  async fetchEnvDisplayName(client: any, envId: string): Promise<string> {
+  private async fetchEnvDisplayName(client: any, envId: string): Promise<string> {
     const url = `https://api.confluent.cloud/org/v2/environments/${envId}`;
     const response = await fetch(url, {
       method: 'GET',
@@ -47,7 +48,7 @@ export class ConfluentClient extends InfraWalletClient {
     return jsonResponse.display_name;
   }
 
-  async initCloudClient(subAccountConfig: Config): Promise<any> {
+  protected async initCloudClient(subAccountConfig: Config): Promise<any> {
     const apiKey = subAccountConfig.getString('apiKey');
     const apiSecret = subAccountConfig.getString('apiSecret');
     const auth = `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString('base64')}`;
@@ -62,7 +63,26 @@ export class ConfluentClient extends InfraWalletClient {
     return client;
   }
 
-  async fetchCostsFromCloud(_subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
+  protected async fetchTagKeys(
+    _subAccountConfig: Config,
+    _client: any,
+    _query: TagsQuery,
+  ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
+    // To be implemented
+    return { tagKeys: [], provider: CLOUD_PROVIDER.CONFLUENT };
+  }
+
+  protected async fetchTagValues(
+    _subAccountConfig: Config,
+    _client: any,
+    _query: TagsQuery,
+    _tagKey: string,
+  ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
+    // To be implemented
+    return { tagValues: [], provider: CLOUD_PROVIDER.CONFLUENT };
+  }
+
+  protected async fetchCosts(_subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
     const startDate = moment(parseInt(query.startTime, 10));
     const endDate = moment(parseInt(query.endTime, 10));
 
@@ -120,7 +140,7 @@ export class ConfluentClient extends InfraWalletClient {
     }
   }
 
-  async transformCostsData(
+  protected async transformCostsData(
     subAccountConfig: Config,
     query: CostQuery,
     costResponse: any,
@@ -163,10 +183,10 @@ export class ConfluentClient extends InfraWalletClient {
       if (!accumulator[keyName]) {
         accumulator[keyName] = {
           id: keyName,
-          name: `${this.providerName}/${accountName}`,
+          name: `${this.provider}/${accountName}`,
           service: this.convertServiceName(serviceName),
           category: getCategoryByServiceName(serviceName, categoryMappings),
-          provider: this.providerName,
+          provider: this.provider,
           reports: {},
           ...{ project: envDisplayName },
           ...{ cluster: resourceName },

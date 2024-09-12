@@ -5,8 +5,14 @@ export type CategoryMapping = {
   cloud_service_names: string[];
 };
 
+export type TagsQuery = {
+  startTime: string;
+  endTime: string;
+};
+
 export type CostQuery = {
   filters: string;
+  tags: string;
   groups: string;
   granularity: string;
   startTime: string;
@@ -24,6 +30,12 @@ export type Report = {
   };
 };
 
+export type Tag = {
+  key: string;
+  value?: string;
+  provider: string;
+};
+
 export type CloudProviderError = {
   provider: string; // AWS, GCP, Azure or MongoAtlas
   name: string; // the name defined in the configuration file
@@ -32,6 +44,11 @@ export type CloudProviderError = {
 
 export type ClientResponse = {
   reports: Report[];
+  errors: CloudProviderError[];
+};
+
+export type TagsResponse = {
+  tags: Tag[];
   errors: CloudProviderError[];
 };
 

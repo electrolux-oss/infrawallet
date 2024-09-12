@@ -1,7 +1,7 @@
 import { format, parse, subMonths } from 'date-fns';
 import { reduce } from 'lodash';
 import moment from 'moment';
-import { Report, Filters } from './types';
+import { Report, Filters, Tag } from './types';
 
 export const mergeCostReports = (reports: Report[], threshold: number): Report[] => {
   const totalCosts: { id: string; total: number }[] = [];
@@ -118,6 +118,23 @@ export const getReportKeyAndValues = (reports: Report[]): { [key: string]: strin
     keyValues[key] = Array.from(keyValueSets[key]);
   });
   return keyValues;
+};
+
+// check if targetTag exists in tags
+export function tagExists(tags: Tag[], targetTag: Tag): boolean {
+  return tags.some(
+    tag => tag.provider === targetTag.provider && tag.key === targetTag.key && tag.value === targetTag.value,
+  );
+}
+
+// convert Tag array to (provider1:key1=value1 OR provider2:key2=value2) format
+export const tagsToString = (tags: Tag[]): string => {
+  if (tags.length === 0) {
+    return '()';
+  }
+
+  const keyValuePairs = tags.map(tag => `${tag.provider}:${tag.key}=${tag.value}`);
+  return `(${keyValuePairs.join(' OR ')})`;
 };
 
 export const getAllReportTags = (reports: Report[]): string[] => {

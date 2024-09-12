@@ -1,20 +1,21 @@
-import { CostManagementClient, QueryDefinition } from '@azure/arm-costmanagement';
+import { CostManagementClient, QueryDefinition, QueryFilter } from '@azure/arm-costmanagement';
 import { createHttpHeaders, createPipelineRequest } from '@azure/core-rest-pipeline';
 import { ClientSecretCredential } from '@azure/identity';
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
-import { getCategoryByServiceName } from '../service/functions';
-import { CostQuery, Report } from '../service/types';
+import { getCategoryByServiceName, parseTags } from '../service/functions';
+import { CostQuery, Report, TagsQuery } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
+import { CLOUD_PROVIDER } from '../service/consts';
 
 export class AzureClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
-    return new AzureClient('Azure', config, database, cache, logger);
+    return new AzureClient(CLOUD_PROVIDER.AZURE, config, database, cache, logger);
   }
 
-  convertServiceName(serviceName: string): string {
+  protected convertServiceName(serviceName: string): string {
     let convertedName = serviceName;
 
     const prefixes = ['Azure'];
@@ -25,10 +26,10 @@ export class AzureClient extends InfraWalletClient {
       }
     }
 
-    return `${this.providerName}/${convertedName}`;
+    return `${this.provider}/${convertedName}`;
   }
 
-  formatDate(dateNumber: number): string | null {
+  private formatDate(dateNumber: number): string | null {
     // dateNumber example: 20240407
     const dateString = dateNumber.toString();
 
@@ -43,7 +44,7 @@ export class AzureClient extends InfraWalletClient {
     return `${year}-${month}-${day}`;
   }
 
-  async fetchDataWithRetry(client: CostManagementClient, url: string, body: any, maxRetries = 5): Promise<any> {
+  private async fetchDataWithRetry(client: CostManagementClient, url: string, body: any, maxRetries = 5): Promise<any> {
     let retries = 0;
 
     while (retries < maxRetries) {
@@ -53,6 +54,7 @@ export class AzureClient extends InfraWalletClient {
         body: JSON.stringify(body),
         headers: createHttpHeaders({
           'Content-Type': 'application/json',
+          ClientType: 'InfraWallet',
         }),
       });
       const response = await client.pipeline.sendRequest(client, request);
@@ -74,43 +76,51 @@ export class AzureClient extends InfraWalletClient {
     throw new Error('Max retries exceeded');
   }
 
-  async queryAzureCostExplorer(
-    azureClient: CostManagementClient,
-    subscription: string,
-    granularity: string,
-    groups: { type: string; name: string }[],
-    startDate: moment.Moment,
-    endDate: moment.Moment,
-  ) {
-    // Azure SDK doesn't support pagination, so sending HTTP request directly
-    const url = `https://management.azure.com/subscriptions/${subscription}/providers/Microsoft.CostManagement/query?api-version=2022-10-01`;
+  // If tagKey is specified, returns all tag values of that key.
+  // Otherwise returns all available tag keys.
+  private async _fetchTags(subAccountConfig: Config, client: any, query: TagsQuery, tagKey: string): Promise<string[]> {
+    const subscriptionId = subAccountConfig.getString('subscriptionId');
+    const url = `https://management.azure.com/subscriptions/${subscriptionId}/providers/Microsoft.CostManagement/query?api-version=2021-10-01`;
 
-    const query: QueryDefinition = {
+    const queryDefinition: QueryDefinition = {
       type: 'ActualCost',
       dataset: {
-        granularity: granularity,
-        aggregation: { totalCostUSD: { name: 'CostUSD', function: 'Sum' } },
-        grouping: groups,
+        granularity: 'None',
+        grouping: [{ type: 'TagKey', name: tagKey }],
       },
       timeframe: 'Custom',
       timePeriod: {
-        from: startDate.toDate(),
-        to: endDate.toDate(),
+        from: moment(parseInt(query.startTime, 10)).toDate(),
+        to: moment(parseInt(query.endTime, 10)).toDate(),
       },
     };
 
-    let result = await this.fetchDataWithRetry(azureClient, url, query);
+    let result = await this.fetchDataWithRetry(client, url, queryDefinition);
     let allResults = result.properties.rows;
 
     while (result.properties.nextLink) {
-      result = await this.fetchDataWithRetry(azureClient, result.properties.nextLink, query);
+      result = await this.fetchDataWithRetry(client, result.properties.nextLink, queryDefinition);
       allResults = allResults.concat(result.properties.rows);
     }
 
-    return allResults;
+    const tags: string[] = [];
+    for (const row of allResults) {
+      if (tagKey === '') {
+        if (row[0] && !row[0].startsWith('hidden-')) {
+          tags.push(row[0]);
+        }
+      } else {
+        if (row[1]) {
+          tags.push(row[1]);
+        }
+      }
+    }
+    tags.sort();
+
+    return tags;
   }
 
-  async initCloudClient(config: Config): Promise<any> {
+  protected async initCloudClient(config: Config): Promise<any> {
     const tenantId = config.getString('tenantId');
     const clientId = config.getString('clientId');
     const clientSecret = config.getString('clientSecret');
@@ -120,18 +130,54 @@ export class AzureClient extends InfraWalletClient {
     return client;
   }
 
-  async fetchCostsFromCloud(subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
+  protected async fetchTagKeys(
+    subAccountConfig: Config,
+    client: any,
+    query: TagsQuery,
+  ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
+    const tagKeys = await this._fetchTags(subAccountConfig, client, query, '');
+    return { tagKeys: tagKeys, provider: CLOUD_PROVIDER.AZURE };
+  }
+
+  protected async fetchTagValues(
+    subAccountConfig: Config,
+    client: any,
+    query: TagsQuery,
+    tagKey: string,
+  ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
+    const tagValues = await this._fetchTags(subAccountConfig, client, query, tagKey);
+    return { tagValues: tagValues, provider: CLOUD_PROVIDER.AZURE };
+  }
+
+  protected async fetchCosts(subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
     // Azure SDK doesn't support pagination, so sending HTTP request directly
     const subscriptionId = subAccountConfig.getString('subscriptionId');
-    const url = `https://management.azure.com/subscriptions/${subscriptionId}/providers/Microsoft.CostManagement/query?api-version=2022-10-01`;
+    const url = `https://management.azure.com/subscriptions/${subscriptionId}/providers/Microsoft.CostManagement/query?api-version=2023-11-01`;
 
     const groupPairs = [{ type: 'Dimension', name: 'ServiceName' }];
+    let filter: QueryFilter | undefined = undefined;
+    const tags = parseTags(query.tags);
+    if (tags.length) {
+      if (tags.length === 1) {
+        filter = {
+          tags: { name: tags[0].key, operator: 'In', values: [tags[0].value as string] },
+        };
+      } else {
+        const tagList: QueryFilter[] = [];
+        for (const tag of tags) {
+          tagList.push({ tags: { name: tag.key, operator: 'In', values: [tag.value as string] } });
+        }
+        filter = { or: tagList };
+      }
+    }
+
     const queryDefinition: QueryDefinition = {
       type: 'ActualCost',
       dataset: {
         granularity: query.granularity,
         aggregation: { totalCostUSD: { name: 'CostUSD', function: 'Sum' } },
         grouping: groupPairs,
+        filter: filter,
       },
       timeframe: 'Custom',
       timePeriod: {
@@ -151,7 +197,7 @@ export class AzureClient extends InfraWalletClient {
     return allResults;
   }
 
-  async transformCostsData(
+  protected async transformCostsData(
     subAccountConfig: Config,
     query: CostQuery,
     costResponse: any,
@@ -202,10 +248,10 @@ export class AzureClient extends InfraWalletClient {
         if (!accumulator[keyName]) {
           accumulator[keyName] = {
             id: keyName,
-            name: `${this.providerName}/${accountName}`,
+            name: `${this.provider}/${accountName}`,
             service: this.convertServiceName(serviceName),
             category: getCategoryByServiceName(serviceName, categoryMappings),
-            provider: this.providerName,
+            provider: this.provider,
             reports: {},
             ...tagKeyValues,
           };

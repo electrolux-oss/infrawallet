@@ -6,6 +6,12 @@ export type Report = {
   };
 };
 
+export type Tag = {
+  key: string;
+  value?: string;
+  provider: string;
+};
+
 export type Filters = {
   [key: string]: string[];
 };
@@ -18,6 +24,12 @@ export type CloudProviderError = {
 
 export type CostReportsResponse = {
   data?: Report[];
+  errors?: CloudProviderError[];
+  status: number;
+};
+
+export type TagResponse = {
+  data?: Tag[];
   errors?: CloudProviderError[];
   status: number;
 };
