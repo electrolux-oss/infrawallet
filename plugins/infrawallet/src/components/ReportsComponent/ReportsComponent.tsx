@@ -203,7 +203,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
                   data: rearrangeData(item, periods),
                 }))}
                 metrics={metrics.map((item: any) => ({
-                  name: item.id,
+                  name: item.name,
                   group: item.yaxis_group,
                   type: 'line',
                   data: rearrangeData(item, periods),
