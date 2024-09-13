@@ -131,10 +131,19 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
       };
 
   const initChartCallback = useCallback(async () => {
+    const labelFormatter = (value: number): string => {
+      const scale = humanFormat.Scale.create(['', 'K', 'M', 'B'], 1000);
+      if (typeof value !== 'number' || isNaN(value)) {
+        return '';
+      }
+      return `$${humanFormat(value, {
+        scale: scale,
+        separator: '',
+      })}`;
+    };
+
     const strokeWidth = Array<number>(series.length).fill(0);
     const seriesResult = series.map(s => s);
-    // init a scale here as well, it seems that adding the predefined customScale as a dependency is buggy
-    const scale = humanFormat.Scale.create(['', 'K', 'M', 'B'], 1000);
     const yaxisResult: any[] = [
       {
         seriesName: series.map(s => s.name),
@@ -143,15 +152,7 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
           text: 'Costs in USD',
         },
         labels: {
-          formatter: (value: number) => {
-            if (typeof value !== 'number' || isNaN(value)) {
-              return '';
-            }
-            return `$${humanFormat(value, {
-              scale: scale,
-              separator: '',
-            })}`;
-          },
+          formatter: labelFormatter,
         },
       },
     ];
@@ -168,42 +169,30 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
               seriesName: [metric.name],
               decimalsInFloat: 2,
               opposite: true,
+              forceNiceScale: true,
               title: {
                 text: metric.group,
               },
               labels: {
-                formatter: (value: number) => {
-                  if (typeof value !== 'number' || isNaN(value)) {
-                    return '';
-                  }
-                  return humanFormat(value, {
-                    scale: scale,
-                    separator: '',
-                  });
-                },
+                formatter: labelFormatter,
               },
             };
           } else {
+            // yaxis already exists, add the series to the existing one
             metricYAxisGroups[metric.group].seriesName.push(metric.name);
           }
         } else {
+          // the metric does not have a group, create a separate yaxis for it
           yaxisResult.push({
             seriesName: [metric.name],
             decimalsInFloat: 2,
             opposite: true,
+            forceNiceScale: true,
             title: {
               text: metric.name,
             },
             labels: {
-              formatter: (value: number) => {
-                if (typeof value !== 'number' || isNaN(value)) {
-                  return '';
-                }
-                return humanFormat(value, {
-                  scale: scale,
-                  separator: '',
-                });
-              },
+              formatter: labelFormatter,
             },
           });
         }
