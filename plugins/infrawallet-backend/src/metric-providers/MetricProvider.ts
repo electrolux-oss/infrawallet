@@ -64,7 +64,7 @@ export abstract class MetricProvider {
               this.logger.debug(`${this.providerName}/${configName}/${fullQuery.name} metrics from cache`);
               cachedMetrics.map(m => {
                 results.push({
-                  yaxis_group: metric.yaxis_group, // add yaxis_group info to the metric
+                  group: metric.group, // add group info to the metric
                   ...m,
                 });
               });
@@ -86,7 +86,7 @@ export abstract class MetricProvider {
 
             transformedMetrics.map((value: any) => {
               results.push({
-                yaxis_group: metric.yaxis_group, // add yaxis_group info to the metric
+                group: metric.group, // add group info to the metric
                 ...value,
               });
             });

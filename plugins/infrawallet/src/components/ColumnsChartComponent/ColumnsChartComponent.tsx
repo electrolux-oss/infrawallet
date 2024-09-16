@@ -158,14 +158,14 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
     ];
 
     if (metrics && showMetrics) {
-      const metricYAxisGroups: any = {};
+      const metricGroups: any = {};
       metrics.forEach(metric => {
         strokeWidth.push(3);
         seriesResult.push(metric);
 
         if (metric.group) {
-          if (!metricYAxisGroups[metric.group]) {
-            metricYAxisGroups[metric.group] = {
+          if (!metricGroups[metric.group]) {
+            metricGroups[metric.group] = {
               seriesName: [metric.name],
               decimalsInFloat: 2,
               opposite: true,
@@ -179,7 +179,7 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
             };
           } else {
             // yaxis already exists, add the series to the existing one
-            metricYAxisGroups[metric.group].seriesName.push(metric.name);
+            metricGroups[metric.group].seriesName.push(metric.name);
           }
         } else {
           // the metric does not have a group, create a separate yaxis for it
@@ -197,7 +197,7 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
           });
         }
       });
-      Object.values(metricYAxisGroups).forEach((group: any) => {
+      Object.values(metricGroups).forEach((group: any) => {
         yaxisResult.push(group);
       });
     }
