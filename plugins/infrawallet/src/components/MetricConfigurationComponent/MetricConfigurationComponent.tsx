@@ -49,7 +49,7 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
           config_name: '',
           metric_name: '',
           description: '',
-          yaxis_group: '',
+          group: '',
           query: '',
           isNew: true,
         },
@@ -186,7 +186,7 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
       editable: !readOnly,
     },
     {
-      field: 'yaxis_group',
+      field: 'group',
       headerName: 'Group',
       width: 100,
       editable: !readOnly,

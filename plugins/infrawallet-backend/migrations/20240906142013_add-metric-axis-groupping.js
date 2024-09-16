@@ -4,7 +4,7 @@
  */
 exports.up = async function up(knex) {
   await knex.schema.table('business_metrics', table => {
-    table.string('yaxis_group').comment('Metrics using the same value in this column will share the same yaxis label');
+    table.string('group').comment('Metrics using the same value in this column will share the same yaxis label');
   });
 };
 
@@ -14,6 +14,6 @@ exports.up = async function up(knex) {
  */
 exports.down = async function down(knex) {
   await knex.schema.table('business_metrics', table => {
-    table.dropColumn('yaxis_group');
+    table.dropColumn('group');
   });
 };
