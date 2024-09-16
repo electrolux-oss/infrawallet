@@ -67,6 +67,7 @@ export type MetricSetting = {
   config_name: string;
   metric_name: string;
   description?: string;
+  group?: string;
   query: string;
 };
 
