@@ -183,7 +183,7 @@ export class ConfluentClient extends InfraWalletClient {
       if (!accumulator[keyName]) {
         accumulator[keyName] = {
           id: keyName,
-          name: `${this.provider}/${accountName}`,
+          account: `${this.provider}/${accountName}`,
           service: this.convertServiceName(serviceName),
           category: getCategoryByServiceName(serviceName, categoryMappings),
           provider: this.provider,

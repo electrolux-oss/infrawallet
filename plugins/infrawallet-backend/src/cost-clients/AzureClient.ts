@@ -221,6 +221,7 @@ export class AzureClient extends InfraWalletClient {
         ]
     */
     const accountName = subAccountConfig.getString('name');
+    const subscriptionId = subAccountConfig.getString('subscriptionId');
     const groupPairs = [{ type: 'Dimension', name: 'ServiceName' }];
     const tags = subAccountConfig.getOptionalStringArray('tags');
     const tagKeyValues: { [key: string]: string } = {};
@@ -248,7 +249,7 @@ export class AzureClient extends InfraWalletClient {
         if (!accumulator[keyName]) {
           accumulator[keyName] = {
             id: keyName,
-            name: `${this.provider}/${accountName}`,
+            account: `${this.provider}/${accountName} (${subscriptionId})`,
             service: this.convertServiceName(serviceName),
             category: getCategoryByServiceName(serviceName, categoryMappings),
             provider: this.provider,

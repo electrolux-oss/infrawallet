@@ -78,7 +78,7 @@ export type MetricsSettingResponse = {
 export type Wallet = {
   id: string;
   name: string;
-  currenty: string;
+  currency: string;
   description?: string;
 };
 

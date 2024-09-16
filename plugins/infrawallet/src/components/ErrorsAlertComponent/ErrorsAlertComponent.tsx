@@ -39,7 +39,7 @@ export const ErrorsAlertComponent: FC<{ errors: CloudProviderError[] }> = ({ err
           <Table aria-label="errors table">
             <TableHead>
               <TableRow>
-                <TableCell style={{ minWidth: '150px' }}>Account Name</TableCell>
+                <TableCell style={{ minWidth: '150px' }}>Account/Integration</TableCell>
                 <TableCell>Error Message</TableCell>
               </TableRow>
             </TableHead>

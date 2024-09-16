@@ -21,10 +21,10 @@ export type CostQuery = {
 
 export type Report = {
   id: string;
+  account: string;
   service: string;
   category: string;
   provider: string;
-  name: string;
   reports: {
     [period: string]: number;
   };
