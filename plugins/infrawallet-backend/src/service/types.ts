@@ -64,6 +64,7 @@ export type MetricQuery = {
 export type Metric = {
   id: string;
   provider: string;
+  group?: string;
   name: string;
   reports: {
     [period: string]: number;
@@ -82,6 +83,7 @@ export type MetricSetting = {
   config_name: string;
   metric_name: string;
   description?: string;
+  group?: string;
   query: string;
 };
 
