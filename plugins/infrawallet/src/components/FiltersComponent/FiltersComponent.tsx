@@ -1,4 +1,4 @@
-import { Chip, CircularProgress, Divider, FormControl, Grid, Tooltip } from '@material-ui/core';
+import { Chip, CircularProgress, Divider, FormControl, Grid, Tooltip, Typography } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
 import TextField from '@material-ui/core/TextField';
@@ -7,11 +7,12 @@ import CheckBoxIcon from '@material-ui/icons/CheckBox';
 import CheckBoxOutlineBlankIcon from '@material-ui/icons/CheckBoxOutlineBlank';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import React, { FC, useEffect, useState } from 'react';
-import { getReportKeyAndValues, tagExists } from '../../api/functions';
+import { extractAccountInfo, extractProvider, getReportKeyAndValues, tagExists } from '../../api/functions';
 import { FiltersComponentProps } from '../types';
 import { Tag } from '../../api/types';
 import { alertApiRef, useApi } from '@backstage/core-plugin-api';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
+import { getProviderIcon } from '../ProviderIcons';
 
 const useStyles = makeStyles(theme => ({
   formControl: {
@@ -20,6 +21,7 @@ const useStyles = makeStyles(theme => ({
     width: 300,
   },
 }));
+
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
@@ -77,6 +79,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
     setResetTagKeys(prev => !prev);
     setTagKeys([]);
     setSelectedTagKey(null);
+    setOpenTagValue(false);
     setTagValues([]);
 
     if (provider) {
@@ -172,16 +175,51 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
             <Autocomplete
               multiple
               id={`checkboxes-${key}`}
-              options={keyValues[key]}
+              options={keyValues[key].sort()}
               value={filters[key] || []}
               onChange={(_event, value: string[], _reason) => handleFiltersChange(key, value)}
               disableCloseOnSelect
-              renderOption={(option, { selected }) => (
-                <React.Fragment key={`option-${option}`}>
-                  <Checkbox icon={icon} checkedIcon={checkedIcon} style={{ marginRight: 8 }} checked={selected} />
-                  {option}
-                </React.Fragment>
-              )}
+              renderOption={(option, { selected }) => {
+                let provider = undefined;
+                let providerIcon = undefined;
+                let accountName = undefined;
+                let accountId = undefined;
+                if (key === 'provider') {
+                  provider = option;
+                  providerIcon = getProviderIcon(provider);
+                } else if (['account', 'service'].includes(key)) {
+                  provider = extractProvider(option);
+                  providerIcon = getProviderIcon(provider);
+                }
+
+                if (key === 'account') {
+                  const account = extractAccountInfo(option.replace(`${provider}/`, ''));
+                  accountName = account.accountName;
+                  accountId = account.accountId;
+                }
+
+                return (
+                  <React.Fragment key={`option-${option}`}>
+                    <Checkbox icon={icon} checkedIcon={checkedIcon} style={{ marginRight: 8 }} checked={selected} />
+                    {providerIcon && (
+                      <>
+                        <Typography>{providerIcon}</Typography>
+                        &nbsp;&nbsp;
+                      </>
+                    )}
+                    {key === 'account' ? (
+                      <div>
+                        <Typography variant="body2">{accountName}</Typography>
+                        <Typography variant="caption" color="textSecondary">
+                          {accountId}
+                        </Typography>
+                      </div>
+                    ) : (
+                      <Typography variant="body2">{option.replace(`${provider}/`, '')}</Typography>
+                    )}
+                  </React.Fragment>
+                );
+              }}
               renderInput={params => (
                 <TextField {...params} variant="standard" label={key.charAt(0).toUpperCase() + key.slice(1)} />
               )}
@@ -203,7 +241,12 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
             id="tag-providers"
             options={tagProviders}
             onChange={(_, provider) => handleTagProviderChange(provider)}
-            renderInput={params => <TextField {...params} variant="standard" label="Tag providers" />}
+            renderInput={params => <TextField {...params} variant="standard" label="Tag provider" />}
+            renderOption={option => (
+              <React.Fragment>
+                <Typography variant="body2">{option}</Typography>
+              </React.Fragment>
+            )}
           />
         </FormControl>
         <FormControl className={classes.formControl}>
@@ -234,6 +277,11 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
                   ),
                 }}
               />
+            )}
+            renderOption={option => (
+              <React.Fragment>
+                <Typography variant="body2">{option.key}</Typography>
+              </React.Fragment>
             )}
           />
         </FormControl>
@@ -267,6 +315,11 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
                 }}
               />
             )}
+            renderOption={option => (
+              <React.Fragment>
+                <Typography variant="body2">{option.value}</Typography>
+              </React.Fragment>
+            )}
           />
         </FormControl>
         <FormControl style={{ marginTop: 10 }}>
@@ -287,6 +340,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
       <Grid item xs={12}>
         {selectedTags.map(tag => (
           <Chip
+            size="small"
             key={`${tag.provider}/${tag.key}=${tag.value}`}
             label={`${tag.provider}/${tag.key}=${tag.value}`}
             onDelete={handleDeleteTag(tag)}

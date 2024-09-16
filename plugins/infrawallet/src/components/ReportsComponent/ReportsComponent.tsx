@@ -66,7 +66,12 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
   const configApi = useApi(configApiRef);
   const params = useParams();
 
-  const defaultGroupBy = configApi.getOptionalString('infraWallet.settings.defaultGroupBy') ?? 'none';
+  let defaultGroupBy = configApi.getOptionalString('infraWallet.settings.defaultGroupBy') ?? 'none';
+  // "name" is renamed to "account", make it backward compatibility
+  if (defaultGroupBy === 'name') {
+    defaultGroupBy = 'account';
+  }
+
   const defaultShowLastXMonths = configApi.getOptionalNumber('infraWallet.settings.defaultShowLastXMonths') ?? 3;
 
   const MERGE_THRESHOLD = 8;
@@ -125,10 +130,10 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
   useEffect(() => {
     if (reports.length !== 0) {
       const filteredReports = filterCostReports(reports, filters);
-      const arrgegatedReports = aggregateCostReports(filteredReports, aggregatedBy);
-      const aggregatedAndMergedReports = mergeCostReports(arrgegatedReports, MERGE_THRESHOLD);
+      const aggregatedReports = aggregateCostReports(filteredReports, aggregatedBy);
+      const aggregatedAndMergedReports = mergeCostReports(aggregatedReports, MERGE_THRESHOLD);
       const allTags = getAllReportTags(reports);
-      setReportsAggregated(arrgegatedReports);
+      setReportsAggregated(aggregatedReports);
       setReportsAggregatedAndMerged(aggregatedAndMergedReports);
       setReportTags(allTags);
     }
