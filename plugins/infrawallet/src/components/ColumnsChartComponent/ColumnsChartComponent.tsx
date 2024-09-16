@@ -40,7 +40,7 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
     },
   });
   const classes = useStyles();
-  const [showMetrics, setShowMetrics] = useState<boolean>(true);
+  const [showMetrics, setShowMetrics] = useState<boolean>(false);
   const [seriesArray, setSeriesArray] = useState<any[]>([]);
   const [yaxisArray, setYaxisArray] = useState<any[]>([]);
   const [strokeWidthArray, setStrokeWidthArray] = useState<number[]>([]);
