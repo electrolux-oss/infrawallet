@@ -121,7 +121,7 @@ export class GCPClient extends InfraWalletClient {
         if (!acc[keyName]) {
           acc[keyName] = {
             id: keyName,
-            name: `${this.provider}/${accountName}`,
+            account: `${this.provider}/${accountName}`,
             service: this.convertServiceName(row.service),
             category: getCategoryByServiceName(row.service, categoryMappings),
             provider: this.provider,

@@ -1,11 +1,13 @@
 import {
   CostExplorerClient,
+  Dimension,
   Expression,
   GetCostAndUsageCommand,
   GetCostAndUsageCommandInput,
   GetTagsCommand,
   GetTagsCommandInput,
   Granularity,
+  GroupDefinitionType,
 } from '@aws-sdk/client-cost-explorer';
 import { AssumeRoleCommand, STSClient } from '@aws-sdk/client-sts';
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
@@ -18,6 +20,8 @@ import { InfraWalletClient } from './InfraWalletClient';
 import { CLOUD_PROVIDER } from '../service/consts';
 
 export class AwsClient extends InfraWalletClient {
+  private accounts: Map<string, string> = new Map();
+
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
     return new AwsClient(CLOUD_PROVIDER.AWS, config, database, cache, logger);
   }
@@ -145,7 +149,7 @@ export class AwsClient extends InfraWalletClient {
     // query this aws account's cost and usage using @aws-sdk/client-cost-explorer
     let costAndUsageResults: any[] = [];
     let nextPageToken = undefined;
-    let filterExpression: Expression = { Dimensions: { Key: 'RECORD_TYPE', Values: ['Usage'] } };
+    let filterExpression: Expression = { Dimensions: { Key: Dimension.RECORD_TYPE, Values: ['Usage'] } };
     const tags = parseTags(query.tags);
     if (tags.length) {
       let tagsExpression: Expression = {};
@@ -171,13 +175,23 @@ export class AwsClient extends InfraWalletClient {
         },
         Granularity: query.granularity.toUpperCase() as Granularity,
         Filter: filterExpression,
-        GroupBy: [{ Type: 'DIMENSION', Key: 'SERVICE' }],
+        GroupBy: [
+          { Type: GroupDefinitionType.DIMENSION, Key: Dimension.LINKED_ACCOUNT },
+          { Type: GroupDefinitionType.DIMENSION, Key: Dimension.SERVICE },
+        ],
         Metrics: ['UnblendedCost'],
         NextPageToken: nextPageToken,
       };
 
       const getCostCommand = new GetCostAndUsageCommand(input);
       const costAndUsageResponse = await client.send(getCostCommand);
+
+      // get AWS account names
+      for (const accountAttributes of costAndUsageResponse.DimensionValueAttributes) {
+        const accountId = accountAttributes.Value;
+        const accountName = accountAttributes.Attributes.description;
+        this.accounts.set(accountId, accountName);
+      }
 
       costAndUsageResults = costAndUsageResults.concat(costAndUsageResponse.ResultsByTime);
       nextPageToken = costAndUsageResponse.NextPageToken;
@@ -192,7 +206,6 @@ export class AwsClient extends InfraWalletClient {
     costResponse: any,
     categoryMappings: { [service: string]: string },
   ): Promise<Report[]> {
-    const accountName = subAccountConfig.getString('name');
     const tags = subAccountConfig.getOptionalStringArray('tags');
     const tagKeyValues: { [key: string]: string } = {};
     tags?.forEach(tag => {
@@ -214,13 +227,15 @@ export class AwsClient extends InfraWalletClient {
         }
         if (row.Groups) {
           row.Groups.forEach((group: any) => {
-            const serviceName = group.Keys ? group.Keys[0] : '';
-            const keyName = `${accountName}_${serviceName}`;
+            const accountId = group.Keys ? group.Keys[0] : '';
+            const accountName = this.accounts.get(accountId) || accountId;
+            const serviceName = group.Keys ? group.Keys[1] : '';
+            const keyName = `${accountId}_${serviceName}`;
 
             if (!accumulator[keyName]) {
               accumulator[keyName] = {
                 id: keyName,
-                name: `${this.provider}/${accountName}`,
+                account: `${this.provider}/${accountName} (${accountId})`,
                 service: this.convertServiceName(serviceName),
                 category: getCategoryByServiceName(serviceName, categoryMappings),
                 provider: this.provider,

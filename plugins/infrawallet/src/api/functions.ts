@@ -72,6 +72,7 @@ export const aggregateCostReports = (reports: Report[], aggregatedBy?: string): 
       if (!accumulator[keyName]) {
         accumulator[keyName] = {
           id: keyName,
+          provider: report.provider,
           reports: {},
         } as {
           id: string;
@@ -106,9 +107,9 @@ export const getReportKeyAndValues = (reports: Report[]): { [key: string]: strin
       if (!excludedKeys.includes(key)) {
         if (keyValueSets[key] === undefined) {
           keyValueSets[key] = new Set<string>();
-        } else {
-          keyValueSets[key].add(report[key] as string);
         }
+
+        keyValueSets[key].add(report[key] as string);
       }
     });
   });
@@ -118,6 +119,29 @@ export const getReportKeyAndValues = (reports: Report[]): { [key: string]: strin
     keyValues[key] = Array.from(keyValueSets[key]);
   });
   return keyValues;
+};
+
+export const extractProvider = (input: string): string | undefined => {
+  let provider = undefined;
+  if (input && input.indexOf('/') !== -1) {
+    provider = input.split('/')[0];
+  }
+
+  return provider;
+};
+
+export const extractAccountInfo = (input: string): { accountName: string; accountId?: string } => {
+  // try to match format: accountName (accountId), e.g. aws-dev (123456789012)
+  const regex = /^(.*?)\s*\(([^)]+)\)$/;
+  const match = input.match(regex);
+
+  if (match) {
+    const accountName = match[1];
+    const accountId = match[2];
+    return { accountName: accountName, accountId: accountId };
+  }
+
+  return { accountName: input };
 };
 
 // check if targetTag exists in tags
@@ -139,7 +163,7 @@ export const tagsToString = (tags: Tag[]): string => {
 
 export const getAllReportTags = (reports: Report[]): string[] => {
   const tags = new Set<string>();
-  const reservedKeys = ['id', 'name', 'service', 'category', 'provider', 'reports'];
+  const reservedKeys = ['id', 'account', 'service', 'category', 'provider', 'reports'];
   reports.forEach(report => {
     Object.keys(report).forEach(key => {
       if (reservedKeys.indexOf(key) === -1) {

@@ -55,7 +55,6 @@ export class MockClient extends InfraWalletClient {
       const currentDate = moment();
 
       if (endD.isAfter(currentDate)) {
-        this.logger.warn('End Date is in the future, adjusting to current date.');
         endD = currentDate.clone();
         endD.add(1, 'day');
       }

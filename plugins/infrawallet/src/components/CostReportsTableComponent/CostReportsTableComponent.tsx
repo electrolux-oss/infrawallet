@@ -1,15 +1,15 @@
-import Chip from '@material-ui/core/Chip';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import Box from '@mui/material/Box';
 import { DataGrid, GridColDef, GridRenderCellParams, GridToolbarContainer, GridToolbarExport } from '@mui/x-data-grid';
 import humanFormat from 'human-format';
 import React, { FC } from 'react';
-import { getPreviousMonth } from '../../api/functions';
+import { extractAccountInfo, getPreviousMonth } from '../../api/functions';
 import { CostReportsTableComponentProps } from '../types';
 import { TrendBarComponent } from './TrendBarComponent';
+import { getProviderIcon } from '../ProviderIcons';
 
-const useStyles = makeStyles(theme => ({
+const useStyles = makeStyles({
   increase: {
     color: 'red',
   },
@@ -20,17 +20,15 @@ const useStyles = makeStyles(theme => ({
     display: 'flex',
     alignItems: 'center',
   },
-  clip: {
-    backgroundColor: '#deebff',
-    color: '#0052cc',
-    marginLeft: theme.spacing(1),
-  },
-}));
+});
 
 function CustomToolbar() {
   return (
     <GridToolbarContainer>
-      <GridToolbarExport printOptions={{ disableToolbarButton: true }} />
+      <GridToolbarExport
+        csvOptions={{ fileName: 'InfraWallet-export' }}
+        printOptions={{ disableToolbarButton: true }}
+      />
     </GridToolbarContainer>
   );
 }
@@ -62,7 +60,20 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
     return '-';
   };
 
-  const columns: GridColDef[] = [
+  const columns: GridColDef[] = [];
+  if (['account', 'provider', 'service'].includes(aggregatedBy)) {
+    columns.push({
+      field: 'PROVIDER',
+      headerName: '',
+      width: 30,
+      disableExport: true,
+      renderCell: (params: GridRenderCellParams): React.ReactNode => {
+        return getProviderIcon(params.row.provider);
+      },
+    });
+  }
+
+  columns.push(
     {
       field: aggregatedBy,
       headerName: aggregatedBy.toLocaleUpperCase('en-US'),
@@ -70,20 +81,34 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
       flex: 2,
       renderCell: (params: GridRenderCellParams): React.ReactNode => {
         let formattedValue = params.formattedValue;
-        let chipLabel = null;
 
-        if (aggregatedBy === 'service' || aggregatedBy === 'name') {
+        if (aggregatedBy === 'service' || aggregatedBy === 'account') {
+          // remove provider names
           if (params.formattedValue !== undefined && params.formattedValue.indexOf('/') !== -1) {
-            const splitValue = params.formattedValue.split('/');
-            formattedValue = splitValue[1];
-            chipLabel = splitValue[0].toLowerCase();
+            formattedValue = params.formattedValue.split('/')[1];
+          }
+
+          if (aggregatedBy === 'account' && formattedValue) {
+            const account = extractAccountInfo(formattedValue);
+            const accountName = account.accountName;
+            const accountId = account.accountId;
+
+            return (
+              <div>
+                <Typography variant="body2" className={classes.container}>
+                  {accountName}
+                </Typography>
+                <Typography variant="caption" className={classes.container} color="textSecondary">
+                  {accountId}
+                </Typography>
+              </div>
+            );
           }
         }
 
         return (
           <Typography variant="body2" component="div" className={classes.container}>
             {formattedValue}
-            {chipLabel && <Chip size="small" label={chipLabel} className={classes.clip} />}
           </Typography>
         );
       },
@@ -93,6 +118,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
       headerName: 'TREND',
       width: 100,
       disableExport: true,
+      hideSortIcons: true,
       renderCell: (params: GridRenderCellParams): React.ReactNode => {
         return (
           <TrendBarComponent
@@ -109,7 +135,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
         );
       },
     },
-  ];
+  );
 
   periods.forEach(period => {
     columns.push({
@@ -177,7 +203,6 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
     <Box>
       <DataGrid
         rows={reports}
-        rowHeight={35}
         columns={columns}
         initialState={{
           sorting: {
@@ -193,6 +218,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
         slots={{ toolbar: CustomToolbar }}
         disableRowSelectionOnClick
         disableColumnMenu
+        density={aggregatedBy === 'account' ? 'standard' : 'compact'}
       />
     </Box>
   );

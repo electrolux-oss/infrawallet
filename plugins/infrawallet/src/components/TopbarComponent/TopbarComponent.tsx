@@ -42,7 +42,7 @@ export const TopbarComponent: FC<TopbarComponentProps> = ({
           <MenuItem value="none">
             <em>None</em>
           </MenuItem>
-          <MenuItem value="name">Name</MenuItem>
+          <MenuItem value="account">Account</MenuItem>
           <MenuItem value="provider">Provider</MenuItem>
           <MenuItem value="category">Category</MenuItem>
           <MenuItem value="service">Cloud Service</MenuItem>

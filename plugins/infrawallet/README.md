@@ -24,7 +24,7 @@ query period. Add the following configurations to your `app-config.yaml` file if
 # note that infraWallet exists at the root level, it is not the same one for backend configurations
 infraWallet:
   settings:
-    defaultGroupBy: none # none by default, or provider, category, service, tag:<tag_key>
+    defaultGroupBy: none # none by default, or account, provider, category, service, tag:<tag_key>
     defaultShowLastXMonths: 3 # 3 by default, or other numbers, we recommend it less than 12
 ```
 
@@ -42,19 +42,31 @@ To customize the title and subtitle of the InfraWalletPage, you can modify the r
 <Route path="/infrawallet" element={<InfraWalletPage title="Custom title" subTitle="Custom subTitle" />} />
 ```
 
-### Define Cloud Accounts in app-config.yaml
+### Defining Provider Integrations
 
-The configuration schema of InfraWallet is defined in the [plugins/infrawallet-backend/config.d.ts](plugins/infrawallet-backend/config.d.ts) file. Users need to configure their cloud accounts in the `app-config.yaml` in the root folder.
+InfraWallet's configuration schema is specified in in [plugins/infrawallet-backend/config.d.ts](../infrawallet-backend/config.d.ts). To set up provider integrations, users must configure them in the `app-config.yaml` file located in the root directory.
 
-#### AWS
+#### AWS Integration
 
-For AWS, InfraWallet relies on an IAM role to fetch cost and usage data using AWS Cost Explorer APIs. Thus before adding the configurations, AWS IAM user, role, and policy need to be set up. If you have multiple AWS accounts, you can reuse the IAM user in one account and grant the necessary permissions to the role in each account. The role to be assumed in an AWS account needs the following permission:
+InfraWallet uses an IAM role to retrieve cost and usage data via the AWS Cost Explorer APIs. Before configuring InfraWallet, you must set up the necessary AWS IAM role and policy.
+
+##### For Management Accounts
+
+If you have a [management account](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_getting-started_concepts.html#management-account), this setup only needs to be done once within the management account. InfraWallet will then be able to retrieve cost data across all [member accounts](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_getting-started_concepts.html#member-account).
+
+##### For Non-Management Accounts
+
+If you're not using a [management account](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_getting-started_concepts.html#management-account), you'll need to create a role in each AWS account and configure trust relationships individually.
+
+##### Required IAM Role Permissions
+
+The IAM role must have the following permissions to access cost and usage data:
 
 ```json
 {
   "Statement": [
     {
-      "Action": "ce:GetCostAndUsage",
+      "Action": ["ce:GetCostAndUsage", "ce:GetTags"],
       "Effect": "Allow",
       "Resource": "*",
       "Sid": ""
@@ -64,37 +76,49 @@ For AWS, InfraWallet relies on an IAM role to fetch cost and usage data using AW
 }
 ```
 
-After getting the IAM-related resources ready, put the following configuration into `app-config.yaml`:
+##### Configuration
+
+Once the IAM roles and policies are in place, add the following configuration to your `app-config.yaml` file:
 
 ```yaml
 backend:
   infraWallet:
     integrations:
       aws:
-        - name: <unique_name_of_this_account>
+        - name: <unique_name_of_this_integration>
           accountId: '<12-digit_account_ID>' # quoted as a string
           assumedRoleName: <name_of_the_AWS_IAM_role_to_be_assumed>
-          accessKeyId: <access_key_ID_of_AWS_IAM_user_that_assumes_the_role>
-          accessKeySecret: <access_key_secret_of_AWS_IAM_user_that_assumes_the_role>
+          accessKeyId: <access_key_ID_of_AWS_IAM_user_that_assumes_the_role> # optional, only needed when an IAM user is used to assume the role
+          accessKeySecret: <access_key_secret_of_AWS_IAM_user_that_assumes_the_role> # optional, only needed when an IAM user is used to assume the role
 ```
 
-#### Azure
+InfraWallet's AWS client is built using the AWS SDK for JavaScript. If both `accessKeyId` and `accessKeySecret` are provided in the configuration, the client will use the specified IAM user to assume the role. Otherwise, it follows the [default credential provider chain](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/setting-credentials-node.html#credchain).
 
-In order to manage Azure costs, an application needs to be registered on Azure. InfraWallet is only tested with subscription-level cost data. After creating the application, users need to go to the `Subscriptions` page, choose the target subscription and then visit the `Access control (IAM)` page. Assign the `Cost Management Reader` role to the created application. Create a new client secret for the application, and add the following configurations in `app-config.yaml`:
+#### Azure Integration
+
+To manage Azure costs with InfraWallet, you need to register an application in Azure. Note that InfraWallet has been tested with subscription-level cost data only.
+
+##### Steps:
+
+1. After registering the application, navigate to the `Subscriptions` page and select the target subscription.
+2. Go to the `Access control (IAM)` section and assign the `Cost Management Reader` role to the newly created application.
+3. Generate a client secret for the application.
+
+Add the following configurations to your `app-config.yaml` file:
 
 ```yaml
 backend:
   infraWallet:
     integrations:
       azure:
-        - name: <unique_name_of_this_account>
+        - name: <unique_name_of_this_integration>
           subscriptionId: <Azure_subscription_ID>
           tenantId: <Azure_tenant_ID>
           clientId: <Client_ID_of_the_created_application>
           clientSecret: <Client_secret_of_the_created_application>
 ```
 
-#### GCP
+#### GCP Integration
 
 InfraWallet relies on GCP Big Query to fetch cost data. This means that the billing data needs to be exported to a big query dataset, and a service account needs to be created for InfraWallet. The steps of exporting billing data to Big Query can be found [here](https://cloud.google.com/billing/docs/how-to/export-data-bigquery). Then, visit Google Cloud Console and navigate to the `IAM & Admin` section in the billing account. Click `Service Accounts`, and create a new service account. The service account needs to have `BigQuery Data Viewer` and `BigQuery Job User` roles. On the `Service Accounts` page, click the three dots (menu) in the `Actions` column for the newly created service account and select `Manage keys`. There click `Add key` -> `Create new key`, and use `JSON` as the format. Download the JSON key file and keep it safe.
 
@@ -105,14 +129,14 @@ backend:
   infraWallet:
     integrations:
       gcp:
-        - name: <unique_name_of_this_account>
+        - name: <unique_name_of_this_integration>
           keyFilePath: <path_to_your_json_key_file> # if you run it in a k8s pod, you may need to create a secret and mount it to the pod
           projectId: <GCP_project_that_your_big_query_dataset_belongs_to>
           datasetId: <big_query_dataset_id>
           tableId: <big_query_table_id>
 ```
 
-#### Confluent Cloud
+#### Confluent Cloud Integration
 
 To manage Confluent Cloud costs, you need to create an API key (Service account) for your Organization with the 'Cloud resource management' resource scope, you can find the documentation [here](https://docs.confluent.io/cloud/current/security/authenticate/workload-identities/service-accounts/api-keys/manage-api-keys.html#add-an-api-key). Once you have your API key details, add the following settings to `app-config.yaml`:
 
@@ -121,21 +145,21 @@ backend:
   infraWallet:
     integrations:
       confluent:
-        - name: <unique_name_of_this_account>
+        - name: <unique_name_of_this_integration>
           apiKey: <your_api_key>
           apiSecret: <your_api_key_secret>
 ```
 
-#### Mongo Atlas
+#### MongoDB Atlas Integration
 
-To manage Mongo Atlas costs, you need to create an API key for your Organization with the 'Organization Billing Viewer' permission, you can find the documentation [here](https://www.mongodb.com/docs/atlas/configure-api-access/#std-label-about-org-api-keys). Once you have your API key details, add the following settings to `app-config.yaml`:
+To manage Mongo Atlas costs, you need to create an API key for your Organization with `Organization Billing Viewer` permission, you can find the documentation [here](https://www.mongodb.com/docs/atlas/configure-api-access/#std-label-about-org-api-keys). Once you have your API key details, add the following settings to `app-config.yaml`:
 
 ```yaml
 backend:
   infraWallet:
     integrations:
       mongoatlas:
-        - name: <unique_name_of_this_account>
+        - name: <unique_name_of_this_integration>
           orgId: <id_organization_mongo_atlas>
           publicKey: <public_key_of_your_api_key>
           privateKey: <private_key_of_your_api_key>
@@ -143,7 +167,7 @@ backend:
 
 ### Adjust Category Mappings if Needed
 
-The category mappings are stored in the plugin's database. If there is no mapping found in the DB when initializing the plugin, the default mappings will be used. The default mappings can be found in the [plugins/infrawallet-backend/seeds/init.js](plugins/infrawallet-backend/seeds/init.js) file. You can adjust this seed file to fit your needs, or update the database directly later on.
+The category mappings are stored in the plugin's database. If there is no mapping found in the DB when initializing the plugin, the default mappings will be used. The default mappings can be found in the [plugins/infrawallet-backend/seeds/init.js](../infrawallet-backend/seeds/init.js) file. You can adjust this seed file to fit your needs, or update the database directly later on.
 
 ### Install the Plugin
 
