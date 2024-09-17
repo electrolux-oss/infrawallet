@@ -23,11 +23,12 @@ export class CategoryMappingService {
   private updateServiceToCategoryMappings() {
     for (const [category, mappings] of Object.entries(this.categoryMappings)) {
       for (const [provider, services] of Object.entries(mappings)) {
+        const providerLowerCase = provider.toLowerCase();
         if (!(provider in this.serviceToCategory)) {
-          this.serviceToCategory[provider] = {};
+          this.serviceToCategory[providerLowerCase] = {};
         }
         services.forEach(service => {
-          this.serviceToCategory[provider][service] = category;
+          this.serviceToCategory[providerLowerCase][service] = category;
         });
       }
     }
