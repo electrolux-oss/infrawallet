@@ -6,8 +6,8 @@ import humanFormat from 'human-format';
 import React, { FC } from 'react';
 import { extractAccountInfo, getPreviousMonth } from '../../api/functions';
 import { CostReportsTableComponentProps } from '../types';
-import { TrendBarComponent } from './TrendBarComponent';
 import { getProviderIcon } from '../ProviderIcons';
+import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
 
 const useStyles = makeStyles({
   increase: {
@@ -119,21 +119,12 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
       width: 100,
       disableExport: true,
       hideSortIcons: true,
-      renderCell: (params: GridRenderCellParams): React.ReactNode => {
-        return (
-          <TrendBarComponent
-            categories={periods}
-            series={[
-              {
-                name: params.row.id,
-                data: periods.map(period =>
-                  params.row.reports[period] !== undefined ? params.row.reports[period] : null,
-                ),
-              },
-            ]}
-          />
-        );
-      },
+      renderCell: (params: GridRenderCellParams) => (
+        <SparkLineChart data={params.value ? params.value[0] : null} plotType="bar" />
+      ),
+      valueGetter: (_, row) => [
+        periods.map(period => (row.reports[period] !== undefined ? row.reports[period] : null)),
+      ],
     },
   );
 
