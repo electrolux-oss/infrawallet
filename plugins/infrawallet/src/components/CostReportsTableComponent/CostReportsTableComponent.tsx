@@ -120,11 +120,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
       disableExport: true,
       hideSortIcons: true,
       renderCell: (params: GridRenderCellParams) => (
-        <SparkLineChart
-          data={params.value ? params.value[0] : null}
-          width={params.colDef.computedWidth}
-          plotType="bar"
-        />
+        <SparkLineChart data={params.value ? params.value[0] : null} plotType="bar" />
       ),
       valueGetter: (_, row) => [
         periods.map(period => (row.reports[period] !== undefined ? row.reports[period] : null)),
