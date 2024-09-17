@@ -5,10 +5,11 @@ import { CacheService, DatabaseService, LoggerService } from '@backstage/backend
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
-import { getCategoryByServiceName, parseTags } from '../service/functions';
+import { CategoryMappingService } from '../service/CategoryMappingService';
+import { CLOUD_PROVIDER } from '../service/consts';
+import { parseTags } from '../service/functions';
 import { CostQuery, Report, TagsQuery } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
-import { CLOUD_PROVIDER } from '../service/consts';
 
 export class AzureClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -197,12 +198,7 @@ export class AzureClient extends InfraWalletClient {
     return allResults;
   }
 
-  protected async transformCostsData(
-    subAccountConfig: Config,
-    query: CostQuery,
-    costResponse: any,
-    categoryMappings: { [service: string]: string },
-  ): Promise<Report[]> {
+  protected async transformCostsData(subAccountConfig: Config, query: CostQuery, costResponse: any): Promise<Report[]> {
     /*
       Monthly cost sample:
         [
@@ -220,6 +216,7 @@ export class AzureClient extends InfraWalletClient {
           "EUR"
         ]
     */
+    const categoryMappingService = CategoryMappingService.getInstance();
     const accountName = subAccountConfig.getString('name');
     const subscriptionId = subAccountConfig.getString('subscriptionId');
     const groupPairs = [{ type: 'Dimension', name: 'ServiceName' }];
@@ -251,7 +248,7 @@ export class AzureClient extends InfraWalletClient {
             id: keyName,
             account: `${this.provider}/${accountName} (${subscriptionId})`,
             service: this.convertServiceName(serviceName),
-            category: getCategoryByServiceName(serviceName, categoryMappings),
+            category: categoryMappingService.getCategoryByServiceName(this.provider, serviceName),
             provider: this.provider,
             reports: {},
             ...tagKeyValues,

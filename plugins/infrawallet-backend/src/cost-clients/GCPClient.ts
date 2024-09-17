@@ -2,10 +2,10 @@ import { CacheService, DatabaseService, LoggerService } from '@backstage/backend
 import { Config } from '@backstage/config';
 import { BigQuery } from '@google-cloud/bigquery';
 import { reduce } from 'lodash';
-import { getCategoryByServiceName } from '../service/functions';
+import { CategoryMappingService } from '../service/CategoryMappingService';
+import { CLOUD_PROVIDER } from '../service/consts';
 import { CostQuery, Report, TagsQuery } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
-import { CLOUD_PROVIDER } from '../service/consts';
 
 export class GCPClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -103,8 +103,8 @@ export class GCPClient extends InfraWalletClient {
     subAccountConfig: Config,
     _query: CostQuery,
     costResponse: any,
-    categoryMappings: { [service: string]: string },
   ): Promise<Report[]> {
+    const categoryMappingService = CategoryMappingService.getInstance();
     const accountName = subAccountConfig.getString('name');
     const tags = subAccountConfig.getOptionalStringArray('tags');
     const tagKeyValues: { [key: string]: string } = {};
@@ -123,7 +123,7 @@ export class GCPClient extends InfraWalletClient {
             id: keyName,
             account: `${this.provider}/${accountName}`,
             service: this.convertServiceName(row.service),
-            category: getCategoryByServiceName(row.service, categoryMappings),
+            category: categoryMappingService.getCategoryByServiceName(this.provider, row.service),
             provider: this.provider,
             reports: {},
             ...{ project: row.project }, // TODO: how should we handle the project field? for now, we add project name as a field in the report

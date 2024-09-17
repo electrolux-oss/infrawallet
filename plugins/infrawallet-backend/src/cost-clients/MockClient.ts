@@ -43,7 +43,6 @@ export class MockClient extends InfraWalletClient {
     _subAccountConfig: Config,
     query: CostQuery,
     _costResponse: any,
-    _categoryMappings: { [service: string]: string },
   ): Promise<Report[]> {
     try {
       const startD = moment.unix(Number(query.startTime) / 1000);
