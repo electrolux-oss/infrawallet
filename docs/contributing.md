@@ -16,6 +16,11 @@ backend:
         - name: demo-mock-data
 ```
 
+### Pre-commit Hook
+
+We use [Husky](https://typicode.github.io/husky/) to set up a pre-commit hook that runs the linter, type checker and
+code formatter before committing. Run `git config core.hooksPath .husky` from the root folder of this repo to enable it.
+
 ## How to Support a New Cloud Vendor?
 
 In InfraWallet, all the cost data fetched from different cloud providers are transformed into a generic format:
