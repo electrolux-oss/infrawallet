@@ -52,16 +52,16 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
 
   // tag keys
   const [openTagKey, setOpenTagKey] = useState(false);
-  const [tagKeys, setTagKeys] = useState<Tag[]>([]);
-  const [selectedTagKey, setSelectedTagKey] = useState<Tag | null>(null);
+  const [tagKeys, setTagKeys] = useState<Tag[] | undefined>(undefined);
+  const [selectedTagKey, setSelectedTagKey] = useState<Tag | undefined>(undefined);
   const [resetTagKeys, setResetTagKeys] = useState(false);
-  const loadingTagKeys = openTagKey && tagKeys.length === 0;
+  const loadingTagKeys = openTagKey && tagKeys === undefined;
 
   // tag values
   const [openTagValue, setOpenTagValue] = useState(false);
-  const [tagValues, setTagValues] = useState<Tag[]>([]);
+  const [tagValues, setTagValues] = useState<Tag[] | undefined>(undefined);
   const [resetTagValues, setResetTagValues] = useState(false);
-  const loadingTagValues = openTagValue && tagValues.length === 0;
+  const loadingTagValues = openTagValue && tagValues === undefined;
 
   // user selected tags
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
@@ -77,8 +77,8 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
     setTagProvider('');
     setOpenTagKey(false);
     setResetTagKeys(prev => !prev);
-    setTagKeys([]);
-    setSelectedTagKey(null);
+    setTagKeys(undefined);
+    setSelectedTagKey(undefined);
     setOpenTagValue(false);
     setTagValues([]);
 
@@ -89,8 +89,8 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
   };
 
   const handleTagKeyChange = (tagKey: Tag | string | null) => {
-    setSelectedTagKey(null);
-    setTagValues([]);
+    setSelectedTagKey(undefined);
+    setTagValues(undefined);
     setResetTagValues(prev => !prev);
 
     if (typeof tagKey === 'string') {
@@ -133,7 +133,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
         await infraWalletApi
           .getTagKeys(tagProvider, monthRange.startMonth, monthRange.endMonth)
           .then(response => {
-            if (response.data && response.data.length > 0) {
+            if (response.data) {
               setTagKeys(response.data);
             }
             if (response.status === 207 && response.errors) {
@@ -155,7 +155,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
         await infraWalletApi
           .getTagValues(selectedTagKey, monthRange.startMonth, monthRange.endMonth)
           .then(response => {
-            if (response.data && response.data.length > 0) {
+            if (response.data) {
               setTagValues(response.data);
             }
             if (response.status === 207 && response.errors) {
@@ -258,8 +258,9 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
             open={openTagKey}
             onOpen={() => setOpenTagKey(true)}
             onClose={() => setOpenTagKey(false)}
-            options={tagKeys}
+            options={tagKeys && tagKeys.length ? tagKeys : [{ key: 'No value', provider: tagProvider as string }]}
             getOptionLabel={tag => tag.key}
+            getOptionDisabled={tag => tag.key === 'No value'}
             loading={loadingTagKeys}
             onChange={(_, tagKey) => handleTagKeyChange(tagKey)}
             renderInput={params => (
@@ -294,9 +295,13 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
             open={openTagValue}
             onOpen={() => setOpenTagValue(true)}
             onClose={() => setOpenTagValue(false)}
-            options={tagValues}
+            options={
+              tagValues && tagValues.length
+                ? tagValues
+                : [{ key: 'No value', value: 'No value', provider: tagProvider as string }]
+            }
             getOptionLabel={tag => tag?.value || ''}
-            getOptionDisabled={tag => tagExists(selectedTags, tag)}
+            getOptionDisabled={tag => tag?.value === 'No value' || tagExists(selectedTags, tag)}
             loading={loadingTagValues}
             onChange={(_, tag) => handleTagValueSelection(tag)}
             renderInput={params => (
