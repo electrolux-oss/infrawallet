@@ -13,7 +13,7 @@
     "lint": "backstage-cli package lint",
     "test": "backstage-cli package test",
     "clean": "backstage-cli package clean",
-    "build-image": "docker build ../.. -f Dockerfile --tag backstage"
+    "build-image": "docker build ../.. -f Dockerfile --tag infrawallet"
   },
   "dependencies": {
     "@backstage/backend-common": "^0.22.0",
