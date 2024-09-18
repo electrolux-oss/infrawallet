@@ -14,7 +14,17 @@
 - Swift response times with cached cost data, ensuring rapid access to financial insights fetched from cloud platforms
 - Easy configuration and deployment as a Backstage plugin, both frontend and backend plugins are production-ready
 
-\*_The latest version supports AWS, Azure and GCP cost aggregation while the framework is designed to be extensible to support others. Feel free to contribute to the project._
+## Supported Cloud Providers
+
+| Provider  | Filter costs by tags |
+| --------- | -------------------- |
+| AWS       | ✅                   |
+| Azure     | ✅                   |
+| GCP       |                      |
+| MongoDB   |                      |
+| Confluent |                      |
+
+\*_The framework is designed to be extensible to support other cloud providers. Feel free to [contribute](./docs/contributing.md) to the project._
 
 ## Getting started
 
