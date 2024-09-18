@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-      - 81/build-docker-image # test this action from the PR branch
 
 env:
   DOCKER_HUB_ORG: opensourceelectrolux
@@ -56,8 +55,9 @@ jobs:
         with:
           platforms: linux/amd64,linux/arm64
           push: true
+          context: .
           file: ./packages/backend/Dockerfile
           tags: |
             ${{ env.DOCKER_HUB_ORG }}/infrawallet:latest
-            ${{ env.DOCKER_HUB_ORG }}/infrawallet:${{ github.event.push.head_commit.id }}
-            ${{ startsWith(github.ref_name, 'v') ? format('{0}/infrawallet:{1}', env.DOCKER_HUB_ORG, github.ref_name) : '' }}
+            ${{ env.DOCKER_HUB_ORG }}/infrawallet:${{ github.sha }}
+            ${{ startsWith(github.ref_name, 'v') && format('{0}/infrawallet:{1}', env.DOCKER_HUB_ORG, github.ref_name) || '' }}
