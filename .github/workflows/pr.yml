@@ -3,8 +3,7 @@ name: PR Checker
 on:
   pull_request:
     paths-ignore:
-      - 'plugins/infrawallet/docs/**'
-      - 'plugins/infrawallet-backend/docs/**'
+      - '**/docs/**'
       - '**.md'
 
 concurrency:
