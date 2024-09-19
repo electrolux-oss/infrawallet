@@ -1,0 +1,14 @@
+backend:
+  infraWallet:
+    metricProviders:
+      mock:
+        - name: mock-metric-provider
+    integrations:
+      mock:
+        - name: mock-integration
+
+infraWallet:
+  settings:
+    defaultGroupBy: none
+    defaultShowLastXMonths: 6
+    readOnly: false
