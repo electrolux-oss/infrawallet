@@ -16,13 +16,13 @@
 
 ## Supported Cloud Providers
 
-| Provider  | Filter costs by tags |
-| --------- | -------------------- |
-| AWS       | ✅                   |
-| Azure     | ✅                   |
-| GCP       |                      |
-| MongoDB   |                      |
-| Confluent |                      |
+| Provider  | Cost Reports | Filter Costs by Tags | Integration Levels                  |
+| --------- | ------------ | -------------------- | ----------------------------------- |
+| AWS       | ✅           | ✅                   | Management account and user account |
+| Azure     | ✅           | ✅                   | Subscription                        |
+| GCP       | ✅           |                      | Billing account                     |
+| MongoDB   | ✅           |                      | Organization                        |
+| Confluent | ✅           |                      | Organization                        |
 
 \*_The framework is designed to be extensible to support other cloud providers. Feel free to [contribute](./docs/contributing.md) to the project._
 
