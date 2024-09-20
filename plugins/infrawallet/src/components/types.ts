@@ -39,7 +39,7 @@ export type QueryComponentProps = {
 export type ColumnsChartComponentProps = {
   granularitySetter: any;
   categories: any[];
-  series: Array<{ name: string; data: any[] }>;
+  series: Array<{ name: string; data: any[] }> | undefined;
   metrics?: Array<{ name: string; group?: string; data: any[] }>;
   height?: number;
   thumbnail?: boolean;
@@ -47,13 +47,13 @@ export type ColumnsChartComponentProps = {
 };
 
 export type PieChartComponentProps = {
-  categories: string[];
-  series: number[];
+  categories: string[] | undefined;
+  series: number[] | undefined;
   height?: number;
 };
 
 export type CostReportsTableComponentProps = {
-  reports: Report[];
+  reports: Report[] | undefined;
   aggregatedBy: string;
   periods: string[];
 };
