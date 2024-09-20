@@ -46,7 +46,7 @@
     "@mui/x-date-pickers": "7.17.0",
     "@stitches/react": "1.2.8",
     "@types/react": "^18",
-    "apexcharts": "3.51.0",
+    "apexcharts": "3.53.0",
     "better-react-mathjax": "^2.0.2",
     "date-fns": "2.30.0",
     "human-format": "1.2.0",
