@@ -1,5 +1,5 @@
 app:
-  title: Backstage
+  title: Backstage - InfraWallet
   baseUrl: http://localhost:3000
 
 backend:
@@ -21,6 +21,7 @@ backend:
     # host: 127.0.0.1
   csp:
     connect-src: ["'self'", 'http:', 'https:']
+    upgrade-insecure-requests: false # allow access this demo instance via http
     # Content-Security-Policy directives follow the Helmet format: https://helmetjs.github.io/#reference
     # Default Helmet Content-Security-Policy values can be removed by setting the key to false
   cors:

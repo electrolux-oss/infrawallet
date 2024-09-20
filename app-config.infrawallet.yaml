@@ -1,4 +1,9 @@
+app:
+  title: Backstage - InfraWallet
+  baseUrl: http://${INFRAWALLET_DOMAIN} # in our Dockerfile, we set the default value to localhost
+
 backend:
+  baseUrl: http://${INFRAWALLET_DOMAIN}
   infraWallet:
     metricProviders:
       mock:
