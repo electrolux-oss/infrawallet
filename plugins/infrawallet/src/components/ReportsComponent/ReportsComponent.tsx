@@ -1,4 +1,4 @@
-import { Content, Header, Page, Progress } from '@backstage/core-components';
+import { Content, Header, Page } from '@backstage/core-components';
 import { alertApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { Chip, Grid } from '@material-ui/core';
 import Accordion from '@material-ui/core/Accordion';
@@ -75,14 +75,14 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
   const defaultShowLastXMonths = configApi.getOptionalNumber('infraWallet.settings.defaultShowLastXMonths') ?? 3;
 
   const MERGE_THRESHOLD = 8;
-  const [submittingState, setSubmittingState] = useState<boolean>(false);
+
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [reports, setReports] = useState<Report[]>([]);
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [filters, setFilters] = useState<Filters>({});
   const [cloudProviderErrors, setCloudProviderErrors] = useState<CloudProviderError[]>([]);
-  const [reportsAggregated, setReportsAggregated] = useState<Report[]>([]);
-  const [reportsAggregatedAndMerged, setReportsAggregatedAndMerged] = useState<Report[]>([]);
+  const [reportsAggregated, setReportsAggregated] = useState<Report[] | undefined>(undefined);
+  const [reportsAggregatedAndMerged, setReportsAggregatedAndMerged] = useState<Report[] | undefined>(undefined);
   const [reportTags, setReportTags] = useState<string[]>([]);
   const [granularity, setGranularity] = useState<string>('monthly');
   const [aggregatedBy, setAggregatedBy] = useState<string>(defaultGroupBy);
@@ -97,7 +97,8 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
   const infraWalletApi = useApi(infraWalletApiRef);
 
   const fetchCostReportsCallback = useCallback(async () => {
-    setSubmittingState(true);
+    setReportsAggregated(undefined);
+    setReportsAggregatedAndMerged(undefined);
     await infraWalletApi
       .getCostReports('', selectedTags, groups, granularity, monthRange.startMonth, monthRange.endMonth)
       .then(reportsResponse => {
@@ -110,7 +111,6 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
         }
       })
       .catch(e => alertApi.post({ message: `${e.message}`, severity: 'error' }));
-    setSubmittingState(false);
   }, [groups, monthRange, granularity, selectedTags, infraWalletApi, alertApi]);
 
   const fetchMetricsCallback = useCallback(async () => {
@@ -148,7 +148,6 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
     <Page themeId="tool">
       <Header title={title ?? 'InfraWallet'} subtitle={subTitle ?? ''} />
       <Content>
-        {submittingState ? <Progress /> : null}
         <Grid container spacing={3}>
           {cloudProviderErrors.length > 0 && (
             <Grid item xs={12}>
@@ -184,38 +183,42 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
             </Accordion>
           </Grid>
           <Grid item xs={12} md={4} lg={3}>
-            {reportsAggregatedAndMerged.length > 0 && (
-              <PieChartComponent
-                categories={reportsAggregatedAndMerged.map((item: any) => item.id)}
-                series={reportsAggregatedAndMerged.map((item: any) => getTotalCost(item))}
-                height={350}
-              />
-            )}
+            <PieChartComponent
+              categories={
+                reportsAggregatedAndMerged ? reportsAggregatedAndMerged.map((item: any) => item.id) : undefined
+              }
+              series={
+                reportsAggregatedAndMerged
+                  ? reportsAggregatedAndMerged.map((item: any) => getTotalCost(item))
+                  : undefined
+              }
+              height={350}
+            />
           </Grid>
           <Grid item xs={12} md={8} lg={9}>
-            {reportsAggregatedAndMerged.length > 0 && (
-              <ColumnsChartComponent
-                granularitySetter={setGranularity}
-                categories={periods}
-                series={reportsAggregatedAndMerged.map((item: any) => ({
-                  name: item.id,
-                  type: 'column',
-                  data: rearrangeData(item, periods),
-                }))}
-                metrics={metrics.map((item: any) => ({
-                  name: item.name,
-                  group: item.group,
-                  type: 'line',
-                  data: rearrangeData(item, periods),
-                }))}
-                height={350}
-              />
-            )}
+            <ColumnsChartComponent
+              granularitySetter={setGranularity}
+              categories={periods}
+              series={
+                reportsAggregatedAndMerged
+                  ? reportsAggregatedAndMerged.map((item: any) => ({
+                      name: item.id,
+                      type: 'column',
+                      data: rearrangeData(item, periods),
+                    }))
+                  : undefined
+              }
+              metrics={metrics.map((item: any) => ({
+                name: item.name,
+                group: item.group,
+                type: 'line',
+                data: rearrangeData(item, periods),
+              }))}
+              height={350}
+            />
           </Grid>
           <Grid item xs={12}>
-            {reportsAggregated.length > 0 && (
-              <CostReportsTableComponent reports={reportsAggregated} aggregatedBy={aggregatedBy} periods={periods} />
-            )}
+            <CostReportsTableComponent reports={reportsAggregated} aggregatedBy={aggregatedBy} periods={periods} />
           </Grid>
         </Grid>
       </Content>

@@ -1,20 +1,20 @@
 import { Paper } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
-import humanFormat from 'human-format';
 import React, { FC } from 'react';
 import Chart from 'react-apexcharts';
 import { colorList } from '../constants';
 import { PieChartComponentProps } from '../types';
+import Skeleton from '@material-ui/lab/Skeleton';
+import { formatNumber } from '../../api/functions';
 
 export const PieChartComponent: FC<PieChartComponentProps> = ({ categories, series, height }) => {
   const useStyles = makeStyles({
     fixedHeightPaper: {
-      paddingTop: '10px',
+      alignContent: 'center',
       height: height ? height : 300,
     },
   });
   const classes = useStyles();
-  const customScale = humanFormat.Scale.create(['', 'K', 'M', 'B'], 1000);
 
   const state = {
     options: {
@@ -28,18 +28,12 @@ export const PieChartComponent: FC<PieChartComponentProps> = ({ categories, seri
       },
       labels: categories,
       dataLabels: {
-        enabled: true,
-        formatter: (value: number, { seriesIndex, w }: { seriesIndex: number; w: any }) => {
-          return `${w.config.labels[seriesIndex]} (${value.toFixed(0)}%)`;
-        },
+        enabled: false,
       },
       tooltip: {
         y: {
           formatter: (value: number) => {
-            return `$${humanFormat(value, {
-              scale: customScale,
-              separator: '',
-            })}`;
+            return `$${formatNumber(value)}`;
           },
         },
       },
@@ -48,13 +42,15 @@ export const PieChartComponent: FC<PieChartComponentProps> = ({ categories, seri
           donut: {
             labels: {
               show: true,
-              value: {
-                formatter: (val: string) => {
-                  const floatVal = parseFloat(val);
-                  return `$${humanFormat(floatVal, {
-                    scale: customScale,
-                    separator: '',
-                  })}`;
+              total: {
+                show: true,
+                showAlways: true,
+                formatter: (value: any) => {
+                  let total = 0;
+                  for (const i of value.config.series) {
+                    total += i;
+                  }
+                  return `$${formatNumber(total)}`;
                 },
               },
             },
@@ -69,7 +65,15 @@ export const PieChartComponent: FC<PieChartComponentProps> = ({ categories, seri
 
   return (
     <Paper className={classes.fixedHeightPaper}>
-      <Chart options={state.options} series={state.series} type="donut" height={height ? height : 300} />
+      {series === undefined ? (
+        <div style={{ width: '60%', margin: 'auto' }}>
+          <Skeleton />
+          <Skeleton />
+          <Skeleton />
+        </div>
+      ) : (
+        <Chart options={state.options} series={state.series} type="donut" height={height ? height : 300} />
+      )}
     </Paper>
   );
 };

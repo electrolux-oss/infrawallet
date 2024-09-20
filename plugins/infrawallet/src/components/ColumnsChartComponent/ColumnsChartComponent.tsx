@@ -1,10 +1,11 @@
 import { Grid, Paper, Switch } from '@material-ui/core';
 import { makeStyles, useTheme } from '@material-ui/core/styles';
-import humanFormat from 'human-format';
 import React, { FC, useCallback, useEffect, useState } from 'react';
 import Chart from 'react-apexcharts';
 import { colorList } from '../constants';
 import { ColumnsChartComponentProps } from '../types';
+import Skeleton from '@material-ui/lab/Skeleton';
+import { formatNumber } from '../../api/functions';
 
 type CurveType =
   | 'smooth'
@@ -45,101 +46,100 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
   const [yaxisArray, setYaxisArray] = useState<any[]>([]);
   const [strokeWidthArray, setStrokeWidthArray] = useState<number[]>([]);
   const [strokeDashArray, setStrokeDashArray] = useState<number[]>([]);
-  const customScale = humanFormat.Scale.create(['', 'K', 'M', 'B'], 1000);
 
-  const state = thumbnail
-    ? {
-        options: {
-          chart: {
-            animations: {
-              enabled: false,
-            },
-            zoom: {
-              enabled: false,
-            },
-            stacked: true,
-            toolbar: {
-              show: false,
-            },
-            sparkline: {
-              enabled: true,
-            },
-          },
-          xaxis: {
-            categories: categories,
-          },
-          theme: {
-            mode: defaultTheme.palette.type,
-          },
-        },
-        series: series,
-      }
-    : {
-        options: {
-          chart: {
-            animations: {
-              enabled: false,
-            },
-            stacked: true,
-            toolbar: {
-              show: false,
-            },
-            events: {
-              dataPointSelection: dataPointSelectionHandler,
-            },
-          },
-          xaxis: {
-            categories: categories,
-          },
-          stroke: {
-            width: strokeWidthArray,
-            dashArray: strokeDashArray,
-            curve: 'smooth' as CurveType,
-          },
-          yaxis: yaxisArray,
-          dataLabels: {
-            enabled: false,
-          },
-          tooltip: {
-            y: {
-              formatter: (value: number, { seriesIndex }: { seriesIndex: number }) => {
-                if (!value) {
-                  return '';
-                }
-                const prefix = seriesIndex <= series.length - 1 ? '$' : '';
-                return `${prefix}${humanFormat(value, {
-                  scale: customScale,
-                  separator: '',
-                })}`;
+  let state = undefined;
+  if (series) {
+    state = thumbnail
+      ? {
+          options: {
+            chart: {
+              animations: {
+                enabled: false,
+              },
+              zoom: {
+                enabled: false,
+              },
+              stacked: true,
+              toolbar: {
+                show: false,
+              },
+              sparkline: {
+                enabled: true,
               },
             },
-            fixed: {
-              enabled: true,
-              position: 'topRight',
+            xaxis: {
+              categories: categories,
+            },
+            theme: {
+              mode: defaultTheme.palette.type,
             },
           },
-          legend: {
-            showForSingleSeries: true,
+          series: series,
+        }
+      : {
+          options: {
+            chart: {
+              animations: {
+                enabled: false,
+              },
+              stacked: true,
+              toolbar: {
+                show: false,
+              },
+              events: {
+                dataPointSelection: dataPointSelectionHandler,
+              },
+            },
+            xaxis: {
+              categories: categories,
+            },
+            stroke: {
+              width: strokeWidthArray,
+              dashArray: strokeDashArray,
+              curve: 'smooth' as CurveType,
+            },
+            yaxis: yaxisArray,
+            dataLabels: {
+              enabled: false,
+            },
+            tooltip: {
+              y: {
+                formatter: (value: number, { seriesIndex }: { seriesIndex: number }) => {
+                  if (!value) {
+                    return '';
+                  }
+                  const prefix = seriesIndex <= series.length - 1 ? '$' : '';
+                  return `${prefix}${formatNumber(value)}`;
+                },
+              },
+              fixed: {
+                enabled: true,
+                position: 'topRight',
+              },
+            },
+            legend: {
+              showForSingleSeries: true,
+            },
+            theme: {
+              mode: defaultTheme.palette.type,
+            },
+            // there are only 5 colors by default, here we extend it to 50 different colors
+            colors: colorList,
           },
-          theme: {
-            mode: defaultTheme.palette.type,
-          },
-          // there are only 5 colors by default, here we extend it to 50 different colors
-          colors: colorList,
-        },
-        series: seriesArray,
-      };
+          series: seriesArray,
+        };
+  }
 
   const initChartCallback = useCallback(async () => {
+    if (series === undefined) {
+      return;
+    }
+
     const labelFormatter = (value: number): string => {
-      const scale = humanFormat.Scale.create(['', 'K', 'M', 'B'], 1000);
       if (typeof value !== 'number' || isNaN(value)) {
         return '';
       }
-      return `$${humanFormat(value, {
-        scale: scale,
-        separator: '',
-      })}`;
+      return `$${formatNumber(value)}`;
     };
 
     const strokeWidth = Array<number>(series.length).fill(0);
@@ -226,8 +226,14 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
         </Grid>
         <Grid item>Show Metrics</Grid>
       </Grid>
-      {seriesArray && (
+      {series && state && seriesArray ? (
         <Chart options={state.options} series={state.series} type="line" height={height ? height - 70 : 230} />
+      ) : (
+        <div style={{ width: '60%', margin: 'auto' }}>
+          <Skeleton />
+          <Skeleton />
+          <Skeleton />
+        </div>
       )}
     </Paper>
   );

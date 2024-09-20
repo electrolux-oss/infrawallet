@@ -1,7 +1,8 @@
-import { format, parse, subMonths } from 'date-fns';
+import { format, parse, subDays, subMonths } from 'date-fns';
 import { reduce } from 'lodash';
 import moment from 'moment';
 import { Report, Filters, Tag } from './types';
+import humanFormat from 'human-format';
 
 export const mergeCostReports = (reports: Report[], threshold: number): Report[] => {
   const totalCosts: { id: string; total: number }[] = [];
@@ -180,6 +181,12 @@ export const getPreviousMonth = (month: string): string => {
   return format(previousMonth, 'yyyy-MM');
 };
 
+export const getPreviousDay = (day: string): string => {
+  const date = parse(day, 'yyyy-MM-dd', new Date());
+  const previousDay = subDays(date, 1);
+  return format(previousDay, 'yyyy-MM-dd');
+};
+
 export const getPeriodStrings = (granularity: string, startTime: Date, endTime: Date): string[] => {
   const result: string[] = [];
   const current = moment(startTime);
@@ -195,4 +202,13 @@ export const getPeriodStrings = (granularity: string, startTime: Date, endTime: 
   }
 
   return result;
+};
+
+export const formatNumber = (number: number): string => {
+  const customScale = humanFormat.Scale.create(['', 'K', 'M', 'B'], 1000);
+  return humanFormat(number, {
+    scale: customScale,
+    separator: '',
+    decimals: 2,
+  });
 };
