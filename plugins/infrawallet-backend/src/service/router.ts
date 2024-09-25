@@ -11,9 +11,10 @@ import {
 } from '../controllers/MetricSettingController';
 import { InfraWalletClient } from '../cost-clients/InfraWalletClient';
 import { MetricProvider } from '../metric-providers/MetricProvider';
+import { CategoryMappingService } from './CategoryMappingService';
 import { COST_CLIENT_MAPPINGS, METRIC_PROVIDER_MAPPINGS } from './consts';
-import { CloudProviderError, Metric, MetricSetting, Report, Tag } from './types';
 import { parseTags, tagsToString } from './functions';
+import { CloudProviderError, Metric, MetricSetting, Report, Tag } from './types';
 
 export interface RouterOptions {
   logger: LoggerService;
@@ -41,6 +42,9 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
   const { logger, config, cache, database } = options;
   // do database migrations here to support the legacy backend system
   await setUpDatabase(database);
+
+  // init CategoryMappingService
+  CategoryMappingService.initInstance(cache, logger);
 
   const router = Router();
   router.use(express.json());
@@ -71,6 +75,9 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
 
       providerTags[provider].push(tag);
     }
+
+    const categoryMappingService = CategoryMappingService.getInstance();
+    await categoryMappingService.refreshCategoryMappings();
 
     const conf = config.getConfig('backend.infraWallet.integrations');
     conf.keys().forEach((provider: string) => {
