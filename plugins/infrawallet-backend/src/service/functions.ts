@@ -207,7 +207,6 @@ export async function setMetricsToCache(
   }); // cache for 2 hours by default
 }
 
-
 export function parseFilters(filters: string): Record<string, string[]> {
   const result: Record<string, string[]> = {};
 
@@ -227,7 +226,10 @@ export function parseFilters(filters: string): Record<string, string[]> {
     if (key && value) {
       if (value.startsWith('(') && value.endsWith(')')) {
         // multiple values
-        const values = value.slice(1, -1).split('|').map(v => v.trim());
+        const values = value
+          .slice(1, -1)
+          .split('|')
+          .map(v => v.trim());
         result[key] = values;
       } else {
         // single value

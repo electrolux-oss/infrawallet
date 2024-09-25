@@ -9,7 +9,7 @@ import {
   INFRAWALLET_ANNOTATION_CATEGORY,
   INFRAWALLET_ANNOTATION_PROVIDER,
   INFRAWALLET_ANNOTATION_EXTRAS,
-} from './InfraWalletAppData'
+} from './InfraWalletAppData';
 
 export const isInfraWalletProjectIDAnnotationAvailable = (entity: Entity) =>
   Boolean(entity.metadata.annotations?.[INFRAWALLET_ANNOTATION_PROJECT]);
@@ -30,12 +30,12 @@ export const isInfraWalletExtrasAnnotationAvailable = (entity: Entity) =>
   Boolean(entity.metadata.annotations?.[INFRAWALLET_ANNOTATION_EXTRAS]);
 
 export const isInfraWalletAvailable = (entity: Entity) => {
-    const available =
-      isInfraWalletProjectIDAnnotationAvailable(entity) ||
-      isInfraWalletAccountAnnotationAvailable(entity) ||
-      isInfraWalletServiceAnnotationAvailable(entity) ||
-      isInfraWalletCategoryAnnotationAvailable(entity) ||
-      isInfraWalletProviderAnnotationAvailable(entity) ||
-      isInfraWalletExtrasAnnotationAvailable(entity);
-    return available;
-  };
+  const available =
+    isInfraWalletProjectIDAnnotationAvailable(entity) ||
+    isInfraWalletAccountAnnotationAvailable(entity) ||
+    isInfraWalletServiceAnnotationAvailable(entity) ||
+    isInfraWalletCategoryAnnotationAvailable(entity) ||
+    isInfraWalletProviderAnnotationAvailable(entity) ||
+    isInfraWalletExtrasAnnotationAvailable(entity);
+  return available;
+};

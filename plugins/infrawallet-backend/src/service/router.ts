@@ -127,8 +127,6 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
       });
     });
 
-
-
     if (errors.length > 0) {
       response.status(207).json({ data: filteredResults, errors: errors, status: 207 });
     } else {

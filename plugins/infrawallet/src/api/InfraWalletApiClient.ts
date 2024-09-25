@@ -59,7 +59,7 @@ export class InfraWalletApiClient implements InfraWalletApi {
     groups: string,
     granularity: string,
     startTime: Date,
-    endTime: Date
+    endTime: Date,
   ): Promise<CostReportsResponse> {
     const tagsString = tagsToString(tags);
     const queryParams = {
@@ -72,7 +72,6 @@ export class InfraWalletApiClient implements InfraWalletApi {
     };
     const queryString = stringify(queryParams);
     const url = `api/infrawallet/reports?${queryString}`;
-
 
     return await this.request(url);
   }

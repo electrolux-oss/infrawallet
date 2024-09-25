@@ -5,28 +5,9 @@ import { useApi } from '@backstage/core-plugin-api';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { useEntity } from '@backstage/plugin-catalog-react';
 import { Report, Tag } from '../../api/types';
-import {
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Tabs,
-  Tab,
-  Box,
-} from '@material-ui/core';
+import { Typography, Table, TableBody, TableCell, TableHead, TableRow, Tabs, Tab, Box } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-  Legend,
-} from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
 const useStyles = makeStyles({
   increase: {
@@ -107,7 +88,7 @@ export const EntityInfraWalletCard = () => {
 
         const filtersObj: Record<string, string[]> = {};
 
-        annotationKeys.forEach((key) => {
+        annotationKeys.forEach(key => {
           if (annotations[key]) {
             const shortKey = key.replace('infrawallet.io/', '');
             const values = annotations[key]
@@ -121,8 +102,8 @@ export const EntityInfraWalletCard = () => {
         if (annotations['infrawallet.io/extra-filters']) {
           const extraFilters = annotations['infrawallet.io/extra-filters'];
           // assuming extra-filters are in the format "key1: value1, key2: value2"
-          extraFilters.split(',').forEach((pair) => {
-            const [key, value] = pair.split(':').map((s) => s.trim());
+          extraFilters.split(',').forEach(pair => {
+            const [key, value] = pair.split(':').map(s => s.trim());
             if (key && value) {
               const values = value
                 .split('|')
@@ -157,7 +138,7 @@ export const EntityInfraWalletCard = () => {
           groups,
           granularity,
           startTime,
-          endTime
+          endTime,
         );
 
         if (costReportsResponse.status !== 200) {
@@ -189,14 +170,14 @@ export const EntityInfraWalletCard = () => {
 
   // prepare periods
   const periods = new Set<string>();
-  costData.forEach((report) => {
-    Object.keys(report.reports).forEach((period) => periods.add(period));
+  costData.forEach(report => {
+    Object.keys(report.reports).forEach(period => periods.add(period));
   });
 
   const sortedPeriods = Array.from(periods).sort();
 
   // calculate total cost for each period
-  const totalCostsByPeriod = sortedPeriods.map((period) => {
+  const totalCostsByPeriod = sortedPeriods.map(period => {
     const total = costData.reduce((sum, report) => {
       return sum + (report.reports[period] || 0);
     }, 0);
@@ -207,13 +188,13 @@ export const EntityInfraWalletCard = () => {
   const currentPeriod = sortedPeriods[sortedPeriods.length - 1];
   const previousPeriod = sortedPeriods.length > 1 ? sortedPeriods[sortedPeriods.length - 2] : null;
 
-  const totalCost = totalCostsByPeriod.find((item) => item.period === currentPeriod)?.total || 0;
-  const previousTotalCost =
-    previousPeriod ? totalCostsByPeriod.find((item) => item.period === previousPeriod)?.total || 0 : 0;
+  const totalCost = totalCostsByPeriod.find(item => item.period === currentPeriod)?.total || 0;
+  const previousTotalCost = previousPeriod
+    ? totalCostsByPeriod.find(item => item.period === previousPeriod)?.total || 0
+    : 0;
 
   // calculate percentage change
-  const percentageChange =
-    previousTotalCost !== 0 ? ((totalCost - previousTotalCost) / previousTotalCost) * 100 : 0;
+  const percentageChange = previousTotalCost !== 0 ? ((totalCost - previousTotalCost) / previousTotalCost) * 100 : 0;
   const percentageChangeFormatted = Math.abs(percentageChange).toFixed(2);
   let mark = '';
   if (percentageChange < 0) {
@@ -226,12 +207,12 @@ export const EntityInfraWalletCard = () => {
   const projects = Array.from(
     new Set(
       costData
-        .map((report) => {
+        .map(report => {
           const project = report.project as string | undefined;
           return typeof project === 'string' ? project : undefined;
         })
-        .filter((project): project is string => !!project)
-    )
+        .filter((project): project is string => !!project),
+    ),
   );
 
   if (projects.length === 0) {
@@ -239,10 +220,10 @@ export const EntityInfraWalletCard = () => {
   }
 
   // 2. build chart data with per-project costs
-  const chartData = sortedPeriods.map((period) => {
+  const chartData = sortedPeriods.map(period => {
     const dataPoint: Record<string, any> = { period };
-    projects.forEach((project) => {
-      const projectReports = costData.filter((report) => report.project === project);
+    projects.forEach(project => {
+      const projectReports = costData.filter(report => report.project === project);
       const total = projectReports.reduce((sum, report) => {
         return sum + (report.reports[period] || 0);
       }, 0);
@@ -328,10 +309,7 @@ export const EntityInfraWalletCard = () => {
         <Box p={2}>
           <Box display="flex" alignItems="center">
             {previousTotalCost > 0 && (
-              <Box
-                className={getChangeClass(percentageChange)}
-                mr={1}
-              >
+              <Box className={getChangeClass(percentageChange)} mr={1}>
                 {mark} {percentageChangeFormatted}%
               </Box>
             )}
@@ -376,7 +354,7 @@ export const EntityInfraWalletCard = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {serviceRows.map((row) => {
+              {serviceRows.map(row => {
                 const serviceChangeClass = getChangeClass(row.change);
                 const serviceMark = getChangeMark(row.change);
                 const changeFormatted = Math.abs(row.change).toFixed(2);
@@ -387,10 +365,7 @@ export const EntityInfraWalletCard = () => {
                     </TableCell>
                     <TableCell align="right">${row.cost.toFixed(2)}</TableCell>
                     <TableCell align="right">
-                      <Box
-                        className={serviceChangeClass}
-                        display="inline"
-                      >
+                      <Box className={serviceChangeClass} display="inline">
                         {serviceMark} {changeFormatted}%
                       </Box>
                     </TableCell>
