@@ -1,14 +1,20 @@
-name: Deploy Packages to NPM
+name: Build and Deploy Packages to NPM
 
 on:
+  release:
+    types: [published]
   push:
-    tags: ['v*']
+    branches:
+      - main
+    paths-ignore:
+      - '**/docs/**'
+      - '**.md'
 
 permissions:
   contents: read
 
 jobs:
-  build-and-release:
+  build-and-publish-to-npm:
     runs-on: ubuntu-latest
 
     strategy:
@@ -19,6 +25,10 @@ jobs:
       NODE_OPTIONS: --max-old-space-size=8192
 
     steps:
+      #############################################################################
+      # common steps
+      #############################################################################
+
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # v4.1.6
 
       - name: use node.js ${{ matrix.node-version }}
@@ -45,8 +55,36 @@ jobs:
       - name: verify type dependencies
         run: yarn lint:type-deps
 
-      # Publishes current version of packages that are not already present in the registry
-      - name: publish
+      #############################################################################
+      # publish a release candidate to npm
+      #############################################################################
+      - name: (for rc) change infrawallet version to `semver-datetime-sha`
+        if: github.event_name == 'push'
+        working-directory: ./plugins/infrawallet
+        run: |
+          VERSION=$(npm pkg get version --workspaces=false | tr -d \")
+          npm pkg set version=$VERSION-$(date +%F%T | tr -d '\-:')-$(echo ${{ github.sha }} | cut -c 1-7)
+
+      - name: (for rc) change infrawallet-backend version to `semver-datetime-sha`
+        if: github.event_name == 'push'
+        working-directory: ./plugins/infrawallet-backend
+        run: |
+          VERSION=$(npm pkg get version --workspaces=false | tr -d \")
+          npm pkg set version=$VERSION-$(date +%F%T | tr -d '\-:')-$(echo ${{ github.sha }} | cut -c 1-7)
+
+      - name: (for rc) publish release candidate
+        if: github.event_name == 'push'
+        run: |
+          yarn config set -H 'npmAuthToken' "${{secrets.NPM_TOKEN}}"
+          yarn workspaces foreach -v --no-private npm publish --access public --tolerate-republish --tag rc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      #############################################################################
+      # publish a release to npm
+      #############################################################################
+      - name: publish release
+        if: github.event_name == 'release'
         run: |
           yarn config set -H 'npmAuthToken' "${{secrets.NPM_TOKEN}}"
           yarn workspaces foreach -v --no-private npm publish --access public --tolerate-republish
