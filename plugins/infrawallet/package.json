@@ -33,6 +33,7 @@
     "test": "backstage-cli package test"
   },
   "dependencies": {
+    "@backstage/catalog-model": "^1.7.0",
     "@backstage/config": "^1.2.0",
     "@backstage/core-components": "^0.14.7",
     "@backstage/core-plugin-api": "^1.9.2",

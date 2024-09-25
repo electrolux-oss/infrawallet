@@ -73,7 +73,6 @@ export class InfraWalletApiClient implements InfraWalletApi {
     const queryString = stringify(queryParams);
     const url = `api/infrawallet/reports?${queryString}`;
 
-    console.log(`Requesting cost reports with URL: ${url}`);
 
     return await this.request(url);
   }

@@ -30,7 +30,6 @@ export const isInfraWalletExtrasAnnotationAvailable = (entity: Entity) =>
   Boolean(entity.metadata.annotations?.[INFRAWALLET_ANNOTATION_EXTRAS]);
 
 export const isInfraWalletAvailable = (entity: Entity) => {
-    console.log('isInfraWalletAvailable called with entity:', entity.metadata.name);
     const available =
       isInfraWalletProjectIDAnnotationAvailable(entity) ||
       isInfraWalletAccountAnnotationAvailable(entity) ||
@@ -38,6 +37,5 @@ export const isInfraWalletAvailable = (entity: Entity) => {
       isInfraWalletCategoryAnnotationAvailable(entity) ||
       isInfraWalletProviderAnnotationAvailable(entity) ||
       isInfraWalletExtrasAnnotationAvailable(entity);
-    console.log('isInfraWalletAvailable returns:', available);
     return available;
   };

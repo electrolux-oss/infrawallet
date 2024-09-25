@@ -78,7 +78,6 @@ const COLORS = [
   '#0000ff',
   '#ff00ff',
   '#00ffff',
-
 ];
 
 export const EntityInfraWalletCard = () => {
@@ -97,7 +96,6 @@ export const EntityInfraWalletCard = () => {
       setError(null);
       try {
         const annotations = entity.metadata.annotations || {};
-
 
         const annotationKeys = [
           'infrawallet.io/project',
@@ -120,7 +118,6 @@ export const EntityInfraWalletCard = () => {
           }
         });
 
-
         if (annotations['infrawallet.io/extra-filters']) {
           const extraFilters = annotations['infrawallet.io/extra-filters'];
           // assuming extra-filters are in the format "key1: value1, key2: value2"
@@ -140,10 +137,9 @@ export const EntityInfraWalletCard = () => {
         const filtersArray = Object.entries(filtersObj).map(([key, values]) => {
           if (values.length === 1) {
             return `${key}:${values[0]}`;
-          } else {
-            const valuesString = values.join('|');
-            return `${key}:(${valuesString})`;
           }
+          const valuesString = values.join('|');
+          return `${key}:(${valuesString})`;
         });
         const filters = `(${filtersArray.join(',')})`;
 
@@ -154,7 +150,6 @@ export const EntityInfraWalletCard = () => {
         const endTime = new Date();
         const startTime = new Date();
         startTime.setMonth(endTime.getMonth() - 2);
-
 
         const costReportsResponse = await infrawalletApi.getCostReports(
           filters,
@@ -192,13 +187,12 @@ export const EntityInfraWalletCard = () => {
     return <Alert severity="info">No cost data available for this entity.</Alert>;
   }
 
-  // prep periods
+  // prepare periods
   const periods = new Set<string>();
   costData.forEach((report) => {
     Object.keys(report.reports).forEach((period) => periods.add(period));
   });
 
-  // convert periods to array and sort
   const sortedPeriods = Array.from(periods).sort();
 
   // calculate total cost for each period
@@ -220,7 +214,6 @@ export const EntityInfraWalletCard = () => {
   // calculate percentage change
   const percentageChange =
     previousTotalCost !== 0 ? ((totalCost - previousTotalCost) / previousTotalCost) * 100 : 0;
-  const isIncrease = percentageChange > 0;
   const percentageChangeFormatted = Math.abs(percentageChange).toFixed(2);
   let mark = '';
   if (percentageChange < 0) {
@@ -228,8 +221,6 @@ export const EntityInfraWalletCard = () => {
   } else if (percentageChange > 0) {
     mark = '▲';
   }
-
-
 
   // 1. extract unique project IDs
   const projects = Array.from(
@@ -243,7 +234,6 @@ export const EntityInfraWalletCard = () => {
     )
   );
 
-
   if (projects.length === 0) {
     return <Alert severity="warning">No project data available to display in the chart.</Alert>;
   }
@@ -252,7 +242,6 @@ export const EntityInfraWalletCard = () => {
   const chartData = sortedPeriods.map((period) => {
     const dataPoint: Record<string, any> = { period };
     projects.forEach((project) => {
-
       const projectReports = costData.filter((report) => report.project === project);
       const total = projectReports.reduce((sum, report) => {
         return sum + (report.reports[period] || 0);
@@ -301,6 +290,28 @@ export const EntityInfraWalletCard = () => {
     };
   });
 
+  // helper function to determine className based on change
+  const getChangeClass = (change: number): string => {
+    if (change > 0) {
+      return classes.increase;
+    }
+    if (change === 0) {
+      return classes.noChange;
+    }
+    return classes.decrease;
+  };
+
+  // helper function to determine mark based on change
+  const getChangeMark = (change: number): string => {
+    if (change < 0) {
+      return '▼';
+    }
+    if (change > 0) {
+      return '▲';
+    }
+    return '';
+  };
+
   const handleTabChange = (_event: React.ChangeEvent<{}>, newValue: number) => {
     setTabIndex(newValue);
   };
@@ -318,13 +329,7 @@ export const EntityInfraWalletCard = () => {
           <Box display="flex" alignItems="center">
             {previousTotalCost > 0 && (
               <Box
-                className={
-                  isIncrease
-                    ? classes.increase
-                    : percentageChange === 0
-                    ? classes.noChange
-                    : classes.decrease
-                }
+                className={getChangeClass(percentageChange)}
                 mr={1}
               >
                 {mark} {percentageChangeFormatted}%
@@ -372,14 +377,9 @@ export const EntityInfraWalletCard = () => {
             </TableHead>
             <TableBody>
               {serviceRows.map((row) => {
-                const isIncrease = row.change > 0;
+                const serviceChangeClass = getChangeClass(row.change);
+                const serviceMark = getChangeMark(row.change);
                 const changeFormatted = Math.abs(row.change).toFixed(2);
-                let mark = '';
-                if (row.change < 0) {
-                  mark = '▼';
-                } else if (row.change > 0) {
-                  mark = '▲';
-                }
                 return (
                   <TableRow key={row.service}>
                     <TableCell component="th" scope="row">
@@ -388,16 +388,10 @@ export const EntityInfraWalletCard = () => {
                     <TableCell align="right">${row.cost.toFixed(2)}</TableCell>
                     <TableCell align="right">
                       <Box
-                        className={
-                          isIncrease
-                            ? classes.increase
-                            : row.change === 0
-                            ? classes.noChange
-                            : classes.decrease
-                        }
+                        className={serviceChangeClass}
                         display="inline"
                       >
-                        {mark} {changeFormatted}%
+                        {serviceMark} {changeFormatted}%
                       </Box>
                     </TableCell>
                   </TableRow>
