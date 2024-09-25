@@ -191,6 +191,21 @@ import { InfraWalletPage } from '@electrolux-oss/plugin-infrawallet';
 </FlatRoutes>
 ...
 ```
+modify `packages/app/src/components/catalog/EntityPage.tsx` and add the following code
+```ts
+...
+import {EntityInfraWalletCard, isInfraWalletAvailable } from '@electrolux-oss/plugin-infrawallet';
+...
+
+    <EntitySwitch>
+      <EntitySwitch.Case if={isInfraWalletAvailable}>
+        <Grid item md={6}>
+          <EntityInfraWalletCard />
+        </Grid>
+      </EntitySwitch.Case>
+    </EntitySwitch>
+...
+```
 
 2. add InfraWallet backend
 

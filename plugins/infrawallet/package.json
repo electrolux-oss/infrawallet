@@ -55,7 +55,9 @@
     "moment": "2.29.4",
     "mui-modal-provider": "2.2.0",
     "node-fetch": "^2.6.7",
+    "query-string": "7.0.0",
     "react-apexcharts": "1.4.1",
+    "recharts": "^2.12.7",
     "uuid": "10.0.0"
   },
   "devDependencies": {

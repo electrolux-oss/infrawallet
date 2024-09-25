@@ -31,6 +31,7 @@ export type Report = {
   reports: {
     [period: string]: number;
   };
+  [key: string]: string | number | { [period: string]: number } | undefined;
 };
 
 export type Tag = {

@@ -206,3 +206,35 @@ export async function setMetricsToCache(
     ttl: ttl ?? 60 * 60 * 2 * 1000,
   }); // cache for 2 hours by default
 }
+
+
+export function parseFilters(filters: string): Record<string, string[]> {
+  const result: Record<string, string[]> = {};
+
+  if (!filters || filters[0] !== '(' || filters[filters.length - 1] !== ')') {
+    return result;
+  }
+
+  const filterString = filters.slice(1, -1);
+  if (!filterString) {
+    return result;
+  }
+
+  const keyValuePairs = filterString.split(',').map(pair => pair.trim());
+
+  keyValuePairs.forEach(pair => {
+    const [key, value] = pair.split(':').map(s => s.trim());
+    if (key && value) {
+      if (value.startsWith('(') && value.endsWith(')')) {
+        // multiple values
+        const values = value.slice(1, -1).split('|').map(v => v.trim());
+        result[key] = values;
+      } else {
+        // single value
+        result[key] = [value];
+      }
+    }
+  });
+
+  return result;
+}
