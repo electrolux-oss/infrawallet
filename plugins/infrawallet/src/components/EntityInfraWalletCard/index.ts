@@ -1,0 +1,1 @@
+export { EntityInfraWalletCard } from './EntityInfraWalletCard';

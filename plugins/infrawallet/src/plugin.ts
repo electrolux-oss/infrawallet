@@ -2,6 +2,7 @@ import {
   createApiFactory,
   createPlugin,
   createRoutableExtension,
+  createComponentExtension,
   identityApiRef,
   configApiRef,
 } from '@backstage/core-plugin-api';
@@ -30,5 +31,14 @@ export const InfraWalletPage = infraWalletPlugin.provide(
     name: 'InfraWalletPage',
     component: () => import('./components/Router').then(m => m.Router),
     mountPoint: rootRouteRef,
+  }),
+);
+
+export const EntityInfraWalletCard = infraWalletPlugin.provide(
+  createComponentExtension({
+    name: 'EntityInfraWalletCard',
+    component: {
+      lazy: () => import('./components/EntityInfraWalletCard').then(m => m.EntityInfraWalletCard),
+    },
   }),
 );
