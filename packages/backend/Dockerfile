@@ -56,4 +56,8 @@ RUN --mount=type=cache,target=/home/node/.cache/yarn,sharing=locked,uid=1000,gid
 COPY --chown=node:node packages/backend/dist/bundle.tar.gz app-config*.yaml ./
 RUN tar xzf bundle.tar.gz && rm bundle.tar.gz
 
+# Set InfraWallet domain as an ENV variable, this can be useful later on when we would like to deploy InfraWallet using
+# a custom domain
+ENV INFRAWALLET_DOMAIN=localhost
+
 CMD ["node", "packages/backend", "--config", "app-config.yaml", "--config", "app-config.infrawallet.yaml"]
