@@ -1,66 +1,6 @@
-import { CacheService, DatabaseService } from '@backstage/backend-plugin-api';
-import { CategoryMapping, CostQuery, Metric, MetricQuery, Report, Tag, TagsQuery } from './types';
+import { CacheService } from '@backstage/backend-plugin-api';
 import { CACHE_CATEGORY, CLOUD_PROVIDER, DEFAULT_COSTS_CACHE_TTL, DEFAULT_TAGS_CACHE_TTL } from './consts';
-
-export async function getCategoryMappings(
-  database: DatabaseService,
-  provider: string,
-): Promise<{ [service: string]: string }> {
-  const result: { [service: string]: string } = {};
-  const client = await database.getClient();
-  const defaultMappings = await client
-    .where({ provider: provider.toLowerCase() })
-    .select()
-    .from<CategoryMapping>('category_mappings_default');
-  defaultMappings.forEach(mapping => {
-    let services = mapping.cloud_service_names;
-    if (typeof services === 'string') {
-      // just in case if the database such as sqlite does not support JSON column
-      services = JSON.parse(services);
-    }
-
-    services.forEach((service: string) => {
-      result[service] = mapping.category;
-    });
-  });
-
-  // check if there are any records defined by user
-  const overrideMappings = await client
-    .where({ provider: provider })
-    .select()
-    .from<CategoryMapping>('category_mappings_override');
-  overrideMappings.forEach(mapping => {
-    let services = mapping.cloud_service_names;
-    if (typeof services === 'string') {
-      // just in case if the database such as sqlite does not support JSON column
-      services = JSON.parse(services);
-    }
-
-    services.forEach((service: string) => {
-      result[service] = mapping.category;
-    });
-  });
-
-  return result;
-}
-
-export function getCategoryByServiceName(serviceName: string, categoryMappings: { [service: string]: string }): string {
-  if (serviceName in categoryMappings) {
-    return categoryMappings[serviceName];
-  }
-
-  // do a regex match with service name
-  for (const service in categoryMappings) {
-    if (Object.hasOwn(categoryMappings, service)) {
-      const regex = new RegExp(service);
-      if (regex.test(serviceName)) {
-        return categoryMappings[service];
-      }
-    }
-  }
-
-  return 'Uncategorized';
-}
+import { CostQuery, Metric, MetricQuery, Report, Tag, TagsQuery } from './types';
 
 // In URL, tags are defined in this format:
 // tags=(provider1:key1=value1 OR provider2:key2=value2)

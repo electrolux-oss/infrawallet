@@ -1,8 +1,11 @@
-export type CategoryMapping = {
-  id: string;
-  provider: string;
-  category: string;
-  cloud_service_names: string[];
+export type CategoryMappings = {
+  [category: string]: {
+    [provider: string]: string[];
+  };
+};
+
+export type ServiceToCategoryMappings = {
+  [provider: string]: { [service: string]: string };
 };
 
 export type TagsQuery = {
