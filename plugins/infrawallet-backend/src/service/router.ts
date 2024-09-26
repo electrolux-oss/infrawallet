@@ -13,8 +13,8 @@ import { InfraWalletClient } from '../cost-clients/InfraWalletClient';
 import { MetricProvider } from '../metric-providers/MetricProvider';
 import { CategoryMappingService } from './CategoryMappingService';
 import { COST_CLIENT_MAPPINGS, METRIC_PROVIDER_MAPPINGS } from './consts';
-import { parseTags, tagsToString } from './functions';
 import { CloudProviderError, Metric, MetricSetting, Report, Tag } from './types';
+import { parseTags, tagsToString, parseFilters } from './functions';
 
 export interface RouterOptions {
   logger: LoggerService;
@@ -114,10 +114,22 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
 
     await Promise.all(promises);
 
+    const parsedFilters = parseFilters(filters);
+
+    const filteredResults = results.filter(report => {
+      return Object.entries(parsedFilters).every(([key, values]) => {
+        const reportValue = report[key];
+        if (typeof reportValue !== 'string') {
+          return false;
+        }
+        return values.includes(reportValue);
+      });
+    });
+
     if (errors.length > 0) {
-      response.status(207).json({ data: results, errors: errors, status: 207 });
+      response.status(207).json({ data: filteredResults, errors: errors, status: 207 });
     } else {
-      response.json({ data: results, errors: errors, status: 200 });
+      response.json({ data: filteredResults, errors: errors, status: 200 });
     }
   });
 

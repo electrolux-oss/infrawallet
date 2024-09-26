@@ -72,6 +72,8 @@
     ]
   },
   "dependencies": {
+    "@backstage/catalog-model": "^1.7.0",
+    "@backstage/plugin-catalog-react": "^1.13.0",
     "@hookform/resolvers": "^3.3.2",
     "react-redux": "^9.1.0"
   },

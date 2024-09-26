@@ -1,6 +1,7 @@
 import { ConfigApi, IdentityApi } from '@backstage/core-plugin-api';
 import fetch from 'node-fetch';
 import { InfraWalletApi } from './InfraWalletApi';
+import { stringify } from 'query-string';
 import {
   CostReportsResponse,
   GetWalletResponse,
@@ -61,10 +62,19 @@ export class InfraWalletApiClient implements InfraWalletApi {
     endTime: Date,
   ): Promise<CostReportsResponse> {
     const tagsString = tagsToString(tags);
-    const url = `api/infrawallet/reports?&filters=${filters}&tags=${tagsString}&groups=${groups}&granularity=${granularity}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
+    const queryParams = {
+      filters,
+      tags: tagsString,
+      groups,
+      granularity,
+      startTime: startTime.getTime(),
+      endTime: endTime.getTime(),
+    };
+    const queryString = stringify(queryParams);
+    const url = `api/infrawallet/reports?${queryString}`;
+
     return await this.request(url);
   }
-
   async getTagKeys(provider: string, startTime: Date, endTime: Date): Promise<TagResponse> {
     const url = `api/infrawallet/tag-keys?provider=${provider}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
     return await this.request(url);
