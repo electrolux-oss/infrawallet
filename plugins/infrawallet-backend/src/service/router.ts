@@ -13,7 +13,6 @@ import { InfraWalletClient } from '../cost-clients/InfraWalletClient';
 import { MetricProvider } from '../metric-providers/MetricProvider';
 import { CategoryMappingService } from './CategoryMappingService';
 import { COST_CLIENT_MAPPINGS, METRIC_PROVIDER_MAPPINGS } from './consts';
-import { parseTags, tagsToString } from './functions';
 import { CloudProviderError, Metric, MetricSetting, Report, Tag } from './types';
 import { parseTags, tagsToString, parseFilters } from './functions';
 
