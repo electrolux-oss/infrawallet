@@ -41,7 +41,10 @@ export const enum CACHE_CATEGORY {
   COSTS = 'costs',
   TAGS = 'tags',
   METRICS = 'metrics',
+  CATEGORY_MAPPINGS = 'category_mappings',
 }
+
+export const DEFAULT_CATEGORY_MAPPING_CACHE_TTL = 12 * 60 * 60 * 1000; // 12 hours
 
 export const DEFAULT_TAGS_CACHE_TTL: {
   [provider in CLOUD_PROVIDER]: number;
