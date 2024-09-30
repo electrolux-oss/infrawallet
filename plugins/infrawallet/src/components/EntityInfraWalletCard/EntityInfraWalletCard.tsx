@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Progress, InfoCard } from '@backstage/core-components';
-import { Alert } from '@material-ui/lab';
+import { InfoCard, Progress } from '@backstage/core-components';
 import { useApi } from '@backstage/core-plugin-api';
-import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { useEntity } from '@backstage/plugin-catalog-react';
-import { Report, Tag } from '../../api/types';
-import { Typography, Table, TableBody, TableCell, TableHead, TableRow, Tabs, Tab, Box } from '@material-ui/core';
+import { Box, Tab, Table, TableBody, TableCell, TableHead, TableRow, Tabs, Typography } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
+import Alert from '@mui/material/Alert';
+import React, { useEffect, useState } from 'react';
+import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { infraWalletApiRef } from '../../api/InfraWalletApi';
+import { Report, Tag } from '../../api/types';
 
 const useStyles = makeStyles({
   increase: {

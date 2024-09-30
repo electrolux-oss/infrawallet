@@ -1,11 +1,12 @@
 import { Content, Header, Page } from '@backstage/core-components';
 import { alertApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
-import { Chip, Grid } from '@material-ui/core';
+import { Grid } from '@material-ui/core';
 import Accordion from '@material-ui/core/Accordion';
 import AccordionDetails from '@material-ui/core/AccordionDetails';
 import AccordionSummary from '@material-ui/core/AccordionSummary';
 import Typography from '@material-ui/core/Typography';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Chip from '@mui/material/Chip';
 import { addMonths, endOfMonth, startOfMonth } from 'date-fns';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
@@ -92,6 +93,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
     endMonth: endOfMonth(new Date()),
   });
   const [periods, setPeriods] = useState<string[]>([]);
+  const [highlightedItem, setHighLightedItem] = useState<string | undefined>(undefined);
 
   const alertApi = useApi(alertApiRef);
   const infraWalletApi = useApi(infraWalletApiRef);
@@ -193,17 +195,19 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
                   : undefined
               }
               height={350}
+              highlightedItem={highlightedItem}
+              highlightedItemSetter={setHighLightedItem}
             />
           </Grid>
           <Grid item xs={12} md={8} lg={9}>
             <ColumnsChartComponent
+              granularity={granularity}
               granularitySetter={setGranularity}
               categories={periods}
-              series={
+              costs={
                 reportsAggregatedAndMerged
                   ? reportsAggregatedAndMerged.map((item: any) => ({
                       name: item.id,
-                      type: 'column',
                       data: rearrangeData(item, periods),
                     }))
                   : undefined
@@ -211,10 +215,11 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
               metrics={metrics.map((item: any) => ({
                 name: item.name,
                 group: item.group,
-                type: 'line',
                 data: rearrangeData(item, periods),
               }))}
               height={350}
+              highlightedItem={highlightedItem}
+              highlightedItemSetter={setHighLightedItem}
             />
           </Grid>
           <Grid item xs={12}>

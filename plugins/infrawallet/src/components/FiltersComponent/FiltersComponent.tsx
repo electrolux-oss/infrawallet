@@ -1,18 +1,19 @@
-import { Chip, CircularProgress, Divider, FormControl, Grid, Tooltip, Typography } from '@material-ui/core';
+import { alertApiRef, useApi } from '@backstage/core-plugin-api';
+import { CircularProgress, Divider, FormControl, Grid, Tooltip, Typography } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
 import TextField from '@material-ui/core/TextField';
 import { Theme, makeStyles, withStyles } from '@material-ui/core/styles';
-import CheckBoxIcon from '@material-ui/icons/CheckBox';
-import CheckBoxOutlineBlankIcon from '@material-ui/icons/CheckBoxOutlineBlank';
-import Autocomplete from '@material-ui/lab/Autocomplete';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
+import Autocomplete from '@mui/material/Autocomplete';
+import Chip from '@mui/material/Chip';
 import React, { FC, useEffect, useState } from 'react';
-import { extractAccountInfo, extractProvider, getReportKeyAndValues, tagExists } from '../../api/functions';
-import { FiltersComponentProps } from '../types';
-import { Tag } from '../../api/types';
-import { alertApiRef, useApi } from '@backstage/core-plugin-api';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
+import { extractAccountInfo, extractProvider, getReportKeyAndValues, tagExists } from '../../api/functions';
+import { Tag } from '../../api/types';
 import { getProviderIcon } from '../ProviderIcons';
+import { FiltersComponentProps } from '../types';
 
 const useStyles = makeStyles(theme => ({
   formControl: {
@@ -179,7 +180,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
               value={filters[key] || []}
               onChange={(_event, value: string[], _reason) => handleFiltersChange(key, value)}
               disableCloseOnSelect
-              renderOption={(option, { selected }) => {
+              renderOption={(props, option, { selected }) => {
                 let provider = undefined;
                 let providerIcon = undefined;
                 let accountName = undefined;
@@ -199,14 +200,9 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
                 }
 
                 return (
-                  <React.Fragment key={`option-${option}`}>
+                  <li {...props} key={option}>
                     <Checkbox icon={icon} checkedIcon={checkedIcon} style={{ marginRight: 8 }} checked={selected} />
-                    {providerIcon && (
-                      <>
-                        <Typography>{providerIcon}</Typography>
-                        &nbsp;&nbsp;
-                      </>
-                    )}
+                    {providerIcon && <>{providerIcon}&nbsp;&nbsp;</>}
                     {key === 'account' ? (
                       <div>
                         <Typography variant="body2">{accountName}</Typography>
@@ -217,7 +213,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
                     ) : (
                       <Typography variant="body2">{option.replace(`${provider}/`, '')}</Typography>
                     )}
-                  </React.Fragment>
+                  </li>
                 );
               }}
               renderInput={params => (
@@ -242,10 +238,10 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
             options={tagProviders}
             onChange={(_, provider) => handleTagProviderChange(provider)}
             renderInput={params => <TextField {...params} variant="standard" label="Tag provider" />}
-            renderOption={option => (
-              <React.Fragment>
+            renderOption={(props, option) => (
+              <li {...props} key={option}>
                 <Typography variant="body2">{option}</Typography>
-              </React.Fragment>
+              </li>
             )}
           />
         </FormControl>
@@ -253,7 +249,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
           <Autocomplete
             id="tag-keys"
             key={String(resetTagKeys)}
-            freeSolo
+            // freeSolo
             disabled={tagProvider ? false : true}
             open={openTagKey}
             onOpen={() => setOpenTagKey(true)}
@@ -279,10 +275,10 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
                 }}
               />
             )}
-            renderOption={option => (
-              <React.Fragment>
+            renderOption={(props, option) => (
+              <li {...props} key={option.key}>
                 <Typography variant="body2">{option.key}</Typography>
-              </React.Fragment>
+              </li>
             )}
           />
         </FormControl>
@@ -290,7 +286,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
           <Autocomplete
             id="tag-values"
             key={String(resetTagValues)}
-            freeSolo
+            // freeSolo
             disabled={selectedTagKey ? false : true}
             open={openTagValue}
             onOpen={() => setOpenTagValue(true)}
@@ -320,10 +316,10 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
                 }}
               />
             )}
-            renderOption={option => (
-              <React.Fragment>
+            renderOption={(props, option) => (
+              <li {...props} key={option.value}>
                 <Typography variant="body2">{option.value}</Typography>
-              </React.Fragment>
+              </li>
             )}
           />
         </FormControl>

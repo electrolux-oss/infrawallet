@@ -1,70 +1,59 @@
-import { Paper } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
+import Paper from '@mui/material/Paper';
+import Skeleton from '@mui/material/Skeleton';
+import { styled } from '@mui/material/styles';
+import { HighlightItemData, PieChart, useDrawingArea } from '@mui/x-charts';
 import React, { FC } from 'react';
-import Chart from 'react-apexcharts';
+import { formatCurrency } from '../../api/functions';
 import { colorList } from '../constants';
 import { PieChartComponentProps } from '../types';
-import Skeleton from '@material-ui/lab/Skeleton';
-import { formatNumber } from '../../api/functions';
 
-export const PieChartComponent: FC<PieChartComponentProps> = ({ categories, series, height }) => {
-  const useStyles = makeStyles({
-    fixedHeightPaper: {
-      alignContent: 'center',
-      height: height ? height : 300,
-    },
-  });
-  const classes = useStyles();
+const StyledText = styled('text')(({ theme }) => ({
+  fill: theme.palette.text.primary,
+  textAnchor: 'middle',
+  dominantBaseline: 'central',
+  fontSize: '1.2em',
+}));
 
-  const state = {
-    options: {
-      chart: {
-        animations: {
-          enabled: false,
-        },
-      },
-      legend: {
-        show: false,
-      },
-      labels: categories,
-      dataLabels: {
-        enabled: false,
-      },
-      tooltip: {
-        y: {
-          formatter: (value: number) => {
-            return `$${formatNumber(value)}`;
-          },
-        },
-      },
-      plotOptions: {
-        pie: {
-          donut: {
-            labels: {
-              show: true,
-              total: {
-                show: true,
-                showAlways: true,
-                formatter: (value: any) => {
-                  let total = 0;
-                  for (const i of value.config.series) {
-                    total += i;
-                  }
-                  return `$${formatNumber(total)}`;
-                },
-              },
-            },
-          },
-        },
-      },
-      // there are only 5 colors by default, here we extend it to 50 different colors
-      colors: colorList,
-    },
-    series: series,
+function PieCenterLabel({ children }: { children: React.ReactNode }) {
+  const { width, height, left, top } = useDrawingArea();
+  return (
+    <StyledText x={left + width / 2} y={top + height / 2}>
+      {children}
+    </StyledText>
+  );
+}
+
+export const PieChartComponent: FC<PieChartComponentProps> = ({
+  categories,
+  series,
+  height,
+  highlightedItem,
+  highlightedItemSetter,
+}) => {
+  const data = [];
+  let total = 0;
+  if (series) {
+    for (let i = 0; i < series.length; i++) {
+      const label = categories ? categories[i] : 'No label';
+      data.push({ id: label, value: series[i], label: label });
+      total += series[i];
+    }
+  }
+
+  const onHighlightChange = (highlighted: HighlightItemData | null) => {
+    if (highlighted === null) {
+      highlightedItemSetter(undefined);
+      return;
+    }
+
+    const dataIndex = highlighted.dataIndex as number;
+    if (categories) {
+      highlightedItemSetter(categories[dataIndex]);
+    }
   };
 
   return (
-    <Paper className={classes.fixedHeightPaper}>
+    <Paper sx={{ alignContent: 'center', height: height ? height : 300 }}>
       {series === undefined ? (
         <div style={{ width: '60%', margin: 'auto' }}>
           <Skeleton />
@@ -72,7 +61,33 @@ export const PieChartComponent: FC<PieChartComponentProps> = ({ categories, seri
           <Skeleton />
         </div>
       ) : (
-        <Chart options={state.options} series={state.series} type="donut" height={height ? height : 300} />
+        <PieChart
+          margin={{ left: 100 }}
+          series={[
+            {
+              id: 'cost-summary',
+              data: data,
+              valueFormatter: value => {
+                return formatCurrency(value.value);
+              },
+              highlightScope: { highlight: 'item', fade: 'global' },
+              innerRadius: 70,
+              outerRadius: 120,
+            },
+          ]}
+          slotProps={{
+            legend: {
+              hidden: true,
+            },
+          }}
+          colors={colorList}
+          highlightedItem={
+            highlightedItem ? { seriesId: 'cost-summary', dataIndex: categories?.indexOf(highlightedItem) } : null
+          }
+          onHighlightChange={onHighlightChange}
+        >
+          <PieCenterLabel>Total: {formatCurrency(total)}</PieCenterLabel>
+        </PieChart>
       )}
     </Paper>
   );
