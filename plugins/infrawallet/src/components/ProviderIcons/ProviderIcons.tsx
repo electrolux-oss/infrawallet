@@ -1,6 +1,6 @@
 import React from 'react';
 import { SvgIcon } from '@material-ui/core';
-import CloudQueueIcon from '@material-ui/icons/CloudQueue';
+import CloudQueueIcon from '@mui/icons-material/CloudQueue';
 
 const AWSIcon = () => {
   return (
@@ -302,19 +302,19 @@ const DatadogIcon = () => {
 };
 
 export const getProviderIcon = (provider: string | undefined) => {
-  if (provider === 'AWS') {
+  if (provider?.toLowerCase() === 'AWS'.toLowerCase()) {
     return <AWSIcon />;
-  } else if (provider === 'Azure') {
+  } else if (provider?.toLowerCase() === 'Azure'.toLowerCase()) {
     return <AzureIcon />;
-  } else if (provider === 'GCP') {
+  } else if (provider?.toLowerCase() === 'GCP'.toLowerCase()) {
     return <GCPIcon />;
-  } else if (provider === 'MongoAtlas') {
+  } else if (provider?.toLowerCase() === 'MongoAtlas'.toLowerCase()) {
     return <MongoDBIcon />;
-  } else if (provider === 'Confluent') {
+  } else if (provider?.toLowerCase() === 'Confluent'.toLowerCase()) {
     return <ConfluentIcon />;
-  } else if (provider === 'Grafana') {
+  } else if (provider?.toLowerCase() === 'Grafana'.toLowerCase()) {
     return <GrafanaIcon />;
-  } else if (provider === 'Datadog') {
+  } else if (provider?.toLowerCase() === 'Datadog'.toLowerCase()) {
     return <DatadogIcon />;
   }
 

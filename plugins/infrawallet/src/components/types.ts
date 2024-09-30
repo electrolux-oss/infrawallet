@@ -37,19 +37,22 @@ export type QueryComponentProps = {
 };
 
 export type ColumnsChartComponentProps = {
+  granularity: string;
   granularitySetter: any;
   categories: any[];
-  series: Array<{ name: string; data: any[] }> | undefined;
+  costs: Array<{ name: string; data: any[] }> | undefined;
   metrics?: Array<{ name: string; group?: string; data: any[] }>;
   height?: number;
-  thumbnail?: boolean;
-  dataPointSelectionHandler?: (event: any, chartContext: any, config: any) => void;
+  highlightedItem: string | undefined;
+  highlightedItemSetter: any;
 };
 
 export type PieChartComponentProps = {
   categories: string[] | undefined;
   series: number[] | undefined;
   height?: number;
+  highlightedItem: string | undefined;
+  highlightedItemSetter: any;
 };
 
 export type CostReportsTableComponentProps = {
