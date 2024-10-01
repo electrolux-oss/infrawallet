@@ -1,6 +1,6 @@
 {
   "name": "@electrolux-oss/plugin-infrawallet",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "backstage": {
     "role": "frontend-plugin"
   },
