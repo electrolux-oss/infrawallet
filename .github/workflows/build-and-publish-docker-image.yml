@@ -1,5 +1,7 @@
 name: Build and Publish InfraWallet Docker Image
 on:
+  release:
+    types: [published]
   push:
     branches:
       - main
@@ -63,4 +65,4 @@ jobs:
           tags: |
             ${{ env.DOCKER_HUB_ORG }}/infrawallet:latest
             ${{ env.DOCKER_HUB_ORG }}/infrawallet:${{ github.sha }}
-            ${{ startsWith(github.ref_name, 'v') && format('{0}/infrawallet:{1}', env.DOCKER_HUB_ORG, github.ref_name) || '' }}
+            ${{ github.event.release.tag_name != '' && format('{0}/infrawallet:{1}', env.DOCKER_HUB_ORG, github.event.release.tag_name) || '' }}
