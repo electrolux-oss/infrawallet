@@ -2,7 +2,12 @@
   "name": "@electrolux-oss/plugin-infrawallet",
   "version": "0.1.12",
   "backstage": {
-    "role": "frontend-plugin"
+    "role": "frontend-plugin",
+    "pluginId": "infrawallet",
+    "pluginPackages": [
+      "@electrolux-oss/plugin-infrawallet",
+      "@electrolux-oss/plugin-infrawallet-backend"
+    ]
   },
   "publishConfig": {
     "access": "public",
