@@ -1,6 +1,6 @@
 import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/core/styles';
 import Box from '@mui/material/Box';
+import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
 import {
   DataGrid,
   GridColDef,
@@ -10,49 +10,9 @@ import {
   GridToolbarExport,
 } from '@mui/x-data-grid';
 import React, { FC } from 'react';
-import { extractAccountInfo, formatNumber, getPreviousDay, getPreviousMonth } from '../../api/functions';
-import { CostReportsTableComponentProps } from '../types';
+import { extractAccountInfo, formatCurrency, getPreviousDay, getPreviousMonth } from '../../api/functions';
 import { getProviderIcon } from '../ProviderIcons';
-import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
-
-const useStyles = makeStyles({
-  increase: {
-    color: '#ae2e24',
-    backgroundColor: '#ffeceb',
-    borderRadius: '4px',
-    paddingInline: '2px',
-    fontSize: '0.82em',
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, “Open Sans”, "Helvetica Neue", sans-serif;',
-  },
-  decrease: {
-    color: '#216e4e',
-    backgroundColor: '#dcfff1',
-    borderRadius: '4px',
-    paddingInline: '2px',
-    fontSize: '0.82em',
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, “Open Sans”, "Helvetica Neue", sans-serif;',
-  },
-  noChange: {
-    color: '#0052cc',
-    backgroundColor: '#e9f2ff',
-    borderRadius: '4px',
-    paddingInline: '2px',
-    fontSize: '0.82em',
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, “Open Sans”, "Helvetica Neue", sans-serif;',
-  },
-  regular: {
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, “Open Sans”, "Helvetica Neue", sans-serif;',
-  },
-  bold: {
-    fontWeight: 'bold',
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, “Open Sans”, "Helvetica Neue", sans-serif;',
-  },
-});
+import { CostReportsTableComponentProps } from '../types';
 
 function CustomToolbar() {
   return (
@@ -66,8 +26,6 @@ function CustomToolbar() {
 }
 
 export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ reports, aggregatedBy, periods }) => {
-  const classes = useStyles();
-
   let rows: any[] | undefined = reports;
   const columns: GridColDef[] = [];
   const columnTotals: { [key: string]: number } = {};
@@ -140,7 +98,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
         }
 
         if (params.id === 'Total') {
-          return <div className={classes.bold}>Total</div>;
+          return <div style={{ fontWeight: 'bold' }}>Total</div>;
         }
 
         return <div>{formattedValue}</div>;
@@ -184,13 +142,12 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
           let cost = '-';
 
           if (typeof value === 'number') {
-            const formattedValue = formatNumber(value);
-            cost = `$${formattedValue}`;
+            cost = formatCurrency(value);
           }
 
           return (
             <div>
-              <span className={params.id === 'Total' ? classes.bold : classes.regular}>{cost}</span>
+              <span style={{ fontWeight: params.id === 'Total' ? 'bold' : 'normal' }}>{cost}</span>
             </div>
           );
         },
@@ -227,19 +184,30 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
             );
           }
 
-          let className = classes.noChange;
+          let color = '#0052cc';
+          let backgroundColor = '#e9f2ff';
           let mark = '';
           if (percentage < 0) {
-            className = classes.decrease;
+            color = '#216e4e';
+            backgroundColor = '#dcfff1';
             mark = '▼';
           } else if (percentage > 0) {
-            className = classes.increase;
+            color = '#ae2e24';
+            backgroundColor = '#ffeceb';
             mark = '▲';
           }
 
           return (
             <div>
-              <span className={className}>
+              <span
+                style={{
+                  fontSize: '0.82em',
+                  paddingInline: '2px',
+                  borderRadius: '4px',
+                  color: color,
+                  backgroundColor: backgroundColor,
+                }}
+              >
                 {mark}
                 {Math.abs(percentage).toLocaleString()}%
               </span>
@@ -272,9 +240,9 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
       renderCell: (params: GridRenderCellParams): React.ReactNode => {
         let formattedValue = '-';
         if (typeof params.value === 'number') {
-          formattedValue = `$${formatNumber(params.value)}`;
+          formattedValue = formatCurrency(params.value);
         }
-        return <div className={classes.bold}>{formattedValue}</div>;
+        return <div style={{ fontWeight: 'bold' }}>{formattedValue}</div>;
       },
       sortComparator: (value1, value2, params1, params2) => {
         if (params1.id === 'Total' || params2.id === 'Total') {

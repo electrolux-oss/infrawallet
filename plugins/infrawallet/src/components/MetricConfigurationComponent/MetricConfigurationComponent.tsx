@@ -1,9 +1,9 @@
 import { alertApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
-import AddIcon from '@material-ui/icons/Add';
-import CancelIcon from '@material-ui/icons/Close';
-import DeleteIcon from '@material-ui/icons/DeleteOutlined';
-import EditIcon from '@material-ui/icons/Edit';
-import SaveIcon from '@material-ui/icons/Save';
+import AddIcon from '@mui/icons-material/Add';
+import CancelIcon from '@mui/icons-material/Cancel';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import React, { FC, useCallback, useEffect, useState } from 'react';
@@ -26,6 +26,7 @@ import {
   GridToolbarContainer,
   ValueOptions,
 } from '@mui/x-data-grid';
+import { getProviderIcon } from '../ProviderIcons';
 
 export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }) => {
   const configApi = useApi(configApiRef);
@@ -142,6 +143,7 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
       width: 220,
       editable: !readOnly,
       type: 'singleSelect',
+      display: 'flex',
       valueOptions: () => {
         const options: ValueOptions[] = [];
         const optionsSet = new Set<string>();
@@ -154,10 +156,18 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
         optionsSet.forEach(o => options.push({ value: o, label: o }));
         return options;
       },
+      renderCell: params => {
+        const provider = params.row.metric_provider;
+        return (
+          <>
+            {getProviderIcon(provider)}&nbsp;&nbsp;{provider.charAt(0).toUpperCase() + provider.slice(1)}
+          </>
+        );
+      },
     },
     {
       field: 'config_name',
-      headerName: 'ConfigName',
+      headerName: 'Integration',
       width: 180,
       editable: !readOnly,
       type: 'singleSelect',
@@ -175,7 +185,7 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
     },
     {
       field: 'metric_name',
-      headerName: 'MetricName',
+      headerName: 'Metric Name',
       width: 220,
       editable: !readOnly,
     },
@@ -184,6 +194,7 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
       headerName: 'Description',
       width: 220,
       editable: !readOnly,
+      sortable: false,
     },
     {
       field: 'group',
@@ -196,6 +207,10 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
       headerName: 'Query',
       flex: 1,
       editable: !readOnly,
+      sortable: false,
+      renderCell: params => {
+        return <div style={{ fontFamily: 'monospace', fontSize: '0.9em' }}>{params.row.query}</div>;
+      },
     },
   ];
 
@@ -296,6 +311,7 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
         slots={{
           toolbar: readOnly ? null : (EditToolbar as GridSlots['toolbar']),
         }}
+        disableColumnMenu
       />
     </Box>
   );
