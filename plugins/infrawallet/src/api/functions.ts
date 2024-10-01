@@ -1,8 +1,7 @@
 import { format, parse, subDays, subMonths } from 'date-fns';
 import { reduce } from 'lodash';
 import moment from 'moment';
-import { Report, Filters, Tag } from './types';
-import humanFormat from 'human-format';
+import { Filters, Report, Tag } from './types';
 
 export const mergeCostReports = (reports: Report[], threshold: number): Report[] => {
   const totalCosts: { id: string; total: number }[] = [];
@@ -19,7 +18,7 @@ export const mergeCostReports = (reports: Report[], threshold: number): Report[]
   const mergedReports = reduce(
     reports,
     (accumulator: { [key: string]: Report }, report) => {
-      let keyName = 'others';
+      let keyName = 'Others';
       if (idsToBeKept.includes(report.id)) {
         keyName = report.id;
       }
@@ -204,11 +203,10 @@ export const getPeriodStrings = (granularity: string, startTime: Date, endTime: 
   return result;
 };
 
-export const formatNumber = (number: number): string => {
-  const customScale = humanFormat.Scale.create(['', 'K', 'M', 'B'], 1000);
-  return humanFormat(number, {
-    scale: customScale,
-    separator: '',
-    decimals: 2,
-  });
+export const formatCurrency = (number: number, currency?: string): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currency || 'USD',
+    notation: 'compact',
+  }).format(number);
 };

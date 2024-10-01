@@ -1,12 +1,12 @@
 import { Content, Header, Page } from '@backstage/core-components';
-import React, { useCallback, useEffect, useState } from 'react';
 import { alertApiRef, useApi } from '@backstage/core-plugin-api';
-import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { Grid } from '@material-ui/core';
-import Alert from '@material-ui/lab/Alert';
+import Alert from '@mui/material/Alert';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { MetricConfigurationComponent } from '../MetricConfigurationComponent';
+import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { Wallet } from '../../api/types';
+import { MetricConfigurationComponent } from '../MetricConfigurationComponent';
 
 export const SettingsComponent = () => {
   const params = useParams();
@@ -31,13 +31,11 @@ export const SettingsComponent = () => {
 
   return (
     <Page themeId="tool">
-      <Header title="Wallet Settings Page (Alpha)" />
+      <Header title="Wallet Settings" />
       <Content>
         <Grid container spacing={3}>
           <Grid item xs={12}>
-            <Alert severity="info">
-              For now, this page only supports configuring business metrics for the default wallet.
-            </Alert>
+            <Alert severity="info">Currently, you can only configure business metrics for the Default wallet.</Alert>
           </Grid>
           <Grid item xs={12}>
             <MetricConfigurationComponent wallet={wallet} />

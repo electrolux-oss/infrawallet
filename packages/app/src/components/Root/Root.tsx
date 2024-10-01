@@ -2,18 +2,16 @@ import {
   Link,
   Sidebar,
   SidebarDivider,
-  SidebarGroup,
   SidebarItem,
   SidebarPage,
   sidebarConfig,
   useSidebarOpenState,
 } from '@backstage/core-components';
+import { InfraWalletIcon } from '@electrolux-oss/plugin-infrawallet';
 import { makeStyles } from '@material-ui/core';
-import MenuIcon from '@material-ui/icons/Menu';
 import React, { PropsWithChildren } from 'react';
 import LogoFull from './LogoFull';
 import LogoIcon from './LogoIcon';
-import { InfraWalletIcon } from '@electrolux-oss/plugin-infrawallet';
 
 const useSidebarLogoStyles = makeStyles({
   root: {
@@ -47,10 +45,8 @@ export const Root = ({ children }: PropsWithChildren<{}>) => (
   <SidebarPage>
     <Sidebar>
       <SidebarLogo />
-      <SidebarGroup label="Menu" icon={<MenuIcon />}>
-        <SidebarDivider />
-        <SidebarItem icon={InfraWalletIcon} to="infrawallet" text="InfraWallet" />
-      </SidebarGroup>
+      <SidebarDivider />
+      <SidebarItem icon={InfraWalletIcon} to="infrawallet" text="InfraWallet" />
     </Sidebar>
     {children}
   </SidebarPage>
