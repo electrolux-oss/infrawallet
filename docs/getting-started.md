@@ -192,23 +192,6 @@ import { InfraWalletPage } from '@electrolux-oss/plugin-infrawallet';
 ...
 ```
 
-modify `packages/app/src/components/catalog/EntityPage.tsx` and add the following code
-
-```ts
-...
-import {EntityInfraWalletCard, isInfraWalletAvailable } from '@electrolux-oss/plugin-infrawallet';
-...
-
-    <EntitySwitch>
-      <EntitySwitch.Case if={isInfraWalletAvailable}>
-        <Grid item md={6}>
-          <EntityInfraWalletCard />
-        </Grid>
-      </EntitySwitch.Case>
-    </EntitySwitch>
-...
-```
-
 2. add InfraWallet backend
 
 ```
@@ -277,6 +260,38 @@ import { InfraWalletIcon } from '@electrolux-oss/plugin-infrawallet';
       ...
     </Sidebar>
 ```
+
+5. integrate InfraWallet with Backstage catalog (optional)
+
+modify `packages/app/src/components/catalog/EntityPage.tsx` and add the following code
+
+```ts
+...
+import {EntityInfraWalletCard, isInfraWalletAvailable } from '@electrolux-oss/plugin-infrawallet';
+...
+
+    <EntitySwitch>
+      <EntitySwitch.Case if={isInfraWalletAvailable}>
+        <Grid item md={6}>
+          <EntityInfraWalletCard />
+        </Grid>
+      </EntitySwitch.Case>
+    </EntitySwitch>
+...
+```
+
+Note that the `EntityInfraWalletCard` only shows up when an entity has at least one of the following annotations:
+
+- `infrawallet.io/project`
+- `infrawallet.io/account`
+- `infrawallet.io/service`
+- `infrawallet.io/category`
+- `infrawallet.io/provider`
+- `infrawallet.io/extra-filters`
+
+These annotations are used to filter the costs, similarly to the `Filters` component in the InfraWallet main page.
+`infrawallet.io/extra-filters` takes a string like `"key-x: value-x, key-y: value-y"` as its input while the others take
+a single string value. When there are multiple annotations, the fetched costs data will meet all of the given filters.
 
 ### If the legacy Backstage backend system is used
 
