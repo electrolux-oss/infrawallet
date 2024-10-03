@@ -19,7 +19,7 @@ export interface Config {
           {
             name: string;
             accountId: string;
-            assumedRoleName: string;
+            assumedRoleName?: string;
             /**
              * @visibility secret
              */
@@ -28,6 +28,7 @@ export interface Config {
              * @visibility secret
              */
             accessKeySecret?: string;
+            region?: string;
             tags?: string[];
           },
         ];

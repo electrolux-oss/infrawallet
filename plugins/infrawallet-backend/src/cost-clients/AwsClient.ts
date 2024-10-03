@@ -61,35 +61,43 @@ export class AwsClient extends InfraWalletClient {
 
   protected async initCloudClient(subAccountConfig: Config): Promise<any> {
     const accountId = subAccountConfig.getString('accountId');
-    const assumedRoleName = subAccountConfig.getString('assumedRoleName');
+    const assumedRoleName = subAccountConfig.getOptionalString('assumedRoleName');
     const accessKeyId = subAccountConfig.getOptionalString('accessKeyId');
     const accessKeySecret = subAccountConfig.getOptionalString('accessKeySecret');
+    const region = subAccountConfig.getOptionalString('region') || 'us-east-1';
 
     let stsParams = {};
     if (accessKeyId && accessKeySecret) {
       stsParams = {
-        region: 'us-east-1',
+        region: region,
         credentials: {
           accessKeyId: accessKeyId as string,
           secretAccessKey: accessKeySecret as string,
         },
       };
-    } else {
+    } else if (assumedRoleName) {
       stsParams = {
-        region: 'us-east-1',
+        region: region,
       };
     }
+
+    if (Object.keys(stsParams).length === 0) {
+      // No credentials provided in configuration, assuming credentials are available in the environment
+      // no need to assume role
+      return new CostExplorerClient({ region: region });
+    }
+
     const client = new STSClient(stsParams);
     const commandInput = {
       // AssumeRoleRequest
       RoleArn: `arn:aws:iam::${accountId}:role/${assumedRoleName}`,
-      RoleSessionName: 'AssumeRoleSession1',
+      RoleSessionName: 'InfraWallet',
     };
     const assumeRoleCommand = new AssumeRoleCommand(commandInput);
     const assumeRoleResponse = await client.send(assumeRoleCommand);
     // init aws cost explorer client
     const awsCeClient = new CostExplorerClient({
-      region: 'us-east-1',
+      region: region,
       credentials: {
         accessKeyId: assumeRoleResponse.Credentials?.AccessKeyId as string,
         secretAccessKey: assumeRoleResponse.Credentials?.SecretAccessKey as string,
