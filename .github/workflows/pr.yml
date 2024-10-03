@@ -5,6 +5,7 @@ on:
     paths-ignore:
       - '**/docs/**'
       - '**.md'
+      - '.github/**'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
