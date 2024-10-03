@@ -8,6 +8,7 @@ on:
     paths-ignore:
       - '**/docs/**'
       - '**.md'
+      - '.github/**'
 
 env:
   DOCKER_HUB_ORG: opensourceelectrolux
