@@ -28,7 +28,6 @@ export interface Config {
              * @visibility secret
              */
             accessKeySecret?: string;
-            region?: string;
             tags?: string[];
           },
         ];

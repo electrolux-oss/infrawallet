@@ -64,7 +64,7 @@ export class AwsClient extends InfraWalletClient {
     const assumedRoleName = subAccountConfig.getOptionalString('assumedRoleName');
     const accessKeyId = subAccountConfig.getOptionalString('accessKeyId');
     const accessKeySecret = subAccountConfig.getOptionalString('accessKeySecret');
-    const region = subAccountConfig.getOptionalString('region') || 'us-east-1';
+    const region = 'us-east-1';
 
     let stsParams = {};
     if (accessKeyId && accessKeySecret) {
