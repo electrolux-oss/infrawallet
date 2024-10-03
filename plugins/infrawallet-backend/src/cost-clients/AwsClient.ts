@@ -66,8 +66,18 @@ export class AwsClient extends InfraWalletClient {
     const accessKeySecret = subAccountConfig.getOptionalString('accessKeySecret');
     const region = 'us-east-1';
 
+    if (!accessKeyId && !accessKeySecret && !assumedRoleName) {
+      // No credentials provided in configuration, assuming credentials are available in the environment
+      return new CostExplorerClient({ region: region });
+    }
+
+    // Check if accessKeyId and accessKeySecret are both provided
+    if ((accessKeyId && !accessKeySecret) || (!accessKeyId && accessKeySecret)) {
+      throw new Error('Both accessKeyId and accessKeySecret must be provided');
+    }
+
     let stsParams = {};
-    if (accessKeyId && accessKeySecret) {
+    if (accessKeyId && accessKeySecret && assumedRoleName) {
       stsParams = {
         region: region,
         credentials: {
@@ -81,12 +91,18 @@ export class AwsClient extends InfraWalletClient {
       };
     }
 
+    // No assume role parameters provided
     if (Object.keys(stsParams).length === 0) {
-      // No credentials provided in configuration, assuming credentials are available in the environment
-      // no need to assume role
-      return new CostExplorerClient({ region: region });
+      return new CostExplorerClient({
+        region: region,
+        credentials: {
+          accessKeyId: accessKeyId as string,
+          secretAccessKey: accessKeySecret as string,
+        },
+      });
     }
 
+    // Assume role
     const client = new STSClient(stsParams);
     const commandInput = {
       // AssumeRoleRequest
