@@ -26,7 +26,7 @@ export function parseTags(tags: string): Tag[] {
 
 // convert Tag array to (provider1:key1=value1 OR provider2:key2=value2) format
 export function tagsToString(tags: Tag[]): string {
-  if (tags.length === 0) {
+  if (!tags || tags.length === 0) {
     return '()';
   }
 
