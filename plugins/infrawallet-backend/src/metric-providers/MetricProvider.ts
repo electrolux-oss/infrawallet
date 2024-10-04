@@ -62,7 +62,7 @@ export abstract class MetricProvider {
             const cachedMetrics = await getMetricsFromCache(this.cache, this.providerName, configName, fullQuery);
             if (cachedMetrics) {
               this.logger.debug(`${this.providerName}/${configName}/${fullQuery.name} metrics from cache`);
-              cachedMetrics.map(m => {
+              cachedMetrics.forEach(m => {
                 results.push({
                   group: metric.group, // add group info to the metric
                   ...m,
@@ -84,7 +84,7 @@ export abstract class MetricProvider {
               60 * 60 * 2 * 1000,
             );
 
-            transformedMetrics.map((value: any) => {
+            transformedMetrics.forEach((value: any) => {
               results.push({
                 group: metric.group, // add group info to the metric
                 ...value,

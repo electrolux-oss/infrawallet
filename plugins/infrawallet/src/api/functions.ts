@@ -12,8 +12,8 @@ export const mergeCostReports = (reports: Report[], threshold: number): Report[]
     });
     totalCosts.push({ id: report.id, total: total });
   });
-  const sortedTotalCosts = totalCosts.sort((a, b) => b.total - a.total);
-  const idsToBeKept = sortedTotalCosts.slice(0, threshold).map(v => v.id);
+  totalCosts.sort((a, b) => b.total - a.total);
+  const idsToBeKept = totalCosts.slice(0, threshold).map(v => v.id);
 
   const mergedReports = reduce(
     reports,
@@ -117,6 +117,7 @@ export const getReportKeyAndValues = (reports: Report[]): { [key: string]: strin
   const keyValues: { [key: string]: string[] } = {};
   Object.keys(keyValueSets).forEach((key: string) => {
     keyValues[key] = Array.from(keyValueSets[key]);
+    keyValues[key].sort((a, b) => a.localeCompare(b));
   });
   return keyValues;
 };

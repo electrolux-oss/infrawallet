@@ -64,13 +64,10 @@ export class MockClient extends InfraWalletClient {
 
           const StartDate = moment(startD);
 
-          let step: moment.unitOfTime.DurationConstructor | undefined;
+          let step: moment.unitOfTime.DurationConstructor = 'months';
           let dateFormat = 'YYYY-MM';
 
-          if (query.granularity.toLowerCase() === 'monthly') {
-            step = 'months';
-            dateFormat = 'YYYY-MM';
-          } else if (query.granularity.toLowerCase() === 'daily') {
+          if (query.granularity.toLowerCase() === 'daily') {
             step = 'days';
             dateFormat = 'YYYY-MM-DD';
           }

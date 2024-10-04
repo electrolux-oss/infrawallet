@@ -108,8 +108,10 @@ export abstract class InfraWalletClient {
     }
     await Promise.all(promises);
 
+    aggregatedTags.sort((a, b) => `${a.provider}/${a.key}`.localeCompare(`${b.provider}/${b.key}`));
+
     return {
-      tags: aggregatedTags.sort((a, b) => `${a.provider}/${a.key}`.localeCompare(`${b.provider}/${b.key}`)),
+      tags: aggregatedTags,
       errors: errors,
     };
   }
@@ -171,10 +173,12 @@ export abstract class InfraWalletClient {
     }
     await Promise.all(promises);
 
+    aggregatedTags.sort((a, b) =>
+      `${a.provider}/${a.key}=${a.value}`.localeCompare(`${b.provider}/${b.key}=${b.value}`),
+    );
+
     return {
-      tags: aggregatedTags.sort((a, b) =>
-        `${a.provider}/${a.key}=${a.value}`.localeCompare(`${b.provider}/${b.key}=${b.value}`),
-      ),
+      tags: aggregatedTags,
       errors: errors,
     };
   }
@@ -198,7 +202,7 @@ export abstract class InfraWalletClient {
       const cachedCosts = await getReportsFromCache(this.cache, this.provider, accountName, query);
       if (cachedCosts) {
         this.logger.debug(`${this.provider}/${accountName} costs from cache`);
-        cachedCosts.map(cost => {
+        cachedCosts.forEach(cost => {
           results.push(cost);
         });
         continue;
@@ -221,7 +225,7 @@ export abstract class InfraWalletClient {
             getDefaultCacheTTL(CACHE_CATEGORY.COSTS, this.provider),
           );
 
-          transformedReports.map((value: any) => {
+          transformedReports.forEach((value: any) => {
             results.push(value);
           });
         } catch (e) {
