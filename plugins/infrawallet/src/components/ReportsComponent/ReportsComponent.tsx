@@ -93,7 +93,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
     endMonth: endOfMonth(new Date()),
   });
   const [periods, setPeriods] = useState<string[]>([]);
-  const [highlightedItem, setHighLightedItem] = useState<string | undefined>(undefined);
+  const [highlightedItem, setHighlightedItem] = useState<string | undefined>(undefined);
 
   const alertApi = useApi(alertApiRef);
   const infraWalletApi = useApi(infraWalletApiRef);
@@ -196,7 +196,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
               }
               height={350}
               highlightedItem={highlightedItem}
-              highlightedItemSetter={setHighLightedItem}
+              highlightedItemSetter={setHighlightedItem}
             />
           </Grid>
           <Grid item xs={12} md={8} lg={9}>
@@ -219,7 +219,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
               }))}
               height={350}
               highlightedItem={highlightedItem}
-              highlightedItemSetter={setHighLightedItem}
+              highlightedItemSetter={setHighlightedItem}
             />
           </Grid>
           <Grid item xs={12}>

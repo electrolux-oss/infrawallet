@@ -51,11 +51,11 @@ export class ConfluentClient extends InfraWalletClient {
   protected async initCloudClient(subAccountConfig: Config): Promise<any> {
     const apiKey = subAccountConfig.getString('apiKey');
     const apiSecret = subAccountConfig.getString('apiSecret');
-    const auth = `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString('base64')}`;
+    const auth = `${apiKey}:${apiSecret}`;
 
     const client = {
       headers: {
-        Authorization: auth,
+        Authorization: `Basic ${Buffer.from(auth).toString('base64')}`,
         'Content-Type': 'application/json',
       },
     };
@@ -152,7 +152,6 @@ export class ConfluentClient extends InfraWalletClient {
 
     const transformedData = costResponse.data.reduce((accumulator: { [key: string]: Report }, line: any) => {
       const amount = parseFloat(line.amount) || 0;
-      let billingPeriod = 'unknown';
 
       if (amount === 0) {
         return accumulator;
@@ -164,6 +163,7 @@ export class ConfluentClient extends InfraWalletClient {
         return accumulator;
       }
 
+      let billingPeriod = undefined;
       if (query.granularity.toUpperCase() === 'MONTHLY') {
         billingPeriod = parsedStartDate.format('YYYY-MM');
       } else {

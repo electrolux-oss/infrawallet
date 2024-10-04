@@ -18,7 +18,7 @@ ENV TZ="Etc/GMT-14"
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   --mount=type=cache,target=/var/lib/apt,sharing=locked \
   apt-get update && \
-  apt-get install -y --no-install-recommends python3 g++ build-essential && \
+  apt-get install -y --no-install-recommends build-essential g++ python3 && \
   yarn config set python /usr/bin/python3
 
 # Install sqlite3 dependencies. You can skip this if you don't use sqlite3 in the image,

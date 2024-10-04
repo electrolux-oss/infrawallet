@@ -14,7 +14,7 @@ const StyledText = styled('text')(({ theme }) => ({
   fontSize: '1.2em',
 }));
 
-function PieCenterLabel({ children }: { children: React.ReactNode }) {
+function PieCenterLabel({ children }: Readonly<{ children: React.ReactNode }>) {
   const { width, height, left, top } = useDrawingArea();
   return (
     <StyledText x={left + width / 2} y={top + height / 2}>
@@ -53,7 +53,7 @@ export const PieChartComponent: FC<PieChartComponentProps> = ({
   };
 
   return (
-    <Paper sx={{ alignContent: 'center', height: height ? height : 300 }}>
+    <Paper sx={{ alignContent: 'center', height: height || 300 }}>
       {series === undefined ? (
         <div style={{ width: '60%', margin: 'auto' }}>
           <Skeleton />
