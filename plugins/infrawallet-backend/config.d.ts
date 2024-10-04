@@ -19,7 +19,7 @@ export interface Config {
           {
             name: string;
             accountId: string;
-            assumedRoleName: string;
+            assumedRoleName?: string;
             /**
              * @visibility secret
              */
