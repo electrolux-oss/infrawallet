@@ -5,7 +5,7 @@ import { CostQuery, Metric, MetricQuery, Report, Tag, TagsQuery } from './types'
 // In URL, tags are defined in this format:
 // tags=(provider1:key1=value1 OR provider2:key2=value2)
 export function parseTags(tags: string): Tag[] {
-  if (!tags || !tags.startsWith('(') || !tags.endsWith(')')) {
+  if (!tags.startsWith('(') || !tags.endsWith(')')) {
     return [];
   }
 
@@ -26,7 +26,7 @@ export function parseTags(tags: string): Tag[] {
 
 // convert Tag array to (provider1:key1=value1 OR provider2:key2=value2) format
 export function tagsToString(tags: Tag[]): string {
-  if (!tags || tags.length === 0) {
+  if (tags.length === 0) {
     return '()';
   }
 
@@ -210,7 +210,7 @@ export async function setMetricsToCache(
 export function parseFilters(filters: string): Record<string, string[]> {
   const result: Record<string, string[]> = {};
 
-  if (!filters || !filters.startsWith('(') || !filters.endsWith(')')) {
+  if (!filters.startsWith('(') || !filters.endsWith(')')) {
     return result;
   }
 
