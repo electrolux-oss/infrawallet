@@ -110,13 +110,11 @@ export class AzureClient extends InfraWalletClient {
         if (row[0] && !row[0].startsWith('hidden-')) {
           tags.push(row[0]);
         }
-      } else {
-        if (row[1]) {
-          tags.push(row[1]);
-        }
+      } else if (row[1]) {
+        tags.push(row[1]);
       }
     }
-    tags.sort();
+    tags.sort((a, b) => a.localeCompare(b));
 
     return tags;
   }
@@ -160,13 +158,17 @@ export class AzureClient extends InfraWalletClient {
     const tags = parseTags(query.tags);
     if (tags.length) {
       if (tags.length === 1) {
-        filter = {
-          tags: { name: tags[0].key, operator: 'In', values: [tags[0].value as string] },
-        };
+        if (tags[0].value) {
+          filter = {
+            tags: { name: tags[0].key, operator: 'In', values: [tags[0].value] },
+          };
+        }
       } else {
         const tagList: QueryFilter[] = [];
         for (const tag of tags) {
-          tagList.push({ tags: { name: tag.key, operator: 'In', values: [tag.value as string] } });
+          if (tag.value) {
+            tagList.push({ tags: { name: tag.key, operator: 'In', values: [tag.value] } });
+          }
         }
         filter = { or: tagList };
       }

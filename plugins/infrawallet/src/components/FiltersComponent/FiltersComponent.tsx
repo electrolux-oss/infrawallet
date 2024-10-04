@@ -176,7 +176,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
             <Autocomplete
               multiple
               id={`checkboxes-${key}`}
-              options={keyValues[key].sort()}
+              options={keyValues[key]}
               value={filters[key] || []}
               onChange={(_event, value: string[], _reason) => handleFiltersChange(key, value)}
               disableCloseOnSelect
@@ -250,11 +250,11 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
             id="tag-keys"
             key={String(resetTagKeys)}
             // freeSolo
-            disabled={tagProvider ? false : true}
+            disabled={!tagProvider}
             open={openTagKey}
             onOpen={() => setOpenTagKey(true)}
             onClose={() => setOpenTagKey(false)}
-            options={tagKeys && tagKeys.length ? tagKeys : [{ key: 'No value', provider: tagProvider as string }]}
+            options={tagKeys?.length ? tagKeys : [{ key: 'No value', provider: tagProvider as string }]}
             getOptionLabel={tag => tag.key}
             getOptionDisabled={tag => tag.key === 'No value'}
             loading={loadingTagKeys}
@@ -269,7 +269,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
                   endAdornment: (
                     <React.Fragment>
                       {loadingTagKeys ? <CircularProgress color="inherit" size={20} /> : null}
-                      {params.InputProps && params.InputProps.endAdornment}
+                      {params.InputProps?.endAdornment}
                     </React.Fragment>
                   ),
                 }}
@@ -287,14 +287,12 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
             id="tag-values"
             key={String(resetTagValues)}
             // freeSolo
-            disabled={selectedTagKey ? false : true}
+            disabled={!selectedTagKey}
             open={openTagValue}
             onOpen={() => setOpenTagValue(true)}
             onClose={() => setOpenTagValue(false)}
             options={
-              tagValues && tagValues.length
-                ? tagValues
-                : [{ key: 'No value', value: 'No value', provider: tagProvider as string }]
+              tagValues?.length ? tagValues : [{ key: 'No value', value: 'No value', provider: tagProvider as string }]
             }
             getOptionLabel={tag => tag?.value || ''}
             getOptionDisabled={tag => tag?.value === 'No value' || tagExists(selectedTags, tag)}
@@ -310,7 +308,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
                   endAdornment: (
                     <React.Fragment>
                       {loadingTagValues ? <CircularProgress color="inherit" size={20} /> : null}
-                      {params.InputProps && params.InputProps.endAdornment}
+                      {params.InputProps?.endAdornment}
                     </React.Fragment>
                   ),
                 }}

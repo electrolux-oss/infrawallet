@@ -156,7 +156,6 @@ export class MongoAtlasClient extends InfraWalletClient {
         });
 
         const amount = parseFloat(rowData.Amount) || 0;
-        let billingPeriod = 'unknown';
 
         const dateFormat = 'MM/DD/YYYY';
         const date = rowData.Date;
@@ -166,6 +165,7 @@ export class MongoAtlasClient extends InfraWalletClient {
           return accumulator;
         }
 
+        let billingPeriod = undefined;
         if (query.granularity.toUpperCase() === 'MONTHLY') {
           billingPeriod = parsedDate.format('YYYY-MM');
         } else {

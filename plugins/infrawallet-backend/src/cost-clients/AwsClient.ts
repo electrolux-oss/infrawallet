@@ -21,7 +21,7 @@ import { CostQuery, Report, TagsQuery } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 
 export class AwsClient extends InfraWalletClient {
-  private accounts: Map<string, string> = new Map();
+  private readonly accounts: Map<string, string> = new Map();
 
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
     return new AwsClient(CLOUD_PROVIDER.AWS, config, database, cache, logger);
@@ -71,39 +71,30 @@ export class AwsClient extends InfraWalletClient {
       return new CostExplorerClient({ region: region });
     }
 
-    // Check if accessKeyId and accessKeySecret are both provided
-    if ((accessKeyId && !accessKeySecret) || (!accessKeyId && accessKeySecret)) {
-      throw new Error('Both accessKeyId and accessKeySecret must be provided');
+    let credentials = undefined;
+    if (accessKeyId || accessKeySecret) {
+      if (accessKeyId && accessKeySecret) {
+        credentials = {
+          accessKeyId: accessKeyId,
+          secretAccessKey: accessKeySecret,
+        };
+      } else {
+        throw new Error('Both accessKeyId and accessKeySecret must be provided');
+      }
     }
 
-    let stsParams = {};
-    if (accessKeyId && accessKeySecret && assumedRoleName) {
-      stsParams = {
-        region: region,
-        credentials: {
-          accessKeyId: accessKeyId as string,
-          secretAccessKey: accessKeySecret as string,
-        },
-      };
-    } else if (assumedRoleName) {
-      stsParams = {
-        region: region,
-      };
-    }
-
-    // No assume role parameters provided
-    if (Object.keys(stsParams).length === 0) {
+    if (assumedRoleName === undefined) {
       return new CostExplorerClient({
         region: region,
-        credentials: {
-          accessKeyId: accessKeyId as string,
-          secretAccessKey: accessKeySecret as string,
-        },
+        credentials: credentials,
       });
     }
 
     // Assume role
-    const client = new STSClient(stsParams);
+    const client = new STSClient({
+      region: region,
+      credentials: credentials,
+    });
     const commandInput = {
       // AssumeRoleRequest
       RoleArn: `arn:aws:iam::${accountId}:role/${assumedRoleName}`,
@@ -125,7 +116,7 @@ export class AwsClient extends InfraWalletClient {
   }
 
   private async _fetchTags(client: any, query: TagsQuery, tagKey?: string): Promise<string[]> {
-    const results: string[] = [];
+    const tags: string[] = [];
     let nextPageToken = undefined;
 
     do {
@@ -140,15 +131,15 @@ export class AwsClient extends InfraWalletClient {
       const response = await client.send(command);
       for (const tag of response.Tags) {
         if (tag) {
-          results.push(tag);
+          tags.push(tag);
         }
       }
 
       nextPageToken = response.NextPageToken;
     } while (nextPageToken);
 
-    results.sort();
-    return results;
+    tags.sort((a, b) => a.localeCompare(b));
+    return tags;
   }
 
   protected async fetchTagKeys(
@@ -180,11 +171,15 @@ export class AwsClient extends InfraWalletClient {
       let tagsExpression: Expression = {};
 
       if (tags.length === 1) {
-        tagsExpression = { Tags: { Key: tags[0].key, Values: [tags[0].value as string] } };
+        if (tags[0].value) {
+          tagsExpression = { Tags: { Key: tags[0].key, Values: [tags[0].value] } };
+        }
       } else {
         const tagList: Expression[] = [];
         for (const tag of tags) {
-          tagList.push({ Tags: { Key: tag.key, Values: [tag.value as string] } });
+          if (tag.value) {
+            tagList.push({ Tags: { Key: tag.key, Values: [tag.value] } });
+          }
         }
         tagsExpression = { Or: tagList };
       }

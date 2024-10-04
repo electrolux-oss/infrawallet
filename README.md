@@ -3,6 +3,9 @@
   InfraWallet
 </h1>
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=electrolux-oss_infrawallet&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=electrolux-oss_infrawallet)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/electrolux-oss/infrawallet/badge)](https://scorecard.dev/viewer/?uri=github.com/electrolux-oss/infrawallet)
+
 > Control your cloud costs just in the way how you control your bank accounts
 
 ![InfraWallet](./plugins/infrawallet/docs/images/iw_demo.gif)
@@ -16,13 +19,13 @@
 
 ## Supported Cloud Providers
 
-| Provider  | Cost Reports | Filter Costs by Tags | Integration Levels                  |
-| --------- | ------------ | -------------------- | ----------------------------------- |
-| AWS       | ✅           | ✅                   | Management account and user account |
-| Azure     | ✅           | ✅                   | Subscription                        |
-| GCP       | ✅           |                      | Billing account                     |
-| MongoDB   | ✅           |                      | Organization                        |
-| Confluent | ✅           |                      | Organization                        |
+| Provider  | Cost Reports | Filter Costs by Tags | Integration Levels                    |
+| --------- | ------------ | -------------------- | ------------------------------------- |
+| AWS       | ✅           | ✅                   | Management account and member account |
+| Azure     | ✅           | ✅                   | Subscription                          |
+| GCP       | ✅           |                      | Billing account                       |
+| MongoDB   | ✅           |                      | Organization                          |
+| Confluent | ✅           |                      | Organization                          |
 
 \*_The framework is designed to be extensible to support other cloud providers. Feel free to [contribute](./docs/contributing.md) to the project._
 
