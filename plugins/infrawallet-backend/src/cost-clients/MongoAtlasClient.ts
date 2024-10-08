@@ -44,7 +44,7 @@ export class MongoAtlasClient extends InfraWalletClient {
     _query: TagsQuery,
   ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
     // To be implemented
-    return { tagKeys: [], provider: CLOUD_PROVIDER.MONGODB_ATLAS };
+    return { tagKeys: [], provider: this.provider };
   }
 
   protected async fetchTagValues(
@@ -54,7 +54,7 @@ export class MongoAtlasClient extends InfraWalletClient {
     _tagKey: string,
   ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
     // To be implemented
-    return { tagValues: [], provider: CLOUD_PROVIDER.MONGODB_ATLAS };
+    return { tagValues: [], provider: this.provider };
   }
 
   protected async fetchCosts(subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {

@@ -148,7 +148,7 @@ export class AwsClient extends InfraWalletClient {
     query: TagsQuery,
   ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
     const tagKeys = await this._fetchTags(client, query);
-    return { tagKeys: tagKeys, provider: CLOUD_PROVIDER.AWS };
+    return { tagKeys: tagKeys, provider: this.provider };
   }
 
   protected async fetchTagValues(
@@ -158,7 +158,7 @@ export class AwsClient extends InfraWalletClient {
     tagKey: string,
   ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
     const tagValues = await this._fetchTags(client, query, tagKey);
-    return { tagValues: tagValues, provider: CLOUD_PROVIDER.AWS };
+    return { tagValues: tagValues, provider: this.provider };
   }
 
   protected async fetchCosts(_subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {

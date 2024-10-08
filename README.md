@@ -26,6 +26,7 @@
 | GCP       | ✅           |                      | Billing account                       |
 | MongoDB   | ✅           |                      | Organization                          |
 | Confluent | ✅           |                      | Organization                          |
+| Datadog   | ✅           |                      | Parent organization                   |
 
 \*_The framework is designed to be extensible to support other cloud providers. Feel free to [contribute](./docs/contributing.md) to the project._
 

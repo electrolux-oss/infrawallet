@@ -69,7 +69,7 @@ export class ConfluentClient extends InfraWalletClient {
     _query: TagsQuery,
   ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
     // To be implemented
-    return { tagKeys: [], provider: CLOUD_PROVIDER.CONFLUENT };
+    return { tagKeys: [], provider: this.provider };
   }
 
   protected async fetchTagValues(
@@ -79,7 +79,7 @@ export class ConfluentClient extends InfraWalletClient {
     _tagKey: string,
   ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
     // To be implemented
-    return { tagValues: [], provider: CLOUD_PROVIDER.CONFLUENT };
+    return { tagValues: [], provider: this.provider };
   }
 
   protected async fetchCosts(_subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
