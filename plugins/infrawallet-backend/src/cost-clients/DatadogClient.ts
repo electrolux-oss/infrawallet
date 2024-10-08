@@ -4,7 +4,7 @@ import { v2 as datadogApiV2, client as datadogClient } from '@datadog/datadog-ap
 import { reduce } from 'lodash';
 import moment from 'moment';
 import { CLOUD_PROVIDER, GRANULARITY } from '../service/consts';
-import { CostQuery, Report, TagsQuery } from '../service/types';
+import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 
 export class DatadogClient extends InfraWalletClient {
@@ -86,25 +86,6 @@ export class DatadogClient extends InfraWalletClient {
     });
     const client = new datadogApiV2.UsageMeteringApi(configuration);
     return client;
-  }
-
-  protected async fetchTagKeys(
-    _subAccountConfig: Config,
-    _client: any,
-    _query: TagsQuery,
-  ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
-    // not supported
-    return { tagKeys: [], provider: this.provider };
-  }
-
-  protected async fetchTagValues(
-    _subAccountConfig: Config,
-    _client: any,
-    _query: TagsQuery,
-    _tagKey: string,
-  ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
-    // not supported
-    return { tagValues: [], provider: this.provider };
   }
 
   protected async fetchCosts(_config: Config, client: any, query: CostQuery): Promise<any> {
