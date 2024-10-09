@@ -45,7 +45,7 @@ export const TopbarComponent: FC<TopbarComponentProps> = ({
           <MenuItem value="account">Account</MenuItem>
           <MenuItem value="provider">Provider</MenuItem>
           <MenuItem value="category">Category</MenuItem>
-          <MenuItem value="service">Cloud Service</MenuItem>
+          <MenuItem value="service">Service</MenuItem>
           <Divider light />
           <ListSubheader onClickCapture={e => e.stopPropagation()}>Tags</ListSubheader>
           {tags.map(tag => (

@@ -125,6 +125,33 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
         periods.map(period => (row.reports[period] !== undefined ? row.reports[period] : null)),
       ],
     },
+    // total column
+    {
+      field: 'total',
+      headerName: 'Total',
+      type: 'number',
+      minWidth: 150,
+      valueGetter: (_, row) => {
+        let total = 0;
+        periods.forEach(period => {
+          total += row.reports[period] ? row.reports[period] : 0;
+        });
+        return total;
+      },
+      renderCell: (params: GridRenderCellParams): React.ReactNode => {
+        let formattedValue = '-';
+        if (typeof params.value === 'number') {
+          formattedValue = formatCurrency(params.value);
+        }
+        return <div style={{ fontWeight: 'bold' }}>{formattedValue}</div>;
+      },
+      sortComparator: (value1, value2, params1, params2) => {
+        if (params1.id === 'Total' || params2.id === 'Total') {
+          return 0;
+        }
+        return value1 - value2;
+      },
+    },
   );
 
   periods.forEach(period => {
@@ -220,38 +247,9 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
     columnGroupingModel.push({
       groupId: period,
       children: [{ field: `cost-${period}` }, { field: `change-${period}` }],
+      headerAlign: 'center',
     });
   });
-
-  columns.push(
-    // total column
-    {
-      field: 'total',
-      headerName: 'Total',
-      type: 'number',
-      minWidth: 150,
-      valueGetter: (_, row) => {
-        let total = 0;
-        periods.forEach(period => {
-          total += row.reports[period] ? row.reports[period] : 0;
-        });
-        return total;
-      },
-      renderCell: (params: GridRenderCellParams): React.ReactNode => {
-        let formattedValue = '-';
-        if (typeof params.value === 'number') {
-          formattedValue = formatCurrency(params.value);
-        }
-        return <div style={{ fontWeight: 'bold' }}>{formattedValue}</div>;
-      },
-      sortComparator: (value1, value2, params1, params2) => {
-        if (params1.id === 'Total' || params2.id === 'Total') {
-          return 0;
-        }
-        return value1 - value2;
-      },
-    },
-  );
 
   return (
     <Box sx={{ height: 700 }}>

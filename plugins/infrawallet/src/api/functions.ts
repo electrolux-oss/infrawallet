@@ -99,10 +99,10 @@ export const aggregateCostReports = (reports: Report[], aggregatedBy?: string): 
   return Object.values(aggregatedReports);
 };
 
-export const getReportKeyAndValues = (reports: Report[]): { [key: string]: string[] } => {
+export const getReportKeyAndValues = (reports: Report[] | undefined): { [key: string]: string[] } => {
   const excludedKeys = ['id', 'reports'];
   const keyValueSets: { [key: string]: Set<string> } = {};
-  reports.forEach(report => {
+  reports?.forEach(report => {
     Object.keys(report).forEach(key => {
       if (!excludedKeys.includes(key)) {
         if (keyValueSets[key] === undefined) {

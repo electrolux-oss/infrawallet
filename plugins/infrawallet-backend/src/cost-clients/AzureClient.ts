@@ -135,7 +135,7 @@ export class AzureClient extends InfraWalletClient {
     query: TagsQuery,
   ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
     const tagKeys = await this._fetchTags(subAccountConfig, client, query, '');
-    return { tagKeys: tagKeys, provider: CLOUD_PROVIDER.AZURE };
+    return { tagKeys: tagKeys, provider: this.provider };
   }
 
   protected async fetchTagValues(
@@ -145,7 +145,7 @@ export class AzureClient extends InfraWalletClient {
     tagKey: string,
   ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
     const tagValues = await this._fetchTags(subAccountConfig, client, query, tagKey);
-    return { tagValues: tagValues, provider: CLOUD_PROVIDER.AZURE };
+    return { tagValues: tagValues, provider: this.provider };
   }
 
   protected async fetchCosts(subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {

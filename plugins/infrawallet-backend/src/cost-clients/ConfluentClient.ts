@@ -1,6 +1,6 @@
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { CostQuery, Report, TagsQuery } from '../service/types';
+import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 import moment from 'moment';
 import { CategoryMappingService } from '../service/CategoryMappingService';
@@ -61,25 +61,6 @@ export class ConfluentClient extends InfraWalletClient {
     };
 
     return client;
-  }
-
-  protected async fetchTagKeys(
-    _subAccountConfig: Config,
-    _client: any,
-    _query: TagsQuery,
-  ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
-    // To be implemented
-    return { tagKeys: [], provider: CLOUD_PROVIDER.CONFLUENT };
-  }
-
-  protected async fetchTagValues(
-    _subAccountConfig: Config,
-    _client: any,
-    _query: TagsQuery,
-    _tagKey: string,
-  ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
-    // To be implemented
-    return { tagValues: [], provider: CLOUD_PROVIDER.CONFLUENT };
   }
 
   protected async fetchCosts(_subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
