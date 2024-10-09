@@ -29,19 +29,25 @@ export abstract class InfraWalletClient {
   protected abstract initCloudClient(subAccountConfig: Config): Promise<any>;
 
   // Get all cost allocation tag keys from one account
-  protected abstract fetchTagKeys(
-    subAccountConfig: Config,
-    client: any,
-    query: TagsQuery,
-  ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }>;
+  protected async fetchTagKeys(
+    _subAccountConfig: Config,
+    _client: any,
+    _query: TagsQuery,
+  ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
+    // To be implemented by each provider client
+    return { tagKeys: [], provider: this.provider };
+  }
 
   // Get all tag values of the specified tag key from one account
-  protected abstract fetchTagValues(
-    subAccountConfig: Config,
-    client: any,
-    query: TagsQuery,
-    tagKey: string,
-  ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }>;
+  protected async fetchTagValues(
+    _subAccountConfig: Config,
+    _client: any,
+    _query: TagsQuery,
+    _tagKey: string,
+  ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
+    // To be implemented by each provider client
+    return { tagValues: [], provider: this.provider };
+  }
 
   protected abstract fetchCosts(subAccountConfig: Config, client: any, query: CostQuery): Promise<any>;
 

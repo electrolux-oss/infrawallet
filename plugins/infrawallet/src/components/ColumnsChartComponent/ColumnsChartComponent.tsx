@@ -22,7 +22,7 @@ import { ColumnsChartComponentProps } from '../types';
 export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
   granularity,
   granularitySetter,
-  categories,
+  periods,
   costs,
   metrics,
   height,
@@ -111,15 +111,15 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
         </Grid>
         <Grid item>Show Metrics</Grid>
       </Grid>
-      {costs && costsSeries ? (
+      {costs !== undefined && costsSeries !== undefined ? (
         <ResponsiveChartContainer
           margin={{
-            bottom: 80,
+            bottom: 6 * costsSeries.length + 80,
           }}
           series={[...costsSeries, ...(metricsSeries ? metricsSeries : [])]}
           xAxis={[
             {
-              data: categories,
+              data: periods,
               scaleType: 'band',
             },
           ]}
@@ -144,7 +144,12 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
           <LinePlot />
           <LineHighlightPlot />
           <MarkPlot />
-          <ChartsXAxis />
+          <ChartsXAxis
+            tickLabelStyle={{
+              angle: periods.length > 12 ? -45 : 0,
+              textAnchor: periods.length > 12 ? 'end' : 'middle',
+            }}
+          />
           <ChartsYAxis />
           <ChartsTooltip trigger="item" />
           <ChartsLegend
@@ -167,6 +172,7 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
                     position={{ vertical: 'bottom', horizontal: 'middle' }}
                     itemMarkHeight={10}
                     itemMarkWidth={10}
+                    itemGap={costsSeries.length > 5 ? 5 : 10}
                     labelStyle={{
                       fontSize: '0.9em',
                     }}

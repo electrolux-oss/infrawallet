@@ -78,7 +78,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
   const MERGE_THRESHOLD = 8;
 
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
-  const [reports, setReports] = useState<Report[]>([]);
+  const [reports, setReports] = useState<Report[] | undefined>(undefined);
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [filters, setFilters] = useState<Filters>({});
   const [cloudProviderErrors, setCloudProviderErrors] = useState<CloudProviderError[]>([]);
@@ -104,7 +104,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
     await infraWalletApi
       .getCostReports('', selectedTags, groups, granularity, monthRange.startMonth, monthRange.endMonth)
       .then(reportsResponse => {
-        if (reportsResponse.data && reportsResponse.data.length > 0) {
+        if (reportsResponse.data) {
           setReports(reportsResponse.data);
           setPeriods(getPeriodStrings(granularity, monthRange.startMonth, monthRange.endMonth));
         }
@@ -130,7 +130,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
   }, [params.name, monthRange, granularity, infraWalletApi, alertApi]);
 
   useEffect(() => {
-    if (reports.length !== 0) {
+    if (reports !== undefined) {
       const filteredReports = filterCostReports(reports, filters);
       const aggregatedReports = aggregateCostReports(filteredReports, aggregatedBy);
       const aggregatedAndMergedReports = mergeCostReports(aggregatedReports, MERGE_THRESHOLD);
@@ -194,7 +194,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
                   ? reportsAggregatedAndMerged.map((item: any) => getTotalCost(item))
                   : undefined
               }
-              height={350}
+              height={450}
               highlightedItem={highlightedItem}
               highlightedItemSetter={setHighlightedItem}
             />
@@ -203,7 +203,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
             <ColumnsChartComponent
               granularity={granularity}
               granularitySetter={setGranularity}
-              categories={periods}
+              periods={periods}
               costs={
                 reportsAggregatedAndMerged
                   ? reportsAggregatedAndMerged.map((item: any) => ({
@@ -217,7 +217,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
                 group: item.group,
                 data: rearrangeData(item, periods),
               }))}
-              height={350}
+              height={450}
               highlightedItem={highlightedItem}
               highlightedItemSetter={setHighlightedItem}
             />

@@ -175,6 +175,23 @@ backend:
           privateKey: <private_key_of_your_api_key>
 ```
 
+### Datadog Integration
+
+To manage Datadog costs, you need to create an API key and an Application Key for your Organization, or [Parent Organization](https://docs.datadoghq.com/account_management/multi_organization/) (if you have Multiple-Organization Accounts), with `usage_read` permission. You can find the documentation [here](https://docs.datadoghq.com/account_management/api-app-keys/). Add the following settings to `app-config.yaml`:
+
+```yaml
+backend:
+  infraWallet:
+    integrations:
+      datadog:
+        - name: <unique_name_of_this_integration>
+          apiKey: <your_api_key>
+          applicationKey: <your_application_key>
+          ddSite: <your_site> # e.g. https://api.datadoghq.eu
+```
+
+Datadog doesn't provide daily costs. Current daily costs are calculated by `monthly costs/number of days in that month`.
+
 ## Adjust Category Mappings if Needed
 
 The category mappings are stored in the plugin's database. If there is no mapping found in the DB when initializing the plugin, the default mappings will be used. The default mappings can be found in the [plugins/infrawallet-backend/seeds/init.js](../plugins/infrawallet-backend/seeds/init.js) file. You can adjust this seed file to fit your needs, or update the database directly later on.

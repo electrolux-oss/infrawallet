@@ -5,7 +5,7 @@ import moment from 'moment';
 import urllib from 'urllib';
 import { CategoryMappingService } from '../service/CategoryMappingService';
 import { CLOUD_PROVIDER } from '../service/consts';
-import { CostQuery, Report, TagsQuery } from '../service/types';
+import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 
 export class MongoAtlasClient extends InfraWalletClient {
@@ -36,25 +36,6 @@ export class MongoAtlasClient extends InfraWalletClient {
     };
 
     return client;
-  }
-
-  protected async fetchTagKeys(
-    _subAccountConfig: Config,
-    _client: any,
-    _query: TagsQuery,
-  ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
-    // To be implemented
-    return { tagKeys: [], provider: CLOUD_PROVIDER.MONGODB_ATLAS };
-  }
-
-  protected async fetchTagValues(
-    _subAccountConfig: Config,
-    _client: any,
-    _query: TagsQuery,
-    _tagKey: string,
-  ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
-    // To be implemented
-    return { tagValues: [], provider: CLOUD_PROVIDER.MONGODB_ATLAS };
   }
 
   protected async fetchCosts(subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {

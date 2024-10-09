@@ -1,12 +1,13 @@
 import { AwsClient } from '../cost-clients/AwsClient';
 import { AzureClient } from '../cost-clients/AzureClient';
+import { ConfluentClient } from '../cost-clients/ConfluentClient';
+import { DatadogClient } from '../cost-clients/DatadogClient';
 import { GCPClient } from '../cost-clients/GCPClient';
+import { MockClient } from '../cost-clients/MockClient';
+import { MongoAtlasClient } from '../cost-clients/MongoAtlasClient';
 import { DatadogProvider } from '../metric-providers/DatadogProvider';
 import { GrafanaCloudProvider } from '../metric-providers/GrafanaCloudProvider';
 import { MockProvider } from '../metric-providers/MockProvider';
-import { MockClient } from '../cost-clients/MockClient';
-import { ConfluentClient } from '../cost-clients/ConfluentClient';
-import { MongoAtlasClient } from '../cost-clients/MongoAtlasClient';
 
 // Supported cloud providers to extract costs
 export const enum CLOUD_PROVIDER {
@@ -15,6 +16,7 @@ export const enum CLOUD_PROVIDER {
   AZURE = 'Azure',
   MONGODB_ATLAS = 'MongoAtlas',
   CONFLUENT = 'Confluent',
+  DATADOG = 'Datadog',
   MOCK = 'Mock',
 }
 
@@ -26,6 +28,7 @@ export const COST_CLIENT_MAPPINGS: {
   gcp: GCPClient,
   confluent: ConfluentClient,
   mongoatlas: MongoAtlasClient,
+  datadog: DatadogClient,
   mock: MockClient,
 };
 
@@ -36,6 +39,11 @@ export const METRIC_PROVIDER_MAPPINGS: {
   grafanacloud: GrafanaCloudProvider,
   mock: MockProvider,
 };
+
+export const enum GRANULARITY {
+  DAILY = 'daily',
+  MONTHLY = 'monthly',
+}
 
 export const enum CACHE_CATEGORY {
   COSTS = 'costs',
@@ -54,6 +62,7 @@ export const DEFAULT_TAGS_CACHE_TTL: {
   [CLOUD_PROVIDER.GCP]: 1 * 60 * 60 * 1000,
   [CLOUD_PROVIDER.MONGODB_ATLAS]: 1 * 60 * 60 * 1000,
   [CLOUD_PROVIDER.CONFLUENT]: 1 * 60 * 60 * 1000,
+  [CLOUD_PROVIDER.DATADOG]: 1 * 60 * 60 * 1000,
   [CLOUD_PROVIDER.MOCK]: 0,
 };
 
@@ -65,5 +74,6 @@ export const DEFAULT_COSTS_CACHE_TTL: {
   [CLOUD_PROVIDER.GCP]: 2 * 60 * 60 * 1000,
   [CLOUD_PROVIDER.MONGODB_ATLAS]: 2 * 60 * 60 * 1000,
   [CLOUD_PROVIDER.CONFLUENT]: 2 * 60 * 60 * 1000,
+  [CLOUD_PROVIDER.DATADOG]: 2 * 60 * 60 * 1000,
   [CLOUD_PROVIDER.MOCK]: 0,
 };

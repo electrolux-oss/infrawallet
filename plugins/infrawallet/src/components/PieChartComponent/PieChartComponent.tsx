@@ -86,7 +86,7 @@ export const PieChartComponent: FC<PieChartComponentProps> = ({
           }
           onHighlightChange={onHighlightChange}
         >
-          <PieCenterLabel>Total: {formatCurrency(total)}</PieCenterLabel>
+          {data.length ? <PieCenterLabel>Total: {formatCurrency(total)}</PieCenterLabel> : <></>}
         </PieChart>
       )}
     </Paper>

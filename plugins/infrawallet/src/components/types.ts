@@ -21,7 +21,7 @@ export type TopbarComponentProps = {
 };
 
 export type FiltersComponentProps = {
-  reports: Report[];
+  reports: Report[] | undefined;
   filters: Filters;
   monthRange: MonthRange;
   filtersSetter: any;
@@ -39,7 +39,7 @@ export type QueryComponentProps = {
 export type ColumnsChartComponentProps = {
   granularity: string;
   granularitySetter: any;
-  categories: any[];
+  periods: any[];
   costs: Array<{ name: string; data: any[] }> | undefined;
   metrics?: Array<{ name: string; group?: string; data: any[] }>;
   height?: number;
