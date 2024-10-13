@@ -29,6 +29,13 @@ export interface Config {
              */
             accessKeySecret?: string;
             tags?: string[];
+            filters?: [
+              {
+                type: string;
+                attribute: string;
+                pattern: string;
+              },
+            ];
           },
         ];
         gcp?: [
@@ -68,6 +75,27 @@ export interface Config {
              */
             privateKey: string;
             tags?: string[];
+          },
+        ];
+        datadog?: [
+          {
+            name: string;
+            /**
+             * @visibility secret
+             */
+            apiKey: string;
+            /**
+             * @visibility secret
+             */
+            applicationKey: string;
+            ddSite: string;
+            filters?: [
+              {
+                type: string;
+                attribute: string;
+                pattern: string;
+              },
+            ];
           },
         ];
         mock?: [
