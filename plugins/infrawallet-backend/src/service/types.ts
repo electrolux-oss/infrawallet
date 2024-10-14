@@ -97,3 +97,9 @@ export type Wallet = {
   currenty: string;
   description?: string;
 };
+
+export type Filter = {
+  type: string; // 'include' or 'exclude'
+  attribute: string;
+  pattern: string;
+};
