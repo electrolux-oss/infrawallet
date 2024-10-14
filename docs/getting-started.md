@@ -192,9 +192,25 @@ backend:
 
 Datadog doesn't provide daily costs. Current daily costs are calculated by `monthly costs/number of days in that month`.
 
-## Adjust Category Mappings if Needed
+## Integration Filter
 
-The category mappings are stored in the plugin's database. If there is no mapping found in the DB when initializing the plugin, the default mappings will be used. The default mappings can be found in the [plugins/infrawallet-backend/seeds/init.js](../plugins/infrawallet-backend/seeds/init.js) file. You can adjust this seed file to fit your needs, or update the database directly later on.
+When integrating InfraWallet with your billing account, you have the ability to retrieve and display costs for all sub-accounts. However, if you want to limit the visibility of certain accounts, you can apply filters. Below is an example of how to configure this for AWS:
+
+```yaml
+backend:
+  infraWallet:
+    integrations:
+      aws:
+        - name: <unique_name_of_this_integration>
+          accountId: '<12-digit_account_ID>' # quoted as a string
+          ...
+          filters:
+            - type: include # 'include' or 'exclude'
+              attribute: account
+              pattern: <regex_for_account_names> # Use a valid regex pattern to specify accounts
+```
+
+Currently, only AWS and Datadog integrations support filters.
 
 ## Install the Plugin
 

@@ -59,11 +59,11 @@ export class AwsClient extends InfraWalletClient {
     return `${this.provider}/${convertedName}`;
   }
 
-  protected async initCloudClient(subAccountConfig: Config): Promise<any> {
-    const accountId = subAccountConfig.getString('accountId');
-    const assumedRoleName = subAccountConfig.getOptionalString('assumedRoleName');
-    const accessKeyId = subAccountConfig.getOptionalString('accessKeyId');
-    const accessKeySecret = subAccountConfig.getOptionalString('accessKeySecret');
+  protected async initCloudClient(integrationConfig: Config): Promise<any> {
+    const accountId = integrationConfig.getString('accountId');
+    const assumedRoleName = integrationConfig.getOptionalString('assumedRoleName');
+    const accessKeyId = integrationConfig.getOptionalString('accessKeyId');
+    const accessKeySecret = integrationConfig.getOptionalString('accessKeySecret');
     const region = 'us-east-1';
 
     if (!accessKeyId && !accessKeySecret && !assumedRoleName) {
@@ -143,7 +143,7 @@ export class AwsClient extends InfraWalletClient {
   }
 
   protected async fetchTagKeys(
-    _subAccountConfig: Config,
+    _integrationConfig: Config,
     client: any,
     query: TagsQuery,
   ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
@@ -152,7 +152,7 @@ export class AwsClient extends InfraWalletClient {
   }
 
   protected async fetchTagValues(
-    _subAccountConfig: Config,
+    _integrationConfig: Config,
     client: any,
     query: TagsQuery,
     tagKey: string,
@@ -161,7 +161,7 @@ export class AwsClient extends InfraWalletClient {
     return { tagValues: tagValues, provider: this.provider };
   }
 
-  protected async fetchCosts(_subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
+  protected async fetchCosts(_integrationConfig: Config, client: any, query: CostQuery): Promise<any> {
     // query this aws account's cost and usage using @aws-sdk/client-cost-explorer
     let costAndUsageResults: any[] = [];
     let nextPageToken = undefined;
@@ -220,9 +220,13 @@ export class AwsClient extends InfraWalletClient {
     return costAndUsageResults;
   }
 
-  protected async transformCostsData(subAccountConfig: Config, query: CostQuery, costResponse: any): Promise<Report[]> {
+  protected async transformCostsData(
+    integrationConfig: Config,
+    query: CostQuery,
+    costResponse: any,
+  ): Promise<Report[]> {
     const categoryMappingService = CategoryMappingService.getInstance();
-    const tags = subAccountConfig.getOptionalStringArray('tags');
+    const tags = integrationConfig.getOptionalStringArray('tags');
     const tagKeyValues: { [key: string]: string } = {};
     tags?.forEach(tag => {
       const [k, v] = tag.split(':');
@@ -245,6 +249,11 @@ export class AwsClient extends InfraWalletClient {
           row.Groups.forEach((group: any) => {
             const accountId = group.Keys ? group.Keys[0] : '';
             const accountName = this.accounts.get(accountId) || accountId;
+
+            if (!this.evaluateIntegrationFilters(accountName, integrationConfig)) {
+              return;
+            }
+
             const serviceName = group.Keys ? group.Keys[1] : '';
             const keyName = `${accountId}_${serviceName}`;
 

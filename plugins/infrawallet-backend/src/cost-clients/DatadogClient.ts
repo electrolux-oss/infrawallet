@@ -73,10 +73,10 @@ export class DatadogClient extends InfraWalletClient {
     return `${this.provider}/${convertedName}`;
   }
 
-  protected async initCloudClient(config: any): Promise<any> {
-    const apiKey = config.getString('apiKey');
-    const applicationKey = config.getString('applicationKey');
-    const ddSite = config.getString('ddSite');
+  protected async initCloudClient(integrationConfig: any): Promise<any> {
+    const apiKey = integrationConfig.getString('apiKey');
+    const applicationKey = integrationConfig.getString('applicationKey');
+    const ddSite = integrationConfig.getString('ddSite');
     const configuration = datadogClient.createConfiguration({
       baseServer: new datadogClient.BaseServerConfiguration(ddSite, {}),
       authMethods: {
@@ -88,7 +88,7 @@ export class DatadogClient extends InfraWalletClient {
     return client;
   }
 
-  protected async fetchCosts(_config: Config, client: any, query: CostQuery): Promise<any> {
+  protected async fetchCosts(integrationConfig: Config, client: any, query: CostQuery): Promise<any> {
     const costData: datadogApiV2.CostByOrg[] = [];
     const startTime = moment(parseInt(query.startTime, 10));
     const endTime = moment(parseInt(query.endTime, 10));
@@ -131,8 +131,13 @@ export class DatadogClient extends InfraWalletClient {
 
     if (query.granularity === GRANULARITY.MONTHLY) {
       costData.forEach(costByOrg => {
+        const orgName = costByOrg.attributes?.orgName as string;
+        if (!this.evaluateIntegrationFilters(orgName, integrationConfig)) {
+          return;
+        }
+
         costs.push({
-          orgName: costByOrg.attributes?.orgName,
+          orgName: orgName,
           date: costByOrg.attributes?.date,
           // only keep cost breakdown
           charges: costByOrg.attributes?.charges?.filter(charge => charge.chargeType !== 'total'),
@@ -141,6 +146,11 @@ export class DatadogClient extends InfraWalletClient {
     } else {
       // Datadog doesn't provide daily costs based on usage, so we allocate monthly costs evenly by day
       costData.forEach(costByOrg => {
+        const orgName = costByOrg.attributes?.orgName as string;
+        if (!this.evaluateIntegrationFilters(orgName, integrationConfig)) {
+          return;
+        }
+
         const daysInMonth = moment(costByOrg.attributes?.date).daysInMonth();
         costByOrg.attributes?.charges?.forEach(charge => {
           if (charge.chargeType === 'total') {
@@ -150,7 +160,7 @@ export class DatadogClient extends InfraWalletClient {
 
           for (let i = 0; i < daysInMonth; i++) {
             const dailyCost = {
-              orgName: costByOrg.attributes?.orgName,
+              orgName: orgName,
               date: moment(costByOrg.attributes?.date).add(i, 'd'),
               charges: [
                 {

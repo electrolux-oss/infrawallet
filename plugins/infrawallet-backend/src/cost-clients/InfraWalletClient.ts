@@ -11,7 +11,16 @@ import {
   setTagValuesToCache,
   tagExists,
 } from '../service/functions';
-import { ClientResponse, CloudProviderError, CostQuery, Report, Tag, TagsQuery, TagsResponse } from '../service/types';
+import {
+  ClientResponse,
+  CloudProviderError,
+  CostQuery,
+  Filter,
+  Report,
+  Tag,
+  TagsQuery,
+  TagsResponse,
+} from '../service/types';
 
 export abstract class InfraWalletClient {
   constructor(
@@ -26,11 +35,56 @@ export abstract class InfraWalletClient {
     return serviceName;
   }
 
-  protected abstract initCloudClient(subAccountConfig: Config): Promise<any>;
+  protected evaluateIntegrationFilters(account: string, integrationConfig: Config): boolean {
+    const filters: Filter[] = [];
+    for (const filter of integrationConfig.getOptionalConfigArray('filters') || []) {
+      filters.push({
+        type: filter.getString('type'),
+        attribute: filter.getString('attribute'),
+        pattern: filter.getString('pattern'),
+      });
+    }
+    return this.evaluateFilters(account, filters);
+  }
+
+  private evaluateFilters(account: string, filters: Filter[]): boolean {
+    if (!filters || filters.length === 0) {
+      // include if no filter
+      return true;
+    }
+
+    let included = false;
+    let hasIncludeFilter = false;
+
+    for (const filter of filters) {
+      const regex = new RegExp(filter.pattern);
+
+      if (filter.type === 'exclude' && regex.test(account)) {
+        // exclude immediately if an exclude filter matches
+        return false;
+      }
+
+      if (filter.type === 'include') {
+        hasIncludeFilter = true;
+
+        if (regex.test(account)) {
+          included = true;
+        }
+      }
+    }
+
+    if (hasIncludeFilter) {
+      return included;
+    }
+
+    return true;
+  }
+
+  protected abstract initCloudClient(integrationConfig: Config): Promise<any>;
 
   // Get all cost allocation tag keys from one account
   protected async fetchTagKeys(
-    _subAccountConfig: Config,
+    _integrationConfig: Config,
     _client: any,
     _query: TagsQuery,
   ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
@@ -40,7 +94,7 @@ export abstract class InfraWalletClient {
 
   // Get all tag values of the specified tag key from one account
   protected async fetchTagValues(
-    _subAccountConfig: Config,
+    _integrationConfig: Config,
     _client: any,
     _query: TagsQuery,
     _tagKey: string,
@@ -49,20 +103,20 @@ export abstract class InfraWalletClient {
     return { tagValues: [], provider: this.provider };
   }
 
-  protected abstract fetchCosts(subAccountConfig: Config, client: any, query: CostQuery): Promise<any>;
+  protected abstract fetchCosts(integrationConfig: Config, client: any, query: CostQuery): Promise<any>;
 
   protected abstract transformCostsData(
-    subAccountConfig: Config,
+    integrationConfig: Config,
     query: CostQuery,
     costResponse: any,
   ): Promise<Report[]>;
 
   // Get aggregated unique tag keys across all accounts of this cloud provider
   async getTagKeys(query: TagsQuery): Promise<TagsResponse> {
-    const accounts = this.config.getOptionalConfigArray(
+    const integrationConfigs = this.config.getOptionalConfigArray(
       `backend.infraWallet.integrations.${this.provider.toLowerCase()}`,
     );
-    if (!accounts) {
+    if (!integrationConfigs) {
       return { tags: [], errors: [] };
     }
 
@@ -70,12 +124,12 @@ export abstract class InfraWalletClient {
     const aggregatedTags: Tag[] = [];
     const errors: CloudProviderError[] = [];
 
-    for (const account of accounts) {
-      const accountName = account.getString('name');
+    for (const integrationConfig of integrationConfigs) {
+      const integrationName = integrationConfig.getString('name');
 
-      const cachedTagKeys = await getTagKeysFromCache(this.cache, this.provider, accountName, query);
+      const cachedTagKeys = await getTagKeysFromCache(this.cache, this.provider, integrationName, query);
       if (cachedTagKeys) {
-        this.logger.info(`Reuse ${this.provider}/${accountName} tag keys from cache`);
+        this.logger.info(`Reuse ${this.provider}/${integrationName} tag keys from cache`);
 
         for (const tag of cachedTagKeys) {
           if (!tagExists(aggregatedTags, tag)) {
@@ -88,8 +142,8 @@ export abstract class InfraWalletClient {
 
       const promise = (async () => {
         try {
-          const client = await this.initCloudClient(account);
-          const response = await this.fetchTagKeys(account, client, query);
+          const client = await this.initCloudClient(integrationConfig);
+          const response = await this.fetchTagKeys(integrationConfig, client, query);
           const tagKeysCache: Tag[] = [];
 
           for (const tagKey of response.tagKeys) {
@@ -100,12 +154,12 @@ export abstract class InfraWalletClient {
               aggregatedTags.push(tag);
             }
           }
-          await setTagKeysToCache(this.cache, tagKeysCache, this.provider, accountName, query);
+          await setTagKeysToCache(this.cache, tagKeysCache, this.provider, integrationName, query);
         } catch (e) {
           this.logger.error(e);
           errors.push({
             provider: this.provider,
-            name: `${this.provider}/${accountName}`,
+            name: `${this.provider}/${integrationName}`,
             error: e.message,
           });
         }
@@ -124,10 +178,10 @@ export abstract class InfraWalletClient {
 
   // Get aggregated tag values of the specified tag key across all accounts of this cloud provider
   async getTagValues(query: TagsQuery, tagKey: string): Promise<TagsResponse> {
-    const accounts = this.config.getOptionalConfigArray(
+    const integrationConfigs = this.config.getOptionalConfigArray(
       `backend.infraWallet.integrations.${this.provider.toLowerCase()}`,
     );
-    if (!accounts) {
+    if (!integrationConfigs) {
       return { tags: [], errors: [] };
     }
 
@@ -135,12 +189,12 @@ export abstract class InfraWalletClient {
     const aggregatedTags: Tag[] = [];
     const errors: CloudProviderError[] = [];
 
-    for (const account of accounts) {
-      const accountName = account.getString('name');
+    for (const integrationConfig of integrationConfigs) {
+      const integrationName = integrationConfig.getString('name');
 
-      const cachedTagValues = await getTagValuesFromCache(this.cache, this.provider, accountName, tagKey, query);
+      const cachedTagValues = await getTagValuesFromCache(this.cache, this.provider, integrationName, tagKey, query);
       if (cachedTagValues) {
-        this.logger.info(`Reuse ${this.provider}/${accountName}/${tagKey} tag values from cache`);
+        this.logger.info(`Reuse ${this.provider}/${integrationName}/${tagKey} tag values from cache`);
 
         for (const tag of cachedTagValues) {
           if (!tagExists(aggregatedTags, tag)) {
@@ -153,8 +207,8 @@ export abstract class InfraWalletClient {
 
       const promise = (async () => {
         try {
-          const client = await this.initCloudClient(account);
-          const response = await this.fetchTagValues(account, client, query, tagKey);
+          const client = await this.initCloudClient(integrationConfig);
+          const response = await this.fetchTagValues(integrationConfig, client, query, tagKey);
           const tagValuesCache: Tag[] = [];
 
           for (const tagValue of response.tagValues) {
@@ -165,12 +219,12 @@ export abstract class InfraWalletClient {
               aggregatedTags.push(tag);
             }
           }
-          await setTagValuesToCache(this.cache, tagValuesCache, this.provider, accountName, tagKey, query);
+          await setTagValuesToCache(this.cache, tagValuesCache, this.provider, integrationName, tagKey, query);
         } catch (e) {
           this.logger.error(e);
           errors.push({
             provider: this.provider,
-            name: `${this.provider}/${accountName}`,
+            name: `${this.provider}/${integrationName}`,
             error: e.message,
           });
         }
@@ -190,10 +244,10 @@ export abstract class InfraWalletClient {
   }
 
   async getCostReports(query: CostQuery): Promise<ClientResponse> {
-    const accounts = this.config.getOptionalConfigArray(
+    const integrationConfigs = this.config.getOptionalConfigArray(
       `backend.infraWallet.integrations.${this.provider.toLowerCase()}`,
     );
-    if (!accounts) {
+    if (!integrationConfigs) {
       return { reports: [], errors: [] };
     }
 
@@ -201,13 +255,13 @@ export abstract class InfraWalletClient {
     const results: Report[] = [];
     const errors: CloudProviderError[] = [];
 
-    for (const account of accounts) {
-      const accountName = account.getString('name');
+    for (const integrationConfig of integrationConfigs) {
+      const integrationName = integrationConfig.getString('name');
 
       // first check if there is any cached
-      const cachedCosts = await getReportsFromCache(this.cache, this.provider, accountName, query);
+      const cachedCosts = await getReportsFromCache(this.cache, this.provider, integrationName, query);
       if (cachedCosts) {
-        this.logger.debug(`${this.provider}/${accountName} costs from cache`);
+        this.logger.debug(`${this.provider}/${integrationName} costs from cache`);
         cachedCosts.forEach(cost => {
           results.push(cost);
         });
@@ -216,17 +270,17 @@ export abstract class InfraWalletClient {
 
       const promise = (async () => {
         try {
-          const client = await this.initCloudClient(account);
-          const costResponse = await this.fetchCosts(account, client, query);
+          const client = await this.initCloudClient(integrationConfig);
+          const costResponse = await this.fetchCosts(integrationConfig, client, query);
 
-          const transformedReports = await this.transformCostsData(account, query, costResponse);
+          const transformedReports = await this.transformCostsData(integrationConfig, query, costResponse);
 
           // cache the results
           await setReportsToCache(
             this.cache,
             transformedReports,
             this.provider,
-            accountName,
+            integrationName,
             query,
             getDefaultCacheTTL(CACHE_CATEGORY.COSTS, this.provider),
           );
@@ -238,7 +292,7 @@ export abstract class InfraWalletClient {
           this.logger.error(e);
           errors.push({
             provider: this.provider,
-            name: `${this.provider}/${accountName}`,
+            name: `${this.provider}/${integrationName}`,
             error: e.message,
           });
         }
