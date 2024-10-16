@@ -3,8 +3,12 @@
   InfraWallet
 </h1>
 
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=electrolux-oss_infrawallet&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=electrolux-oss_infrawallet)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/electrolux-oss/infrawallet/badge)](https://scorecard.dev/viewer/?uri=github.com/electrolux-oss/infrawallet)
+[![GitHub Release](https://img.shields.io/github/v/release/electrolux-oss/infrawallet)](https://github.com/electrolux-oss/infrawallet/releases)
+![NPM Downloads](https://img.shields.io/npm/dm/%40electrolux-oss%2Fplugin-infrawallet)
+
 
 > Control your cloud costs just in the way how you control your bank accounts
 
