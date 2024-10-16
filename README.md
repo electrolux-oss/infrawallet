@@ -42,6 +42,8 @@ For the latest version of InfraWallet, it also supports displaying business metr
 
 There are different ways to contribute to InfraWallet, see examples [here](https://medium.com/@infrawalletbox/contribute-to-infrawallet-5-ways-to-get-started-today-42051b8ff8c6). To join the coding, you can start from this [documentation](./docs/contributing.md).
 
+If your organization uses InfraWallet, we'd love to have you listed in [Adopters](ADOPTERS.md).
+
 ## Roadmap
 
 - [x] Make IAM user optional for AWS credentials
