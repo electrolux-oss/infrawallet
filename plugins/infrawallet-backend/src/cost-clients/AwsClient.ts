@@ -264,6 +264,7 @@ export class AwsClient extends InfraWalletClient {
                 service: this.convertServiceName(serviceName),
                 category: categoryMappingService.getCategoryByServiceName(this.provider, serviceName),
                 provider: this.provider,
+                type: 'Integration',
                 reports: {},
                 ...tagKeyValues,
               };

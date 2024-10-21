@@ -11,10 +11,17 @@ import {
 } from '../controllers/MetricSettingController';
 import { InfraWalletClient } from '../cost-clients/InfraWalletClient';
 import { MetricProvider } from '../metric-providers/MetricProvider';
+import {
+  CustomCost,
+  getCustomCosts,
+  createCustomCosts,
+  updateOrInsertCustomCost,
+  deleteCustomCost,
+} from '../models/CustomCost';
 import { CategoryMappingService } from './CategoryMappingService';
 import { COST_CLIENT_MAPPINGS, METRIC_PROVIDER_MAPPINGS } from './consts';
+import { parseFilters, parseTags, tagsToString } from './functions';
 import { CloudProviderError, Metric, MetricSetting, Report, Tag } from './types';
-import { parseTags, tagsToString, parseFilters } from './functions';
 
 export interface RouterOptions {
   logger: LoggerService;
@@ -229,6 +236,59 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     } else {
       response.json({ data: tags, errors: errors, status: 200 });
     }
+  });
+
+  router.get('/custom_costs', async (_request, response) => {
+    const customCosts = await getCustomCosts(database);
+
+    // make it compatible with the SQLite database
+    for (const cost of customCosts) {
+      if (typeof cost.tags === 'string') {
+        try {
+          cost.tags = JSON.parse(cost.tags);
+        } catch (error) {
+          cost.tags = {};
+        }
+      }
+    }
+
+    response.json({ data: customCosts, status: 200 });
+  });
+
+  router.post('/custom_costs', async (request, response) => {
+    const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
+
+    if (readOnly) {
+      response.status(403).json({ error: 'API not enabled in read-only mode', status: 403 });
+      return;
+    }
+
+    const updatedCustomCost = await createCustomCosts(database, request.body as CustomCost[]);
+    response.json({ created: updatedCustomCost, status: 200 });
+  });
+
+  router.put('/custom_cost', async (request, response) => {
+    const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
+
+    if (readOnly) {
+      response.status(403).json({ error: 'API not enabled in read-only mode', status: 403 });
+      return;
+    }
+
+    const updatedCustomCost = await updateOrInsertCustomCost(database, request.body as CustomCost);
+    response.json({ updated: updatedCustomCost, status: 200 });
+  });
+
+  router.delete('/custom_cost', async (request, response) => {
+    const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
+
+    if (readOnly) {
+      response.status(403).json({ error: 'API not enabled in read-only mode', status: 403 });
+      return;
+    }
+
+    const deletedCustomCost = await deleteCustomCost(database, request.body as CustomCost);
+    response.json({ deleted: deletedCustomCost, status: 200 });
   });
 
   router.get('/:walletName/metrics', async (request, response) => {
