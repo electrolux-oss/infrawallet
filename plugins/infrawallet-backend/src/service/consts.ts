@@ -1,6 +1,7 @@
 import { AwsClient } from '../cost-clients/AwsClient';
 import { AzureClient } from '../cost-clients/AzureClient';
 import { ConfluentClient } from '../cost-clients/ConfluentClient';
+import { CustomCostClient } from '../cost-clients/CustomCostClient';
 import { DatadogClient } from '../cost-clients/DatadogClient';
 import { GCPClient } from '../cost-clients/GCPClient';
 import { MockClient } from '../cost-clients/MockClient';
@@ -17,6 +18,7 @@ export const enum CLOUD_PROVIDER {
   MONGODB_ATLAS = 'MongoAtlas',
   CONFLUENT = 'Confluent',
   DATADOG = 'Datadog',
+  CUSTOM = 'Custom',
   MOCK = 'Mock',
 }
 
@@ -29,6 +31,7 @@ export const COST_CLIENT_MAPPINGS: {
   confluent: ConfluentClient,
   mongoatlas: MongoAtlasClient,
   datadog: DatadogClient,
+  custom: CustomCostClient,
   mock: MockClient,
 };
 
@@ -63,7 +66,8 @@ export const DEFAULT_TAGS_CACHE_TTL: {
   [CLOUD_PROVIDER.MONGODB_ATLAS]: 1 * 60 * 60 * 1000,
   [CLOUD_PROVIDER.CONFLUENT]: 1 * 60 * 60 * 1000,
   [CLOUD_PROVIDER.DATADOG]: 1 * 60 * 60 * 1000,
-  [CLOUD_PROVIDER.MOCK]: 0,
+  [CLOUD_PROVIDER.CUSTOM]: 1,
+  [CLOUD_PROVIDER.MOCK]: 0, // NOTE: 0 means never expired!
 };
 
 export const DEFAULT_COSTS_CACHE_TTL: {
@@ -75,5 +79,6 @@ export const DEFAULT_COSTS_CACHE_TTL: {
   [CLOUD_PROVIDER.MONGODB_ATLAS]: 2 * 60 * 60 * 1000,
   [CLOUD_PROVIDER.CONFLUENT]: 2 * 60 * 60 * 1000,
   [CLOUD_PROVIDER.DATADOG]: 2 * 60 * 60 * 1000,
-  [CLOUD_PROVIDER.MOCK]: 0,
+  [CLOUD_PROVIDER.CUSTOM]: 1, // do not cache custom costs since they are in the plugin database
+  [CLOUD_PROVIDER.MOCK]: 0, // NOTE: 0 means never expired!
 };
