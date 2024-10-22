@@ -33,6 +33,8 @@
 
 \*_The framework is designed to be extensible to support other cloud providers. Feel free to [contribute](./docs/contributing.md) to the project._
 
+\*\*_You can also manually add custom costs using InfraWallet UI if there is no integration. See more about this feature on this [page](./docs/getting-started.md#custom-costs-management)._
+
 ## Getting started
 
 To start using InfraWallet, see the [Getting Started documentation](./docs/getting-started.md).
