@@ -112,7 +112,7 @@ export const BulkInsertButton = (prop: { reloadFunction: any }) => {
   return (
     <React.Fragment>
       <Button startIcon={<LibraryAddIcon />} onClick={handleClickOpen}>
-        Bult Insert Costs
+        Bulk Insert Costs
       </Button>
       <Dialog component="form" fullWidth maxWidth="md" open={open} onClose={handleClose} onSubmit={handleSubmit}>
         <DialogTitle>Insert custom costs for the same provider.</DialogTitle>
