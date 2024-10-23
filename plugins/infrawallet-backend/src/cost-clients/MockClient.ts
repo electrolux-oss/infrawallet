@@ -1,11 +1,11 @@
-import { promises as fsPromises } from 'fs';
-import moment from 'moment';
-import { CostQuery, Report } from '../service/types';
-import * as upath from 'upath';
-import { InfraWalletClient } from './InfraWalletClient';
 import { CacheService, DatabaseService, LoggerService, resolvePackagePath } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { CLOUD_PROVIDER } from '../service/consts';
+import { promises as fsPromises } from 'fs';
+import moment from 'moment';
+import * as upath from 'upath';
+import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
+import { CostQuery, Report } from '../service/types';
+import { InfraWalletClient } from './InfraWalletClient';
 
 export class MockClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -43,7 +43,7 @@ export class MockClient extends InfraWalletClient {
 
       const processedData = await Promise.all(
         jsonData.map(async item => {
-          item.type = 'Integration';
+          item.provider_type = PROVIDER_TYPE.INTEGRATION;
           item.reports = {};
 
           const StartDate = moment(startD);

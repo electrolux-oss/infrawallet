@@ -4,7 +4,7 @@ import { reduce } from 'lodash';
 import moment from 'moment';
 import urllib from 'urllib';
 import { CategoryMappingService } from '../service/CategoryMappingService';
-import { CLOUD_PROVIDER } from '../service/consts';
+import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
 import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 
@@ -169,7 +169,7 @@ export class MongoAtlasClient extends InfraWalletClient {
             service: this.convertServiceName(serviceName),
             category: categoryMappingService.getCategoryByServiceName(this.provider, serviceName),
             provider: this.provider,
-            type: 'Integration',
+            provider_type: PROVIDER_TYPE.INTEGRATION,
             reports: {},
             ...{ project: project },
             ...{ cluster: cluster },

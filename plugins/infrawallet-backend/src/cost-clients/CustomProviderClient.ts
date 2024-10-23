@@ -3,7 +3,7 @@ import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
 import { getCustomCostsByDateRange } from '../models/CustomCost';
-import { CACHE_CATEGORY, CLOUD_PROVIDER, GRANULARITY } from '../service/consts';
+import { CACHE_CATEGORY, CLOUD_PROVIDER, PROVIDER_TYPE, GRANULARITY } from '../service/consts';
 import {
   getDailyPeriodStringsForOneMonth,
   getDefaultCacheTTL,
@@ -13,9 +13,9 @@ import {
 import { ClientResponse, CloudProviderError, CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 
-export class CustomCostClient extends InfraWalletClient {
+export class CustomProviderClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
-    return new CustomCostClient(CLOUD_PROVIDER.CUSTOM, config, database, cache, logger);
+    return new CustomProviderClient(CLOUD_PROVIDER.CUSTOM, config, database, cache, logger);
   }
 
   protected async initCloudClient(_config: Config): Promise<any> {
@@ -63,7 +63,7 @@ export class CustomCostClient extends InfraWalletClient {
             service: record.service,
             category: record.category,
             provider: record.provider,
-            type: 'Custom Cost',
+            provider_type: PROVIDER_TYPE.CUSTOM,
             reports: {},
           };
         }

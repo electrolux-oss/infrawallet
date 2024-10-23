@@ -1,7 +1,7 @@
 import { AwsClient } from '../cost-clients/AwsClient';
 import { AzureClient } from '../cost-clients/AzureClient';
 import { ConfluentClient } from '../cost-clients/ConfluentClient';
-import { CustomCostClient } from '../cost-clients/CustomCostClient';
+import { CustomProviderClient } from '../cost-clients/CustomProviderClient';
 import { DatadogClient } from '../cost-clients/DatadogClient';
 import { GCPClient } from '../cost-clients/GCPClient';
 import { MockClient } from '../cost-clients/MockClient';
@@ -31,7 +31,7 @@ export const COST_CLIENT_MAPPINGS: {
   confluent: ConfluentClient,
   mongoatlas: MongoAtlasClient,
   datadog: DatadogClient,
-  custom: CustomCostClient,
+  custom: CustomProviderClient,
   mock: MockClient,
 };
 
@@ -82,3 +82,8 @@ export const DEFAULT_COSTS_CACHE_TTL: {
   [CLOUD_PROVIDER.CUSTOM]: 1, // do not cache custom costs since they are in the plugin database
   [CLOUD_PROVIDER.MOCK]: 0, // NOTE: 0 means never expired!
 };
+
+export const enum PROVIDER_TYPE {
+  INTEGRATION = 'Itegration',
+  CUSTOM = 'Custom',
+}
