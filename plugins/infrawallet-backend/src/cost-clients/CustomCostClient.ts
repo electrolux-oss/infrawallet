@@ -3,10 +3,15 @@ import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
 import { getCustomCostsByDateRange } from '../models/CustomCost';
-import { CLOUD_PROVIDER, GRANULARITY } from '../service/consts';
-import { CostQuery, Report } from '../service/types';
+import { CACHE_CATEGORY, CLOUD_PROVIDER, GRANULARITY } from '../service/consts';
+import {
+  getDailyPeriodStringsForOneMonth,
+  getDefaultCacheTTL,
+  getReportsFromCache,
+  setReportsToCache,
+} from '../service/functions';
+import { ClientResponse, CloudProviderError, CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
-import { getDailyPeriodStringsForOneMonth } from '../service/functions';
 
 export class CustomCostClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -17,7 +22,7 @@ export class CustomCostClient extends InfraWalletClient {
     return null;
   }
 
-  protected async fetchCosts(_integrationConfig: Config, _client: any, query: CostQuery): Promise<any> {
+  protected async fetchCosts(_integrationConfig: Config | null, _client: any, query: CostQuery): Promise<any> {
     const records = getCustomCostsByDateRange(
       this.database,
       moment(parseInt(query.startTime, 10)).toDate(),
@@ -26,9 +31,11 @@ export class CustomCostClient extends InfraWalletClient {
     return records;
   }
 
-  protected async transformCostsData(subAccountConfig: Config, query: CostQuery, costResponse: any): Promise<Report[]> {
-    const accountName = subAccountConfig.getString('name');
-
+  protected async transformCostsData(
+    _subAccountConfig: Config | null,
+    query: CostQuery,
+    costResponse: any,
+  ): Promise<Report[]> {
     const transformedData = reduce(
       costResponse,
       (accumulator: { [key: string]: Report }, record) => {
@@ -37,7 +44,7 @@ export class CustomCostClient extends InfraWalletClient {
           periodFormat = 'YYYY-MM-DD';
         }
 
-        const keyName = `${accountName}-${record.provider}-${record.account}-${record.service}`;
+        const keyName = `${record.provider}-${record.account}-${record.service}`;
 
         // make it compatible with SQLite database
         if (typeof record.tags === 'string') {
@@ -52,7 +59,7 @@ export class CustomCostClient extends InfraWalletClient {
         if (!accumulator[keyName]) {
           accumulator[keyName] = {
             id: keyName,
-            account: `${this.provider}/${accountName}`,
+            account: record.account,
             service: record.service,
             category: record.category,
             provider: record.provider,
@@ -92,5 +99,51 @@ export class CustomCostClient extends InfraWalletClient {
     );
 
     return Object.values(transformedData);
+  }
+
+  // override this method so that we do not read from the config file
+  async getCostReports(query: CostQuery): Promise<ClientResponse> {
+    const results: Report[] = [];
+    const errors: CloudProviderError[] = [];
+
+    // first check if there is any cached
+    const cachedCosts = await getReportsFromCache(this.cache, this.provider, 'custom', query);
+    if (cachedCosts) {
+      this.logger.debug(`${this.provider} costs from cache`);
+      cachedCosts.forEach(cost => {
+        results.push(cost);
+      });
+    }
+
+    try {
+      const costResponse = await this.fetchCosts(null, null, query);
+
+      const transformedReports = await this.transformCostsData(null, query, costResponse);
+
+      // cache the results
+      await setReportsToCache(
+        this.cache,
+        transformedReports,
+        this.provider,
+        'custom',
+        query,
+        getDefaultCacheTTL(CACHE_CATEGORY.COSTS, this.provider),
+      );
+
+      transformedReports.forEach((value: any) => {
+        results.push(value);
+      });
+    } catch (e) {
+      this.logger.error(e);
+      errors.push({
+        provider: this.provider,
+        name: this.provider,
+        error: e.message,
+      });
+    }
+    return {
+      reports: results,
+      errors: errors,
+    };
   }
 }
