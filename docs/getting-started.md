@@ -195,17 +195,7 @@ Datadog doesn't provide daily costs. Current daily costs are calculated by `mont
 ### Custom Costs Management
 
 If there is no integration available for some of the cloud costs, it is possible to add such costs via InfraWallet
-custom cost management UI. To enable this feature, you only need to add the following configuration:
-
-```yaml
-backend:
-  infraWallet:
-    integrations:
-      custom:
-        - name: <arbitrary_string>
-```
-
-Then visit `/infrawallet/custom_costs` for managing custom costs. The big table on this page shows all of the custom
+custom cost management UI (the tab besides the cost tab). The big table on this page shows all of the custom
 costs saved in the plugin's database. For now, custom costs are only at the monthly level. When the granularity is set
 to `daily` in a view, there are amortization modes of transforming monthly custom costs into daily costs:
 

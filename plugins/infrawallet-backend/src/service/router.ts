@@ -87,37 +87,41 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     await categoryMappingService.refreshCategoryMappings();
 
     const conf = config.getConfig('backend.infraWallet.integrations');
-    conf.keys().forEach((provider: string) => {
-      if (provider in COST_CLIENT_MAPPINGS) {
-        const client: InfraWalletClient = COST_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
-        const fetchCloudCosts = (async () => {
-          try {
-            const clientResponse = await client.getCostReports({
-              filters: filters,
-              tags: tagsToString(providerTags[provider.toLowerCase()]),
-              groups: groups,
-              granularity: granularity,
-              startTime: startTime,
-              endTime: endTime,
-            });
-            clientResponse.errors.forEach((e: CloudProviderError) => {
-              errors.push(e);
-            });
-            clientResponse.reports.forEach((cost: Report) => {
-              results.push(cost);
-            });
-          } catch (e) {
-            logger.error(e);
-            errors.push({
-              provider: client.constructor.name,
-              name: client.constructor.name,
-              error: e.message,
-            });
-          }
-        })();
-        promises.push(fetchCloudCosts);
-      }
-    });
+    // concat['custom'] : always enable custom cost
+    conf
+      .keys()
+      .concat(['custom'])
+      .forEach((provider: string) => {
+        if (provider in COST_CLIENT_MAPPINGS) {
+          const client: InfraWalletClient = COST_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
+          const fetchCloudCosts = (async () => {
+            try {
+              const clientResponse = await client.getCostReports({
+                filters: filters,
+                tags: tagsToString(providerTags[provider.toLowerCase()]),
+                groups: groups,
+                granularity: granularity,
+                startTime: startTime,
+                endTime: endTime,
+              });
+              clientResponse.errors.forEach((e: CloudProviderError) => {
+                errors.push(e);
+              });
+              clientResponse.reports.forEach((cost: Report) => {
+                results.push(cost);
+              });
+            } catch (e) {
+              logger.error(e);
+              errors.push({
+                provider: client.constructor.name,
+                name: client.constructor.name,
+                error: e.message,
+              });
+            }
+          })();
+          promises.push(fetchCloudCosts);
+        }
+      });
 
     await Promise.all(promises);
 
