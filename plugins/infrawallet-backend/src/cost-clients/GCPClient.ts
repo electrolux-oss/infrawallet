@@ -106,7 +106,7 @@ export class GCPClient extends InfraWalletClient {
             service: this.convertServiceName(row.service),
             category: categoryMappingService.getCategoryByServiceName(this.provider, row.service),
             provider: this.provider,
-            provider_type: PROVIDER_TYPE.INTEGRATION,
+            providerType: PROVIDER_TYPE.INTEGRATION,
             reports: {},
             ...{ project: row.project }, // TODO: how should we handle the project field? for now, we add project name as a field in the report
             ...tagKeyValues, // note that if there is a tag `project:foo` in config, it overrides the project field set above

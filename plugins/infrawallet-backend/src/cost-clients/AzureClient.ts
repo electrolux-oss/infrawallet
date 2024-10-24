@@ -252,7 +252,7 @@ export class AzureClient extends InfraWalletClient {
             service: this.convertServiceName(serviceName),
             category: categoryMappingService.getCategoryByServiceName(this.provider, serviceName),
             provider: this.provider,
-            provider_type: PROVIDER_TYPE.INTEGRATION,
+            providerType: PROVIDER_TYPE.INTEGRATION,
             reports: {},
             ...tagKeyValues,
           };

@@ -43,7 +43,7 @@ export class MockClient extends InfraWalletClient {
 
       const processedData = await Promise.all(
         jsonData.map(async item => {
-          item.provider_type = PROVIDER_TYPE.INTEGRATION;
+          item.providerType = PROVIDER_TYPE.INTEGRATION;
           item.reports = {};
 
           const StartDate = moment(startD);

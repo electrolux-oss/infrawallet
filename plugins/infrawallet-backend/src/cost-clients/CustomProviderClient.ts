@@ -63,7 +63,7 @@ export class CustomProviderClient extends InfraWalletClient {
             service: record.service,
             category: record.category,
             provider: record.provider,
-            provider_type: PROVIDER_TYPE.CUSTOM,
+            providerType: PROVIDER_TYPE.CUSTOM,
             reports: {},
           };
         }
