@@ -212,7 +212,7 @@ export class DatadogClient extends InfraWalletClient {
                 service: `${this.convertServiceName(productName as string)} (${charge.chargeType})`,
                 category: 'Observability',
                 provider: this.provider,
-                provider_type: PROVIDER_TYPE.INTEGRATION,
+                providerType: PROVIDER_TYPE.INTEGRATION,
                 reports: {},
                 ...tagKeyValues,
               };
