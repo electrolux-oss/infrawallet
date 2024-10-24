@@ -31,15 +31,15 @@ export async function createCustomCosts(database: DatabaseService, data: Omit<Cu
 // Get cost records by date range
 export async function getCustomCostsByDateRange(
   database: DatabaseService,
-  start_date: Date,
-  end_date: Date,
+  startDate: Date,
+  endDate: Date,
 ): Promise<CustomCost[]> {
   const knex = await database.getClient();
 
   const records = await knex('custom_costs')
     .whereBetween('usage_month', [
-      parseInt(moment(start_date).format('YYYYMM'), 10),
-      parseInt(moment(end_date).format('YYYYMM'), 10),
+      parseInt(moment(startDate).format('YYYYMM'), 10),
+      parseInt(moment(endDate).format('YYYYMM'), 10),
     ])
     .select('*');
 
