@@ -3,7 +3,7 @@ import { Config } from '@backstage/config';
 import { BigQuery } from '@google-cloud/bigquery';
 import { reduce } from 'lodash';
 import { CategoryMappingService } from '../service/CategoryMappingService';
-import { CLOUD_PROVIDER } from '../service/consts';
+import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
 import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 
@@ -106,6 +106,7 @@ export class GCPClient extends InfraWalletClient {
             service: this.convertServiceName(row.service),
             category: categoryMappingService.getCategoryByServiceName(this.provider, row.service),
             provider: this.provider,
+            providerType: PROVIDER_TYPE.INTEGRATION,
             reports: {},
             ...{ project: row.project }, // TODO: how should we handle the project field? for now, we add project name as a field in the report
             ...tagKeyValues, // note that if there is a tag `project:foo` in config, it overrides the project field set above

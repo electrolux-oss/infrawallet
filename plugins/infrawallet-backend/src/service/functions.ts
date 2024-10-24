@@ -1,6 +1,7 @@
 import { CacheService } from '@backstage/backend-plugin-api';
 import { CACHE_CATEGORY, CLOUD_PROVIDER, DEFAULT_COSTS_CACHE_TTL, DEFAULT_TAGS_CACHE_TTL } from './consts';
 import { CostQuery, Metric, MetricQuery, Report, Tag, TagsQuery } from './types';
+import moment from 'moment';
 
 // In URL, tags are defined in this format:
 // tags=(provider1:key1=value1 OR provider2:key2=value2)
@@ -239,4 +240,17 @@ export function parseFilters(filters: string): Record<string, string[]> {
   });
 
   return result;
+}
+
+export function getDailyPeriodStringsForOneMonth(yyyymm: number): string[] {
+  const dateOjb = moment(yyyymm.toString(), 'YYYYMM');
+  const startOfMonth = moment(dateOjb).startOf('month');
+  const endOfMonth = moment(dateOjb).endOf('month');
+  const periods: string[] = [];
+
+  for (let date = startOfMonth; date.isBefore(endOfMonth) || date.isSame(endOfMonth); date.add(1, 'day')) {
+    periods.push(date.format('YYYY-MM-DD'));
+  }
+
+  return periods;
 }

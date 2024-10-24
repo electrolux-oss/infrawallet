@@ -192,6 +192,21 @@ backend:
 
 Datadog doesn't provide daily costs. Current daily costs are calculated by `monthly costs/number of days in that month`.
 
+### Custom Costs Management
+
+If there is no integration available for some of the cloud costs, it is possible to add such costs via InfraWallet
+custom cost management UI (the tab besides the cost tab). The big table on this page shows all of the custom
+costs saved in the plugin's database. For now, custom costs are only at the monthly level. When the granularity is set
+to `daily` in a view, there are amortization modes of transforming monthly custom costs into daily costs:
+
+- Average (by default): the monthly cost is divided by the number of days in that month
+- First day: the monthly cost is assigned to the first day of that month
+- End day: the monthly cost is assigned to the last day of that month
+
+If you would like to create multiple cost records for a provider, you can click the `BULK INSERT COSTS` button at the
+top left corner of the table. Then fill in the necessary information like provider, monthly cost, start month, end
+month, etc. Check the preview and click the `INSERT` button to save the records.
+
 ## Integration Filter
 
 When integrating InfraWallet with your billing account, you have the ability to retrieve and display costs for all sub-accounts. However, if you want to limit the visibility of certain accounts, you can apply filters. Below is an example of how to configure this for AWS:

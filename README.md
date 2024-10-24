@@ -9,7 +9,6 @@
 [![GitHub Release](https://img.shields.io/github/v/release/electrolux-oss/infrawallet)](https://github.com/electrolux-oss/infrawallet/releases)
 ![NPM Downloads](https://img.shields.io/npm/dm/%40electrolux-oss%2Fplugin-infrawallet)
 
-
 > Control your cloud costs just in the way how you control your bank accounts
 
 ![InfraWallet](./plugins/infrawallet/docs/images/iw_demo.gif)
@@ -33,6 +32,8 @@
 | Datadog   | ✅           |                      | Parent organization                   |
 
 \*_The framework is designed to be extensible to support other cloud providers. Feel free to [contribute](./docs/contributing.md) to the project._
+
+\*\*_You can also manually add custom costs using InfraWallet UI if there is no integration. See more about this feature on this [page](./docs/getting-started.md#custom-costs-management)._
 
 ## Getting started
 

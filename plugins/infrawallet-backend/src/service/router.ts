@@ -11,10 +11,17 @@ import {
 } from '../controllers/MetricSettingController';
 import { InfraWalletClient } from '../cost-clients/InfraWalletClient';
 import { MetricProvider } from '../metric-providers/MetricProvider';
+import {
+  CustomCost,
+  getCustomCosts,
+  createCustomCosts,
+  updateOrInsertCustomCost,
+  deleteCustomCost,
+} from '../models/CustomCost';
 import { CategoryMappingService } from './CategoryMappingService';
 import { COST_CLIENT_MAPPINGS, METRIC_PROVIDER_MAPPINGS } from './consts';
+import { parseFilters, parseTags, tagsToString } from './functions';
 import { CloudProviderError, Metric, MetricSetting, Report, Tag } from './types';
-import { parseTags, tagsToString, parseFilters } from './functions';
 
 export interface RouterOptions {
   logger: LoggerService;
@@ -80,37 +87,41 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     await categoryMappingService.refreshCategoryMappings();
 
     const conf = config.getConfig('backend.infraWallet.integrations');
-    conf.keys().forEach((provider: string) => {
-      if (provider in COST_CLIENT_MAPPINGS) {
-        const client: InfraWalletClient = COST_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
-        const fetchCloudCosts = (async () => {
-          try {
-            const clientResponse = await client.getCostReports({
-              filters: filters,
-              tags: tagsToString(providerTags[provider.toLowerCase()]),
-              groups: groups,
-              granularity: granularity,
-              startTime: startTime,
-              endTime: endTime,
-            });
-            clientResponse.errors.forEach((e: CloudProviderError) => {
-              errors.push(e);
-            });
-            clientResponse.reports.forEach((cost: Report) => {
-              results.push(cost);
-            });
-          } catch (e) {
-            logger.error(e);
-            errors.push({
-              provider: client.constructor.name,
-              name: client.constructor.name,
-              error: e.message,
-            });
-          }
-        })();
-        promises.push(fetchCloudCosts);
-      }
-    });
+    // concat['custom'] : always enable custom cost
+    conf
+      .keys()
+      .concat(['custom'])
+      .forEach((provider: string) => {
+        if (provider in COST_CLIENT_MAPPINGS) {
+          const client: InfraWalletClient = COST_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
+          const fetchCloudCosts = (async () => {
+            try {
+              const clientResponse = await client.getCostReports({
+                filters: filters,
+                tags: tagsToString(providerTags[provider.toLowerCase()]),
+                groups: groups,
+                granularity: granularity,
+                startTime: startTime,
+                endTime: endTime,
+              });
+              clientResponse.errors.forEach((e: CloudProviderError) => {
+                errors.push(e);
+              });
+              clientResponse.reports.forEach((cost: Report) => {
+                results.push(cost);
+              });
+            } catch (e) {
+              logger.error(e);
+              errors.push({
+                provider: client.constructor.name,
+                name: client.constructor.name,
+                error: e.message,
+              });
+            }
+          })();
+          promises.push(fetchCloudCosts);
+        }
+      });
 
     await Promise.all(promises);
 
@@ -229,6 +240,59 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     } else {
       response.json({ data: tags, errors: errors, status: 200 });
     }
+  });
+
+  router.get('/custom_costs', async (_request, response) => {
+    const customCosts = await getCustomCosts(database);
+
+    // make it compatible with the SQLite database
+    for (const cost of customCosts) {
+      if (typeof cost.tags === 'string') {
+        try {
+          cost.tags = JSON.parse(cost.tags);
+        } catch (error) {
+          cost.tags = {};
+        }
+      }
+    }
+
+    response.json({ data: customCosts, status: 200 });
+  });
+
+  router.post('/custom_costs', async (request, response) => {
+    const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
+
+    if (readOnly) {
+      response.status(403).json({ error: 'API not enabled in read-only mode', status: 403 });
+      return;
+    }
+
+    const updatedCustomCost = await createCustomCosts(database, request.body as CustomCost[]);
+    response.json({ created: updatedCustomCost, status: 200 });
+  });
+
+  router.put('/custom_cost', async (request, response) => {
+    const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
+
+    if (readOnly) {
+      response.status(403).json({ error: 'API not enabled in read-only mode', status: 403 });
+      return;
+    }
+
+    const updatedCustomCost = await updateOrInsertCustomCost(database, request.body as CustomCost);
+    response.json({ updated: updatedCustomCost, status: 200 });
+  });
+
+  router.delete('/custom_cost', async (request, response) => {
+    const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
+
+    if (readOnly) {
+      response.status(403).json({ error: 'API not enabled in read-only mode', status: 403 });
+      return;
+    }
+
+    const deletedCustomCost = await deleteCustomCost(database, request.body as CustomCost);
+    response.json({ deleted: deletedCustomCost, status: 200 });
   });
 
   router.get('/:walletName/metrics', async (request, response) => {

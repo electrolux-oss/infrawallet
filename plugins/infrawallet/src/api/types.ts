@@ -87,3 +87,21 @@ export type GetWalletResponse = {
   data?: Wallet;
   status: number;
 };
+
+export type CustomCost = {
+  id: string; // UUID
+  provider: string;
+  account: string;
+  service?: string;
+  category?: string;
+  currency: string;
+  amortization_mode: string; // average, as_it_is
+  usage_month: number; // format YYYYMM
+  cost?: number;
+  tags?: Record<string, string>; // JSON object with key-value pairs
+};
+
+export type CustomCostsResponse = {
+  data?: CustomCost[];
+  status: number;
+};
