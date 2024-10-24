@@ -68,6 +68,7 @@
     "@backstage/plugin-auth-backend": "^0.23.0",
     "@backstage/plugin-auth-backend-module-guest-provider": "^0.2.0",
     "@types/supertest": "^2.0.8",
+    "knex": "^3.1.0",
     "msw": "^1.0.0",
     "supertest": "^6.2.4"
   },

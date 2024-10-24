@@ -4,7 +4,7 @@ import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 import moment from 'moment';
 import { CategoryMappingService } from '../service/CategoryMappingService';
-import { CLOUD_PROVIDER } from '../service/consts';
+import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
 
 export class ConfluentClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -167,6 +167,7 @@ export class ConfluentClient extends InfraWalletClient {
           service: this.convertServiceName(serviceName),
           category: categoryMappingService.getCategoryByServiceName(this.provider, serviceName),
           provider: this.provider,
+          providerType: PROVIDER_TYPE.INTEGRATION,
           reports: {},
           ...{ project: envDisplayName },
           ...{ cluster: resourceName },

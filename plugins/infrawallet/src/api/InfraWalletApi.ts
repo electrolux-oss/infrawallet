@@ -1,6 +1,8 @@
 import { createApiRef } from '@backstage/core-plugin-api';
 import {
   CostReportsResponse,
+  CustomCost,
+  CustomCostsResponse,
   GetWalletResponse,
   MetricConfigsResponse,
   MetricSetting,
@@ -39,4 +41,8 @@ export interface InfraWalletApi {
     metricSetting: MetricSetting,
   ): Promise<{ deleted: boolean; status: number }>;
   getWalletByName(walletName: string): Promise<GetWalletResponse>;
+  getCustomCosts(): Promise<CustomCostsResponse>;
+  createCustomCosts(customCosts: Omit<CustomCost, 'id'>[]): Promise<{ created: number; status: number }>;
+  updateCustomCost(customCost: CustomCost): Promise<{ updated: boolean; status: number }>;
+  deleteCustomCost(customCost: CustomCost): Promise<{ deleted: boolean; status: number }>;
 }

@@ -3,7 +3,7 @@ import { Config } from '@backstage/config';
 import { v2 as datadogApiV2, client as datadogClient } from '@datadog/datadog-api-client';
 import { reduce } from 'lodash';
 import moment from 'moment';
-import { CLOUD_PROVIDER, GRANULARITY } from '../service/consts';
+import { CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from '../service/consts';
 import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 
@@ -212,6 +212,7 @@ export class DatadogClient extends InfraWalletClient {
                 service: `${this.convertServiceName(productName as string)} (${charge.chargeType})`,
                 category: 'Observability',
                 provider: this.provider,
+                providerType: PROVIDER_TYPE.INTEGRATION,
                 reports: {},
                 ...tagKeyValues,
               };
