@@ -3,7 +3,7 @@ import { reduce } from 'lodash';
 import moment from 'moment';
 import { Filters, Report, Tag } from './types';
 
-export const mergeCostReports = (reports: Report[], threshold: number): Report[] => {
+export const mergeCostReports = (reports: Report[], threshold?: number): Report[] => {
   const totalCosts: { id: string; total: number }[] = [];
   reports.forEach(report => {
     let total = 0;
@@ -41,7 +41,7 @@ export const mergeCostReports = (reports: Report[], threshold: number): Report[]
     {},
   );
 
-  return Object.values(mergedReports);
+  return Object.values(mergedReports).sort((a, b) => a.id.localeCompare(b.id));
 };
 
 export const filterCostReports = (reports: Report[], filters: Filters): Report[] => {

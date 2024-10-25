@@ -1,4 +1,4 @@
-import { Content, Header, Page } from '@backstage/core-components';
+import { Content, Header, HeaderTabs, Page } from '@backstage/core-components';
 import { alertApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
 import { Grid } from '@material-ui/core';
 import Accordion from '@material-ui/core/Accordion';
@@ -19,11 +19,14 @@ import {
   mergeCostReports,
 } from '../../api/functions';
 import { CloudProviderError, Filters, Metric, Report, Tag } from '../../api/types';
+import { Budgets } from '../Budgets';
 import { ColumnsChartComponent } from '../ColumnsChartComponent';
 import { CostReportsTableComponent } from '../CostReportsTableComponent';
+import { CustomCostsComponent } from '../CustomCostsComponent';
 import { ErrorsAlertComponent } from '../ErrorsAlertComponent';
 import { FiltersComponent } from '../FiltersComponent';
 import { PieChartComponent } from '../PieChartComponent';
+import { SettingsComponent } from '../SettingsComponent';
 import { TopbarComponent } from '../TopbarComponent';
 import { MonthRange } from '../types';
 
@@ -62,6 +65,8 @@ const checkIfFiltersActivated = (filters: Filters): boolean => {
   return activated;
 };
 
+const tabs = [{ label: 'Overview' }, { label: 'Budgets' }, { label: 'Custom Costs' }, { label: 'Business Metrics' }];
+
 export const ReportsComponent = (props: ReportsComponentProps) => {
   const { title, subTitle } = props;
   const configApi = useApi(configApiRef);
@@ -76,6 +81,8 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
   const defaultShowLastXMonths = configApi.getOptionalNumber('infraWallet.settings.defaultShowLastXMonths') ?? 3;
 
   const MERGE_THRESHOLD = 8;
+
+  const [selectedView, setSelectedView] = useState<string>('Overview');
 
   const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [reports, setReports] = useState<Report[] | undefined>(undefined);
@@ -149,6 +156,12 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
   return (
     <Page themeId="tool">
       <Header title={title ?? 'InfraWallet'} subtitle={subTitle ?? ''} />
+      <HeaderTabs
+        tabs={tabs.map(tab => {
+          return { id: tab.label, label: tab.label };
+        })}
+        onChange={index => setSelectedView(tabs[index].label)}
+      />
       <Content>
         <Grid container spacing={3}>
           {cloudProviderErrors.length > 0 && (
@@ -156,75 +169,94 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
               <ErrorsAlertComponent errors={cloudProviderErrors} />
             </Grid>
           )}
-          <Grid item xs={12}>
-            <TopbarComponent
-              aggregatedBy={aggregatedBy}
-              aggregatedBySetter={setAggregatedBy}
-              tags={reportTags}
-              monthRange={monthRange}
-              monthRangeSetter={setMonthRange}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Accordion>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="filters-content" id="filters-header">
-                <Typography>
-                  Filters {checkIfFiltersActivated(filters) && <Chip size="small" label="active" color="primary" />}
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <FiltersComponent
-                  reports={reports}
-                  filters={filters}
+          {selectedView === 'Overview' && (
+            <>
+              <Grid item xs={12}>
+                <TopbarComponent
+                  aggregatedBy={aggregatedBy}
+                  aggregatedBySetter={setAggregatedBy}
+                  tags={reportTags}
                   monthRange={monthRange}
-                  filtersSetter={setFilters}
-                  selectedTagsSetter={setSelectedTags}
-                  providerErrorsSetter={setCloudProviderErrors}
+                  monthRangeSetter={setMonthRange}
                 />
-              </AccordionDetails>
-            </Accordion>
-          </Grid>
-          <Grid item xs={12} md={4} lg={3}>
-            <PieChartComponent
-              categories={
-                reportsAggregatedAndMerged ? reportsAggregatedAndMerged.map((item: any) => item.id) : undefined
-              }
-              series={
-                reportsAggregatedAndMerged
-                  ? reportsAggregatedAndMerged.map((item: any) => getTotalCost(item))
-                  : undefined
-              }
-              height={450}
-              highlightedItem={highlightedItem}
-              highlightedItemSetter={setHighlightedItem}
-            />
-          </Grid>
-          <Grid item xs={12} md={8} lg={9}>
-            <ColumnsChartComponent
-              granularity={granularity}
-              granularitySetter={setGranularity}
-              periods={periods}
-              costs={
-                reportsAggregatedAndMerged
-                  ? reportsAggregatedAndMerged.map((item: any) => ({
-                      name: item.id,
-                      data: rearrangeData(item, periods),
-                    }))
-                  : undefined
-              }
-              metrics={metrics.map((item: any) => ({
-                name: item.name,
-                group: item.group,
-                data: rearrangeData(item, periods),
-              }))}
-              height={450}
-              highlightedItem={highlightedItem}
-              highlightedItemSetter={setHighlightedItem}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <CostReportsTableComponent reports={reportsAggregated} aggregatedBy={aggregatedBy} periods={periods} />
-          </Grid>
+              </Grid>
+              <Grid item xs={12}>
+                <Accordion>
+                  <AccordionSummary expandIcon={<ExpandMoreIcon />} aria-controls="filters-content" id="filters-header">
+                    <Typography>
+                      Filters {checkIfFiltersActivated(filters) && <Chip size="small" label="active" color="primary" />}
+                    </Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <FiltersComponent
+                      reports={reports}
+                      filters={filters}
+                      monthRange={monthRange}
+                      filtersSetter={setFilters}
+                      selectedTagsSetter={setSelectedTags}
+                      providerErrorsSetter={setCloudProviderErrors}
+                    />
+                  </AccordionDetails>
+                </Accordion>
+              </Grid>
+              <Grid item xs={12} md={4} lg={3}>
+                <PieChartComponent
+                  categories={
+                    reportsAggregatedAndMerged ? reportsAggregatedAndMerged.map((item: any) => item.id) : undefined
+                  }
+                  series={
+                    reportsAggregatedAndMerged
+                      ? reportsAggregatedAndMerged.map((item: any) => getTotalCost(item))
+                      : undefined
+                  }
+                  height={450}
+                  highlightedItem={highlightedItem}
+                  highlightedItemSetter={setHighlightedItem}
+                />
+              </Grid>
+              <Grid item xs={12} md={8} lg={9}>
+                <ColumnsChartComponent
+                  granularity={granularity}
+                  granularitySetter={setGranularity}
+                  periods={periods}
+                  costs={
+                    reportsAggregatedAndMerged
+                      ? reportsAggregatedAndMerged.map((item: any) => ({
+                          name: item.id,
+                          data: rearrangeData(item, periods),
+                        }))
+                      : undefined
+                  }
+                  metrics={metrics.map((item: any) => ({
+                    name: item.name,
+                    group: item.group,
+                    data: rearrangeData(item, periods),
+                  }))}
+                  height={450}
+                  highlightedItem={highlightedItem}
+                  highlightedItemSetter={setHighlightedItem}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <CostReportsTableComponent reports={reportsAggregated} aggregatedBy={aggregatedBy} periods={periods} />
+              </Grid>
+            </>
+          )}
+          {selectedView === 'Budgets' && (
+            <Grid item xs={12}>
+              <Budgets providerErrorsSetter={setCloudProviderErrors} />
+            </Grid>
+          )}
+          {selectedView === 'Custom Costs' && (
+            <Grid item xs={12}>
+              <CustomCostsComponent />
+            </Grid>
+          )}
+          {selectedView === 'Business Metrics' && (
+            <Grid item xs={12}>
+              <SettingsComponent />
+            </Grid>
+          )}
         </Grid>
       </Content>
     </Page>
