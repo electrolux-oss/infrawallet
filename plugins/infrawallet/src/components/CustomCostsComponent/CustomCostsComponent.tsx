@@ -1,5 +1,5 @@
 import { alertApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
-import { Chip, } from '@material-ui/core';
+import { Chip } from '@material-ui/core';
 import AddIcon from '@mui/icons-material/Add';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';

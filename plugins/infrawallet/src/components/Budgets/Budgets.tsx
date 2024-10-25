@@ -139,7 +139,9 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
         <ChartsYAxis />
         <ChartsTooltip />
       </ChartContainer>
-      <div style={{ textAlign: 'center', fontWeight: 'bold' }}>{getProviderIcon(provider)} {provider}</div>
+      <div style={{ textAlign: 'center', fontWeight: 'bold' }}>
+        {getProviderIcon(provider)} {provider}
+      </div>
       <div style={{ textAlign: 'center' }}>
         <Button onClick={() => setOpenManageBudget(true)}>Manage budget</Button>
         <Dialog fullWidth maxWidth="sm" open={openManageBudget} onClose={() => setOpenManageBudget(false)}>
