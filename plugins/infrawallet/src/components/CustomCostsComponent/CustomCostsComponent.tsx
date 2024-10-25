@@ -1,6 +1,5 @@
-import { Content, Header, Page } from '@backstage/core-components';
 import { alertApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
-import { Chip, Grid } from '@material-ui/core';
+import { Chip, } from '@material-ui/core';
 import AddIcon from '@mui/icons-material/Add';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';

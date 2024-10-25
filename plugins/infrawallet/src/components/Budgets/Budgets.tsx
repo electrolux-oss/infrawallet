@@ -41,7 +41,7 @@ interface BudgetChartProps {
   costs: number[];
 }
 
-function BudgetChart(props: BudgetChartProps) {
+function BudgetChart(props: Readonly<BudgetChartProps>) {
   const { width, height } = useDrawingArea();
   const theme = useTheme();
   const provider = props.provider;
@@ -97,7 +97,7 @@ function BudgetChart(props: BudgetChartProps) {
             data: accumulatedCosts,
             type: 'line',
             valueFormatter: value => {
-              return formatCurrency(value ? value : 0);
+              return formatCurrency(value || 0);
             },
             showMark: false,
           },
@@ -113,7 +113,7 @@ function BudgetChart(props: BudgetChartProps) {
             min: 0,
             max: max([...accumulatedCosts, budget?.amount]),
             valueFormatter: value => {
-              return formatCurrency(value ? value : 0);
+              return formatCurrency(value || 0);
             },
           },
         ]}
