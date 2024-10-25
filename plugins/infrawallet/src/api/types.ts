@@ -34,6 +34,18 @@ export type TagResponse = {
   status: number;
 };
 
+export type Budget = {
+  id?: string;
+  provider: string;
+  name: string;
+  amount: number;
+};
+
+export type BudgetsResponse = {
+  data?: Budget[];
+  status: number;
+};
+
 // for now it is the same as type Report
 // but still would like to keep them separate for future changes
 export type Metric = {

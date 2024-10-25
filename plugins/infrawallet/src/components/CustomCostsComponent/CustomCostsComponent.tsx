@@ -1,6 +1,5 @@
-import { Content, Header, Page } from '@backstage/core-components';
 import { alertApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
-import { Chip, Grid } from '@material-ui/core';
+import { Chip } from '@material-ui/core';
 import AddIcon from '@mui/icons-material/Add';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -384,44 +383,35 @@ export const CustomCostsComponent: FC = () => {
   }, [getCustomCosts]);
 
   return (
-    <Page themeId="tool">
-      <Header title="Custom Costs Management" />
-      <Content>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Box
-              sx={{
-                height: 700,
-                width: '100%',
-                '& .actions': {
-                  color: 'text.secondary',
-                },
-                '& .textPrimary': {
-                  color: 'text.primary',
-                },
-              }}
-            >
-              <DataGrid
-                rows={rows}
-                columns={columns}
-                editMode="row"
-                rowModesModel={rowModesModel}
-                onRowModesModelChange={handleRowModesModelChange}
-                onRowEditStop={handleRowEditStop}
-                processRowUpdate={processRowUpdate}
-                initialState={{
-                  sorting: {
-                    sortModel: [{ field: 'usage_month', sort: 'desc' }],
-                  },
-                }}
-                slots={{
-                  toolbar: readOnly ? GridToolbar : (EditToolbar as GridSlots['toolbar']),
-                }}
-              />
-            </Box>
-          </Grid>
-        </Grid>
-      </Content>
-    </Page>
+    <Box
+      sx={{
+        height: 700,
+        width: '100%',
+        '& .actions': {
+          color: 'text.secondary',
+        },
+        '& .textPrimary': {
+          color: 'text.primary',
+        },
+      }}
+    >
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        editMode="row"
+        rowModesModel={rowModesModel}
+        onRowModesModelChange={handleRowModesModelChange}
+        onRowEditStop={handleRowEditStop}
+        processRowUpdate={processRowUpdate}
+        initialState={{
+          sorting: {
+            sortModel: [{ field: 'usage_month', sort: 'desc' }],
+          },
+        }}
+        slots={{
+          toolbar: readOnly ? GridToolbar : (EditToolbar as GridSlots['toolbar']),
+        }}
+      />
+    </Box>
   );
 };

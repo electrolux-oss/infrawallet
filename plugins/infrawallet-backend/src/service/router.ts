@@ -11,12 +11,13 @@ import {
 } from '../controllers/MetricSettingController';
 import { InfraWalletClient } from '../cost-clients/InfraWalletClient';
 import { MetricProvider } from '../metric-providers/MetricProvider';
+import { Budget, getBudget, getBudgets, upsertBudget } from '../models/Budget';
 import {
-  CustomCost,
-  getCustomCosts,
   createCustomCosts,
-  updateOrInsertCustomCost,
+  CustomCost,
   deleteCustomCost,
+  getCustomCosts,
+  updateOrInsertCustomCost,
 } from '../models/CustomCost';
 import { CategoryMappingService } from './CategoryMappingService';
 import { COST_CLIENT_MAPPINGS, METRIC_PROVIDER_MAPPINGS } from './consts';
@@ -240,6 +241,26 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     } else {
       response.json({ data: tags, errors: errors, status: 200 });
     }
+  });
+
+  router.get('/:walletName/budgets', async (request, response) => {
+    const walletName = request.params.walletName;
+    const provider = request.query.provider as string;
+    let budgets;
+
+    if (provider) {
+      budgets = await getBudget(database, walletName, provider);
+    } else {
+      budgets = await getBudgets(database, walletName);
+    }
+
+    response.json({ data: budgets, status: 200 });
+  });
+
+  router.put('/:walletName/budgets', async (request, response) => {
+    const walletName = request.params.walletName;
+    const result = await upsertBudget(database, walletName, request.body as Budget);
+    response.json({ updated: result, status: 200 });
   });
 
   router.get('/custom_costs', async (_request, response) => {

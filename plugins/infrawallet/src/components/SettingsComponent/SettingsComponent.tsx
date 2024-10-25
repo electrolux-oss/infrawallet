@@ -1,7 +1,5 @@
-import { Content, Header, Page } from '@backstage/core-components';
 import { alertApiRef, useApi } from '@backstage/core-plugin-api';
 import { Grid } from '@material-ui/core';
-import Alert from '@mui/material/Alert';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
@@ -30,18 +28,10 @@ export const SettingsComponent = () => {
   }, [getWalletInfo]);
 
   return (
-    <Page themeId="tool">
-      <Header title="Wallet Settings" />
-      <Content>
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Alert severity="info">Currently, you can only configure business metrics for the Default wallet.</Alert>
-          </Grid>
-          <Grid item xs={12}>
-            <MetricConfigurationComponent wallet={wallet} />
-          </Grid>
-        </Grid>
-      </Content>
-    </Page>
+    <Grid container spacing={3}>
+      <Grid item xs={12}>
+        <MetricConfigurationComponent wallet={wallet} />
+      </Grid>
+    </Grid>
   );
 };

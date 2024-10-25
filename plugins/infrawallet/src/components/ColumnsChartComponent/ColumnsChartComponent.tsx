@@ -142,8 +142,8 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
           <ChartsGrid horizontal />
           <BarPlot />
           <LinePlot />
-          <LineHighlightPlot />
           <MarkPlot />
+          <LineHighlightPlot />
           <ChartsXAxis
             tickLabelStyle={{
               angle: periods.length > 12 ? -45 : 0,
