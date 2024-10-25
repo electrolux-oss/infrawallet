@@ -72,3 +72,7 @@ export type MetricCardProps = {
   metric: Metric;
   callback: Function;
 };
+
+export type BudgetsProps = {
+  providerErrorsSetter: any;
+};

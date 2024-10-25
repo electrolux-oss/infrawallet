@@ -1,5 +1,7 @@
 import { createApiRef } from '@backstage/core-plugin-api';
 import {
+  Budget,
+  BudgetsResponse,
   CostReportsResponse,
   CustomCost,
   CustomCostsResponse,
@@ -29,6 +31,9 @@ export interface InfraWalletApi {
   ): Promise<CostReportsResponse>;
   getTagKeys(provider: string, startTime: Date, endTime: Date): Promise<TagResponse>;
   getTagValues(tag: Tag, startTime: Date, endTime: Date): Promise<TagResponse>;
+  getBudgets(walletName: string): Promise<BudgetsResponse>;
+  getBudget(walletName: string, provider: string): Promise<BudgetsResponse>;
+  updateBudget(walletName: string, budget: Budget): Promise<{ updated: boolean; status: number }>;
   getMetrics(walletName: string, granularity: string, startTime: Date, endTime: Date): Promise<MetricsResponse>;
   getMetricConfigs(): Promise<MetricConfigsResponse>;
   getWalletMetricsSetting(walletName: string): Promise<MetricsSettingResponse>;

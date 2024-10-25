@@ -3,6 +3,8 @@ import fetch from 'node-fetch';
 import { InfraWalletApi } from './InfraWalletApi';
 import { tagsToString } from './functions';
 import {
+  Budget,
+  BudgetsResponse,
   CostReportsResponse,
   CustomCost,
   CustomCostsResponse,
@@ -67,6 +69,7 @@ export class InfraWalletApiClient implements InfraWalletApi {
 
     return await this.request(url);
   }
+
   async getTagKeys(provider: string, startTime: Date, endTime: Date): Promise<TagResponse> {
     const url = `api/infrawallet/tag-keys?provider=${provider}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
     return await this.request(url);
@@ -77,6 +80,21 @@ export class InfraWalletApiClient implements InfraWalletApi {
     const tagKey = tag.key;
     const url = `api/infrawallet/tag-values?provider=${provider}&tag=${tagKey}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
     return await this.request(url);
+  }
+
+  async getBudgets(walletName: string): Promise<BudgetsResponse> {
+    const url = `api/infrawallet/${walletName}/budgets`;
+    return await this.request(url);
+  }
+
+  async getBudget(walletName: string, provider: string): Promise<BudgetsResponse> {
+    const url = `api/infrawallet/${walletName}/budgets?provider=${provider}`;
+    return await this.request(url);
+  }
+
+  async updateBudget(walletName: string, budget: Budget): Promise<{ updated: boolean; status: number }> {
+    const url = `api/infrawallet/${walletName}/budgets`;
+    return await this.request(url, 'PUT', budget);
   }
 
   async getWalletByName(walletName: string): Promise<GetWalletResponse> {
