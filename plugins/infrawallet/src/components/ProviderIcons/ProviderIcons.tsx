@@ -1,4 +1,3 @@
-import CloudQueueIcon from '@mui/icons-material/CloudQueue';
 import SvgIcon from '@mui/material/SvgIcon';
 import React from 'react';
 
