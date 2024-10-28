@@ -263,7 +263,7 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     response.json({ updated: result, status: 200 });
   });
 
-  router.get('/custom_costs', async (_request, response) => {
+  router.get('/custom-costs', async (_request, response) => {
     const customCosts = await getCustomCosts(database);
 
     // make it compatible with the SQLite database
@@ -280,7 +280,7 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     response.json({ data: customCosts, status: 200 });
   });
 
-  router.post('/custom_costs', async (request, response) => {
+  router.post('/custom-costs', async (request, response) => {
     const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
 
     if (readOnly) {
@@ -292,7 +292,7 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     response.json({ created: updatedCustomCost, status: 200 });
   });
 
-  router.put('/custom_cost', async (request, response) => {
+  router.put('/custom-cost', async (request, response) => {
     const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
 
     if (readOnly) {
@@ -304,7 +304,7 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     response.json({ updated: updatedCustomCost, status: 200 });
   });
 
-  router.delete('/custom_cost', async (request, response) => {
+  router.delete('/custom-cost', async (request, response) => {
     const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
 
     if (readOnly) {
@@ -376,13 +376,13 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     response.json({ data: wallet, status: 200 });
   });
 
-  router.get('/:walletName/metrics_setting', async (request, response) => {
+  router.get('/:walletName/metrics-setting', async (request, response) => {
     const walletName = request.params.walletName;
     const metricSettings = await getWalletMetricSettings(database, walletName);
     response.json({ data: metricSettings, status: 200 });
   });
 
-  router.get('/metric/metric_configs', async (_request, response) => {
+  router.get('/metric/metric-configs', async (_request, response) => {
     const conf = config.getConfig('backend.infraWallet.metricProviders');
     const configNames: { metric_provider: string; config_name: string }[] = [];
     conf.keys().forEach((provider: string) => {
@@ -397,7 +397,7 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     response.json({ data: configNames, status: 200 });
   });
 
-  router.put('/:walletName/metrics_setting', async (request, response) => {
+  router.put('/:walletName/metrics-setting', async (request, response) => {
     const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
 
     if (readOnly) {
@@ -409,7 +409,7 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     response.json({ updated: updatedMetricSetting, status: 200 });
   });
 
-  router.delete('/:walletName/metrics_setting', async (request, response) => {
+  router.delete('/:walletName/metrics-setting', async (request, response) => {
     const readOnly = config.getOptionalBoolean('infraWallet.settings.readOnly') ?? false;
 
     if (readOnly) {

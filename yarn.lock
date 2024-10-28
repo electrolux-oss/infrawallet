@@ -4699,12 +4699,12 @@ __metadata:
     "@backstage/plugin-catalog-react": ^1.13.1
     "@backstage/test-utils": ^1.6.0
     "@backstage/theme": ^0.5.7
-    "@material-ui/core": ^4.9.13
     "@mui/icons-material": 6.1.1
     "@mui/material": ^5.16.7
-    "@mui/x-charts": 7.21.0
-    "@mui/x-data-grid": 7.21.0
-    "@mui/x-date-pickers": 7.21.0
+    "@mui/styles": ^5.16.7
+    "@mui/x-charts": 7.22.0
+    "@mui/x-data-grid": 7.22.0
+    "@mui/x-date-pickers": 7.22.0
     "@stitches/react": 1.2.8
     "@testing-library/jest-dom": ^6.0.0
     "@testing-library/react": ^14.0.0
@@ -6027,7 +6027,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@material-ui/core@npm:^4.12.2, @material-ui/core@npm:^4.12.4, @material-ui/core@npm:^4.9.13":
+"@material-ui/core@npm:^4.12.2, @material-ui/core@npm:^4.12.4":
   version: 4.12.4
   resolution: "@material-ui/core@npm:4.12.4"
   dependencies:
@@ -6566,6 +6566,37 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mui/styles@npm:^5.16.7":
+  version: 5.16.7
+  resolution: "@mui/styles@npm:5.16.7"
+  dependencies:
+    "@babel/runtime": ^7.23.9
+    "@emotion/hash": ^0.9.1
+    "@mui/private-theming": ^5.16.6
+    "@mui/types": ^7.2.15
+    "@mui/utils": ^5.16.6
+    clsx: ^2.1.0
+    csstype: ^3.1.3
+    hoist-non-react-statics: ^3.3.2
+    jss: ^10.10.0
+    jss-plugin-camel-case: ^10.10.0
+    jss-plugin-default-unit: ^10.10.0
+    jss-plugin-global: ^10.10.0
+    jss-plugin-nested: ^10.10.0
+    jss-plugin-props-sort: ^10.10.0
+    jss-plugin-rule-value-function: ^10.10.0
+    jss-plugin-vendor-prefixer: ^10.10.0
+    prop-types: ^15.8.1
+  peerDependencies:
+    "@types/react": ^17.0.0 || ^18.0.0
+    react: ^17.0.0
+  peerDependenciesMeta:
+    "@types/react":
+      optional: true
+  checksum: 1109eb150cf40782a6f24bebf6d22d55ea8c36bbf43893664c303e679b7d235a6578b2f2e1d9ee64132aa24496a15fd32f80278cb641208c3a372bd53679e1c0
+  languageName: node
+  linkType: hard
+
 "@mui/system@npm:^5.16.7":
   version: 5.16.7
   resolution: "@mui/system@npm:5.16.7"
@@ -6669,9 +6700,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@mui/x-charts@npm:7.21.0":
-  version: 7.21.0
-  resolution: "@mui/x-charts@npm:7.21.0"
+"@mui/x-charts@npm:7.22.0":
+  version: 7.22.0
+  resolution: "@mui/x-charts@npm:7.22.0"
   dependencies:
     "@babel/runtime": ^7.25.7
     "@mui/utils": ^5.16.6 || ^6.0.0
@@ -6693,13 +6724,13 @@ __metadata:
       optional: true
     "@emotion/styled":
       optional: true
-  checksum: b4f47fb5a1671987ae3c2a27ddb1e85018493a020a658afa24cf1d72a4358ec7dd89ea4926182f9553b1a06fdd35fc04f6d1b9b177cbc54652fce1d3b495dfae
+  checksum: 4d680774bf1d06251f7b23f2d984605d184b51521783814da183ad9e001ecccda976a1aafce4b04d046ddca853a6acd567a1f8745fcafd74754778de82b14199
   languageName: node
   linkType: hard
 
-"@mui/x-data-grid@npm:7.21.0":
-  version: 7.21.0
-  resolution: "@mui/x-data-grid@npm:7.21.0"
+"@mui/x-data-grid@npm:7.22.0":
+  version: 7.22.0
+  resolution: "@mui/x-data-grid@npm:7.22.0"
   dependencies:
     "@babel/runtime": ^7.25.7
     "@mui/utils": ^5.16.6 || ^6.0.0
@@ -6719,13 +6750,13 @@ __metadata:
       optional: true
     "@emotion/styled":
       optional: true
-  checksum: 846dfe87b5c1988a01664d3c741e67025eec0692b60817a48b8b10785b487768b5149b9d7e68b2cb3a983ef4b751542377fd25129056821650be7a50369c243d
+  checksum: c62c0e605e90584087984b55d75dc9224c205060a60c5fecb7fbf2c2c8438c58edb1c5d77bbaa1859010775a8e5c043f1ac60aeb98b2134ec909ce705e5cdd51
   languageName: node
   linkType: hard
 
-"@mui/x-date-pickers@npm:7.21.0":
-  version: 7.21.0
-  resolution: "@mui/x-date-pickers@npm:7.21.0"
+"@mui/x-date-pickers@npm:7.22.0":
+  version: 7.22.0
+  resolution: "@mui/x-date-pickers@npm:7.22.0"
   dependencies:
     "@babel/runtime": ^7.25.7
     "@mui/utils": ^5.16.6 || ^6.0.0
@@ -6767,7 +6798,7 @@ __metadata:
       optional: true
     moment-jalaali:
       optional: true
-  checksum: 2c9e52b423959fa632b0a186d180a60a183a272cafbcf1836532c8b3639197b4feca950c24f565aef7d8eae558e669a926b7f94c48d0fab4db3ded16446aad9c
+  checksum: d15b4e77e48f51f1b6eedad84faf8b844430996a40d2121891892a1e2a53638f11fb38325403aca629ac4dbbfcabe64521d25ebe5e37bbfcc48d0a2819fcfed5
   languageName: node
   linkType: hard
 
@@ -8686,22 +8717,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@spotify/eslint-plugin@npm:^14.1.3":
-  version: 14.1.6
-  resolution: "@spotify/eslint-plugin@npm:14.1.6"
+"@spotify/eslint-plugin@npm:^15.0.0":
+  version: 15.0.0
+  resolution: "@spotify/eslint-plugin@npm:15.0.0"
   peerDependencies:
     "@typescript-eslint/parser": ^5.13.0
-    eslint: ^8.10.0
-  checksum: 55d844c5733c929a6218f9aae3454556b6090102ae7a7461082dd14ea98485e48e936046f815267b62f7b054c7faa8edd8bde7d4e092d92f810d8eb7246b29bc
+    eslint: ">=8.x"
+  checksum: 899166abb108f1f53867729a35fb711d89dc70d5fc0a725a80386adb85805149008f7226262619044680264c64c0a8a0e9703059f64d0b390650bcae86727ed6
   languageName: node
   linkType: hard
 
-"@spotify/prettier-config@npm:^12.0.0":
-  version: 12.0.0
-  resolution: "@spotify/prettier-config@npm:12.0.0"
+"@spotify/prettier-config@npm:^15.0.0":
+  version: 15.0.0
+  resolution: "@spotify/prettier-config@npm:15.0.0"
   peerDependencies:
     prettier: 2.x
-  checksum: 04732b96af895269bb8a988ba309e80bd7b87c785837e06f72ff938e8895c5a3a3211fa37b54c6a2b502e88587a437c2be3ccb486a84aff02c2f6fb4582a4a97
+  checksum: aa5ec5739427f9acdb9d62ae6c04f04a344898567239f7ee45c75c6205ebdffbc61747ea8de6e83baf0bc3785359967de4b7097a8723c4b4063ff57dc5cb6c44
   languageName: node
   linkType: hard
 
@@ -19929,7 +19960,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jss-plugin-camel-case@npm:^10.5.1":
+"jss-plugin-camel-case@npm:^10.10.0, jss-plugin-camel-case@npm:^10.5.1":
   version: 10.10.0
   resolution: "jss-plugin-camel-case@npm:10.10.0"
   dependencies:
@@ -19940,7 +19971,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jss-plugin-default-unit@npm:^10.5.1":
+"jss-plugin-default-unit@npm:^10.10.0, jss-plugin-default-unit@npm:^10.5.1":
   version: 10.10.0
   resolution: "jss-plugin-default-unit@npm:10.10.0"
   dependencies:
@@ -19950,7 +19981,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jss-plugin-global@npm:^10.5.1":
+"jss-plugin-global@npm:^10.10.0, jss-plugin-global@npm:^10.5.1":
   version: 10.10.0
   resolution: "jss-plugin-global@npm:10.10.0"
   dependencies:
@@ -19960,7 +19991,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jss-plugin-nested@npm:^10.5.1":
+"jss-plugin-nested@npm:^10.10.0, jss-plugin-nested@npm:^10.5.1":
   version: 10.10.0
   resolution: "jss-plugin-nested@npm:10.10.0"
   dependencies:
@@ -19971,7 +20002,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jss-plugin-props-sort@npm:^10.5.1":
+"jss-plugin-props-sort@npm:^10.10.0, jss-plugin-props-sort@npm:^10.5.1":
   version: 10.10.0
   resolution: "jss-plugin-props-sort@npm:10.10.0"
   dependencies:
@@ -19981,7 +20012,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jss-plugin-rule-value-function@npm:^10.5.1":
+"jss-plugin-rule-value-function@npm:^10.10.0, jss-plugin-rule-value-function@npm:^10.5.1":
   version: 10.10.0
   resolution: "jss-plugin-rule-value-function@npm:10.10.0"
   dependencies:
@@ -19992,7 +20023,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jss-plugin-vendor-prefixer@npm:^10.5.1":
+"jss-plugin-vendor-prefixer@npm:^10.10.0, jss-plugin-vendor-prefixer@npm:^10.5.1":
   version: 10.10.0
   resolution: "jss-plugin-vendor-prefixer@npm:10.10.0"
   dependencies:
@@ -20003,7 +20034,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jss@npm:10.10.0, jss@npm:^10.5.1":
+"jss@npm:10.10.0, jss@npm:^10.10.0, jss@npm:^10.5.1":
   version: 10.10.0
   resolution: "jss@npm:10.10.0"
   dependencies:
@@ -24512,12 +24543,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"prettier@npm:^2.3.2":
-  version: 2.8.8
-  resolution: "prettier@npm:2.8.8"
+"prettier@npm:^3.3.3":
+  version: 3.3.3
+  resolution: "prettier@npm:3.3.3"
   bin:
-    prettier: bin-prettier.js
-  checksum: b49e409431bf129dd89238d64299ba80717b57ff5a6d1c1a8b1a28b590d998a34e083fa13573bc732bb8d2305becb4c9a4407f8486c81fa7d55100eb08263cf8
+    prettier: bin/prettier.cjs
+  checksum: bc8604354805acfdde6106852d14b045bb20827ad76a5ffc2455b71a8257f94de93f17f14e463fe844808d2ccc87248364a5691488a3304f1031326e62d9276e
   languageName: node
   linkType: hard
 
@@ -26201,8 +26232,8 @@ __metadata:
     "@backstage/repo-tools": ^0.9.7
     "@hookform/resolvers": ^3.3.2
     "@playwright/test": ^1.32.3
-    "@spotify/eslint-plugin": ^14.1.3
-    "@spotify/prettier-config": ^12.0.0
+    "@spotify/eslint-plugin": ^15.0.0
+    "@spotify/prettier-config": ^15.0.0
     concurrently: ^8.0.0
     eslint: ^8.6.0
     eslint-plugin-react: ^7.28.0
@@ -26212,7 +26243,7 @@ __metadata:
     lerna: ^7.3.0
     lint-staged: ^13.0.0
     node-gyp: ^9.0.0
-    prettier: ^2.3.2
+    prettier: ^3.3.3
     react-redux: ^9.1.0
     typescript: ~5.3.0
   languageName: unknown

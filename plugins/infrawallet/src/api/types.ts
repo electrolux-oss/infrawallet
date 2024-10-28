@@ -17,9 +17,9 @@ export type Filters = {
 };
 
 export type CloudProviderError = {
-  provider: string; // AWS, GCP, Azure or MongoAtlas
+  provider: string;
   name: string; // the name defined in the configuration file
-  error: string; // error message from the cloud provider
+  error: string;
 };
 
 export type CostReportsResponse = {
@@ -101,11 +101,11 @@ export type GetWalletResponse = {
 };
 
 export type CustomCost = {
-  id: string; // UUID
+  id?: string; // UUID
   provider: string;
   account: string;
-  service?: string;
-  category?: string;
+  service: string;
+  category: string;
   currency: string;
   amortization_mode: string; // average, as_it_is
   usage_month: number; // format YYYYMM

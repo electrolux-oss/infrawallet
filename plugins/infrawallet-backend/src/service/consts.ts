@@ -84,6 +84,6 @@ export const DEFAULT_COSTS_CACHE_TTL: {
 };
 
 export const enum PROVIDER_TYPE {
-  INTEGRATION = 'Itegration',
+  INTEGRATION = 'Integration',
   CUSTOM = 'Custom',
 }

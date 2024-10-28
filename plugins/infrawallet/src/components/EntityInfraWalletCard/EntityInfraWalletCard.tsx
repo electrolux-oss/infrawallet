@@ -1,52 +1,20 @@
 import { InfoCard, Progress } from '@backstage/core-components';
 import { useApi } from '@backstage/core-plugin-api';
 import { useEntity } from '@backstage/plugin-catalog-react';
-import { Box, Tab, Table, TableBody, TableCell, TableHead, TableRow, Tabs, Typography } from '@material-ui/core';
-import { makeStyles } from '@material-ui/core/styles';
 import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Tab from '@mui/material/Tab';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Tabs from '@mui/material/Tabs';
+import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { Report, Tag } from '../../api/types';
-
-const useStyles = makeStyles({
-  increase: {
-    color: '#ae2e24',
-    backgroundColor: '#ffeceb',
-    borderRadius: '4px',
-    padding: '2px 4px',
-    fontSize: '0.82em',
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Open Sans", "Helvetica Neue", sans-serif',
-  },
-  decrease: {
-    color: '#216e4e',
-    backgroundColor: '#dcfff1',
-    borderRadius: '4px',
-    padding: '2px 4px',
-    fontSize: '0.82em',
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Open Sans", "Helvetica Neue", sans-serif',
-  },
-  noChange: {
-    color: '#0052cc',
-    backgroundColor: '#e9f2ff',
-    borderRadius: '4px',
-    padding: '2px 4px',
-    fontSize: '0.82em',
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Open Sans", "Helvetica Neue", sans-serif',
-  },
-  regular: {
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Open Sans", "Helvetica Neue", sans-serif',
-  },
-  bold: {
-    fontWeight: 'bold',
-    fontFamily:
-      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Ubuntu, "Open Sans", "Helvetica Neue", sans-serif',
-  },
-});
 
 const COLORS = [
   '#8884d8',
@@ -62,7 +30,6 @@ const COLORS = [
 ];
 
 export const EntityInfraWalletCard = () => {
-  const classes = useStyles();
   const { entity } = useEntity();
   const infrawalletApi = useApi(infraWalletApiRef);
 
@@ -196,10 +163,17 @@ export const EntityInfraWalletCard = () => {
   // calculate percentage change
   const percentageChange = previousTotalCost !== 0 ? ((totalCost - previousTotalCost) / previousTotalCost) * 100 : 0;
   const percentageChangeFormatted = Math.abs(percentageChange).toFixed(2);
+
+  let color = '#0052cc';
+  let backgroundColor = '#e9f2ff';
   let mark = '';
   if (percentageChange < 0) {
+    color = '#216e4e';
+    backgroundColor = '#dcfff1';
     mark = '▼';
   } else if (percentageChange > 0) {
+    color = '#ae2e24';
+    backgroundColor = '#ffeceb';
     mark = '▲';
   }
 
@@ -233,31 +207,37 @@ export const EntityInfraWalletCard = () => {
   });
 
   // 3. calculate per-service costs for current period
-  const perServiceCosts = costData.reduce((acc, report) => {
-    const service = report.service as string | undefined;
-    const cost = report.reports[currentPeriod] || 0;
-    if (typeof service === 'string') {
-      if (!acc[service]) {
-        acc[service] = 0;
+  const perServiceCosts = costData.reduce(
+    (acc, report) => {
+      const service = report.service as string | undefined;
+      const cost = report.reports[currentPeriod] || 0;
+      if (typeof service === 'string') {
+        if (!acc[service]) {
+          acc[service] = 0;
+        }
+        acc[service] += cost;
       }
-      acc[service] += cost;
-    }
-    return acc;
-  }, {} as Record<string, number>);
+      return acc;
+    },
+    {} as Record<string, number>,
+  );
 
   // 4. calculate per-service costs for previous period
   const prevPerServiceCosts = previousPeriod
-    ? costData.reduce((acc, report) => {
-        const service = report.service as string | undefined;
-        const cost = report.reports[previousPeriod] || 0;
-        if (typeof service === 'string') {
-          if (!acc[service]) {
-            acc[service] = 0;
+    ? costData.reduce(
+        (acc, report) => {
+          const service = report.service as string | undefined;
+          const cost = report.reports[previousPeriod] || 0;
+          if (typeof service === 'string') {
+            if (!acc[service]) {
+              acc[service] = 0;
+            }
+            acc[service] += cost;
           }
-          acc[service] += cost;
-        }
-        return acc;
-      }, {} as Record<string, number>)
+          return acc;
+        },
+        {} as Record<string, number>,
+      )
     : {};
 
   // 5. prepare data for per-service table
@@ -270,28 +250,6 @@ export const EntityInfraWalletCard = () => {
       change,
     };
   });
-
-  // helper function to determine className based on change
-  const getChangeClass = (change: number): string => {
-    if (change > 0) {
-      return classes.increase;
-    }
-    if (change === 0) {
-      return classes.noChange;
-    }
-    return classes.decrease;
-  };
-
-  // helper function to determine mark based on change
-  const getChangeMark = (change: number): string => {
-    if (change < 0) {
-      return '▼';
-    }
-    if (change > 0) {
-      return '▲';
-    }
-    return '';
-  };
 
   const handleTabChange = (_event: React.ChangeEvent<{}>, newValue: number) => {
     setTabIndex(newValue);
@@ -309,11 +267,20 @@ export const EntityInfraWalletCard = () => {
         <Box p={2}>
           <Box display="flex" alignItems="center">
             {previousTotalCost > 0 && (
-              <Box className={getChangeClass(percentageChange)} mr={1}>
+              <Box
+                sx={{
+                  fontSize: '0.82em',
+                  paddingInline: '2px',
+                  borderRadius: '4px',
+                  color: color,
+                  backgroundColor: backgroundColor,
+                }}
+                mr={1}
+              >
                 {mark} {percentageChangeFormatted}%
               </Box>
             )}
-            <Typography variant="h6" className={classes.bold}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
               Current Month: ${totalCost.toFixed(2)}
             </Typography>
           </Box>
@@ -344,19 +311,30 @@ export const EntityInfraWalletCard = () => {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell className={classes.bold}>Service</TableCell>
-                <TableCell align="right" className={classes.bold}>
+                <TableCell sx={{ fontWeight: 'bold' }}>Service</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                   Monthly Cost
                 </TableCell>
-                <TableCell align="right" className={classes.bold}>
+                <TableCell align="right" sx={{ fontWeight: 'bold' }}>
                   Monthly Change
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {serviceRows.map(row => {
-                const serviceChangeClass = getChangeClass(row.change);
-                const serviceMark = getChangeMark(row.change);
+                let serviceColor = '#0052cc';
+                let serviceBackgroundColor = '#e9f2ff';
+                let serviceMark = '';
+                if (row.change < 0) {
+                  serviceColor = '#216e4e';
+                  serviceBackgroundColor = '#dcfff1';
+                  serviceMark = '▼';
+                } else if (row.change > 0) {
+                  serviceColor = '#ae2e24';
+                  serviceBackgroundColor = '#ffeceb';
+                  serviceMark = '▲';
+                }
+
                 const changeFormatted = Math.abs(row.change).toFixed(2);
                 return (
                   <TableRow key={row.service}>
@@ -365,7 +343,16 @@ export const EntityInfraWalletCard = () => {
                     </TableCell>
                     <TableCell align="right">${row.cost.toFixed(2)}</TableCell>
                     <TableCell align="right">
-                      <Box className={serviceChangeClass} display="inline">
+                      <Box
+                        sx={{
+                          fontSize: '0.82em',
+                          paddingInline: '2px',
+                          borderRadius: '4px',
+                          color: serviceColor,
+                          backgroundColor: serviceBackgroundColor,
+                        }}
+                        display="inline"
+                      >
                         {serviceMark} {changeFormatted}%
                       </Box>
                     </TableCell>

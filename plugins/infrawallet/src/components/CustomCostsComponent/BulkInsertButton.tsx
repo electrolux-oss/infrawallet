@@ -1,5 +1,5 @@
 import { alertApiRef, useApi } from '@backstage/core-plugin-api';
-import LibraryAddIcon from '@mui/icons-material/LibraryAdd';
+import LibraryAddOutlinedIcon from '@mui/icons-material/LibraryAddOutlined';
 import Alert from '@mui/material/Alert';
 import Autocomplete from '@mui/material/Autocomplete';
 import Button from '@mui/material/Button';
@@ -64,7 +64,7 @@ export const BulkInsertButton = (prop: { reloadFunction: any }) => {
     setBulkCustomCost({ ...bulkCustomCost, [event.target.name]: event.target.value });
   };
 
-  const generateRecords = (): Omit<CustomCost, 'id'>[] => {
+  const generateRecords = (): CustomCost[] => {
     const fromDate = moment(bulkCustomCost.from);
     const toDate = moment(bulkCustomCost.to);
     const records = [];
@@ -72,11 +72,11 @@ export const BulkInsertButton = (prop: { reloadFunction: any }) => {
     const currentDate = fromDate.clone();
 
     while (currentDate.isSameOrBefore(toDate, 'month')) {
-      const newRecord: Omit<CustomCost, 'id'> = {
+      const newRecord: CustomCost = {
         provider: bulkCustomCost.provider,
-        account: bulkCustomCost.account,
-        service: bulkCustomCost.service,
-        category: bulkCustomCost.category,
+        account: bulkCustomCost.account || bulkCustomCost.provider,
+        service: bulkCustomCost.service || bulkCustomCost.provider,
+        category: bulkCustomCost.category || 'Uncategorized',
         currency: 'USD',
         amortization_mode: 'average',
         usage_month: parseInt(currentDate.format('YYYYMM'), 10),
@@ -111,14 +111,14 @@ export const BulkInsertButton = (prop: { reloadFunction: any }) => {
 
   return (
     <React.Fragment>
-      <Button startIcon={<LibraryAddIcon />} onClick={handleClickOpen}>
-        Bulk Insert Costs
+      <Button startIcon={<LibraryAddOutlinedIcon />} onClick={handleClickOpen}>
+        Bulk Add
       </Button>
       <Dialog component="form" fullWidth maxWidth="md" open={open} onClose={handleClose} onSubmit={handleSubmit}>
-        <DialogTitle>Insert custom costs for the same provider.</DialogTitle>
+        <DialogTitle>Bulk Add Custom Costs</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            You can insert custom monthly costs for a provider, if it is an anual contract for example.
+            Bulk add Custom Costs for the same provider/account/service, e.g., for an annual contract.
           </DialogContentText>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
@@ -126,6 +126,7 @@ export const BulkInsertButton = (prop: { reloadFunction: any }) => {
                 <TextField
                   id="provider-input"
                   name="provider"
+                  variant="standard"
                   label="Provider"
                   value={bulkCustomCost.provider}
                   onChange={handleChange}
@@ -138,6 +139,7 @@ export const BulkInsertButton = (prop: { reloadFunction: any }) => {
                     <TextField
                       id="account-input"
                       name="account"
+                      variant="standard"
                       label="Account"
                       value={bulkCustomCost.account}
                       onChange={handleChange}
@@ -149,6 +151,7 @@ export const BulkInsertButton = (prop: { reloadFunction: any }) => {
                     <TextField
                       id="service-input"
                       name="service"
+                      variant="standard"
                       label="Service"
                       value={bulkCustomCost.service}
                       onChange={handleChange}
@@ -179,7 +182,13 @@ export const BulkInsertButton = (prop: { reloadFunction: any }) => {
                   ]}
                   onChange={(_, value) => setBulkCustomCost({ ...bulkCustomCost, category: value as string })}
                   renderInput={params => (
-                    <TextField {...params} name="category" onChange={handleChange} label="Category" />
+                    <TextField
+                      {...params}
+                      name="category"
+                      variant="standard"
+                      label="Category"
+                      onChange={handleChange}
+                    />
                   )}
                 />
               </FormControl>
@@ -229,11 +238,9 @@ export const BulkInsertButton = (prop: { reloadFunction: any }) => {
             </Grid>
             {bulkCustomCost.provider && (
               <Grid item xs={12} md={12}>
-                <FormControl fullWidth sx={{ m: 1 }}>
-                  <Alert severity="info">{generateRecords().length} record(s) will be inserted.</Alert>
-                </FormControl>
+                <Alert severity="info">{generateRecords().length} record(s) will be added.</Alert>
                 <TableContainer component={Paper}>
-                  <Table>
+                  <Table size="small">
                     <TableHead>
                       <TableRow>
                         <TableCell>Provider</TableCell>
@@ -266,9 +273,9 @@ export const BulkInsertButton = (prop: { reloadFunction: any }) => {
         </DialogContent>
         <DialogActions>
           <Button variant="contained" type="submit" disabled={submittingForm}>
-            Insert
+            Submit
           </Button>
-          <Button onClick={handleClose}>Close</Button>
+          <Button onClick={handleClose}>Cancel</Button>
         </DialogActions>
       </Dialog>
     </React.Fragment>

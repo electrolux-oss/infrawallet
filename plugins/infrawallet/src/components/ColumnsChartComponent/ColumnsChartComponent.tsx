@@ -1,6 +1,7 @@
-import { Grid, Switch } from '@material-ui/core';
+import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
+import Switch from '@mui/material/Switch';
 import {
   BarPlot,
   ChartsGrid,

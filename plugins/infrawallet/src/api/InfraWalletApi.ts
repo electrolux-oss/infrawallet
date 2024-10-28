@@ -47,7 +47,7 @@ export interface InfraWalletApi {
   ): Promise<{ deleted: boolean; status: number }>;
   getWalletByName(walletName: string): Promise<GetWalletResponse>;
   getCustomCosts(): Promise<CustomCostsResponse>;
-  createCustomCosts(customCosts: Omit<CustomCost, 'id'>[]): Promise<{ created: number; status: number }>;
+  createCustomCosts(customCosts: CustomCost[]): Promise<{ created: number; status: number }>;
   updateCustomCost(customCost: CustomCost): Promise<{ updated: boolean; status: number }>;
   deleteCustomCost(customCost: CustomCost): Promise<{ deleted: boolean; status: number }>;
 }
