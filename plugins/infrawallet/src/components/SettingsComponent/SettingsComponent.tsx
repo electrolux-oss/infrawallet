@@ -1,5 +1,5 @@
 import { alertApiRef, useApi } from '@backstage/core-plugin-api';
-import { Grid } from '@material-ui/core';
+import Grid from '@mui/material/Grid';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';

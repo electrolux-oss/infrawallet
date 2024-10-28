@@ -1,6 +1,6 @@
-import React from 'react';
-import { SvgIcon } from '@material-ui/core';
 import CloudQueueIcon from '@mui/icons-material/CloudQueue';
+import SvgIcon from '@mui/material/SvgIcon';
+import React from 'react';
 
 const AWSIcon = () => {
   return (
@@ -318,5 +318,5 @@ export const getProviderIcon = (provider: string | undefined) => {
     return <DatadogIcon />;
   }
 
-  return <CloudQueueIcon />;
+  return <></>;
 };

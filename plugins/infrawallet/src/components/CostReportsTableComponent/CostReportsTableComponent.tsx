@@ -1,5 +1,5 @@
-import Typography from '@material-ui/core/Typography';
 import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
 import {
   DataGrid,

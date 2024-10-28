@@ -1,27 +1,25 @@
 import { alertApiRef, useApi } from '@backstage/core-plugin-api';
-import { CircularProgress, Divider, FormControl, Grid, Tooltip, Typography } from '@material-ui/core';
-import Button from '@material-ui/core/Button';
-import Checkbox from '@material-ui/core/Checkbox';
-import TextField from '@material-ui/core/TextField';
-import { Theme, makeStyles, withStyles } from '@material-ui/core/styles';
 import CheckBoxIcon from '@mui/icons-material/CheckBox';
 import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import Autocomplete from '@mui/material/Autocomplete';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
 import Chip from '@mui/material/Chip';
+import CircularProgress from '@mui/material/CircularProgress';
+import Divider from '@mui/material/Divider';
+import FormControl from '@mui/material/FormControl';
+import Grid from '@mui/material/Grid';
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import { Theme, useTheme } from '@mui/material/styles';
+import { withStyles } from '@mui/styles';
 import React, { FC, useEffect, useState } from 'react';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { extractAccountInfo, extractProvider, getReportKeyAndValues, tagExists } from '../../api/functions';
 import { Tag } from '../../api/types';
 import { getProviderIcon } from '../ProviderIcons';
 import { FiltersComponentProps } from '../types';
-
-const useStyles = makeStyles(theme => ({
-  formControl: {
-    marginLeft: theme.spacing(1),
-    marginRight: theme.spacing(3),
-    width: 300,
-  },
-}));
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
@@ -44,7 +42,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
   selectedTagsSetter,
   providerErrorsSetter,
 }) => {
-  const classes = useStyles();
+  const theme = useTheme();
   const keyValues: { [key: string]: string[] } = getReportKeyAndValues(reports);
 
   // tag providers
@@ -172,7 +170,10 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
     <Grid container>
       <Grid item xs={12}>
         {Object.keys(keyValues).map(key => (
-          <FormControl className={classes.formControl} key={`form-${key}`}>
+          <FormControl
+            key={`form-${key}`}
+            sx={{ marginLeft: theme.spacing(1), marginRight: theme.spacing(3), minWidth: 300 }}
+          >
             <Autocomplete
               multiple
               id={`checkboxes-${key}`}
@@ -232,7 +233,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
         <Divider />
       </Grid>
       <Grid item xs={12}>
-        <FormControl className={classes.formControl}>
+        <FormControl sx={{ marginLeft: theme.spacing(1), marginRight: theme.spacing(3), minWidth: 300 }}>
           <Autocomplete
             id="tag-providers"
             options={tagProviders}
@@ -245,7 +246,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
             )}
           />
         </FormControl>
-        <FormControl className={classes.formControl}>
+        <FormControl sx={{ marginLeft: theme.spacing(1), marginRight: theme.spacing(3), minWidth: 300 }}>
           <Autocomplete
             id="tag-keys"
             key={String(resetTagKeys)}
@@ -282,7 +283,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
             )}
           />
         </FormControl>
-        <FormControl className={classes.formControl}>
+        <FormControl sx={{ marginLeft: theme.spacing(1), marginRight: theme.spacing(3), minWidth: 300 }}>
           <Autocomplete
             id="tag-values"
             key={String(resetTagValues)}
