@@ -1,5 +1,4 @@
 import { alertApiRef, configApiRef, useApi } from '@backstage/core-plugin-api';
-import { Chip } from '@material-ui/core';
 import AddIcon from '@mui/icons-material/Add';
 import CancelIcon from '@mui/icons-material/Cancel';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
@@ -9,16 +8,10 @@ import SaveIcon from '@mui/icons-material/Save';
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import TextField from '@mui/material/TextField';
 import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
-import moment from 'moment';
-import React, { FC, useCallback, useEffect, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { infraWalletApiRef } from '../../api/InfraWalletApi';
-import { CustomCost } from '../../api/types';
-import { BulkInsertButton } from './BulkInsertButton';
-
 import {
   DataGrid,
   GridActionsCellItem,
@@ -39,6 +32,12 @@ import {
   GridToolbarFilterButton,
   ValueOptions,
 } from '@mui/x-data-grid';
+import moment from 'moment';
+import React, { FC, useCallback, useEffect, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import { infraWalletApiRef } from '../../api/InfraWalletApi';
+import { CustomCost } from '../../api/types';
+import { BulkInsertButton } from './BulkInsertButton';
 
 const StyledTooltip = styled(({ className, ...props }: TooltipProps) => (
   <Tooltip {...props} classes={{ popper: className }} />
@@ -122,7 +121,13 @@ export const CustomCostsComponent: FC = () => {
   };
 
   const processRowUpdate = (newRow: GridRowModel) => {
-    const updatedRow = { ...newRow, isNew: false };
+    const updatedRow = {
+      ...newRow,
+      isNew: false,
+      account: newRow.account || newRow.provider,
+      service: newRow.service || newRow.provider,
+      category: newRow.category || 'Uncategorized',
+    };
     const { isNew, ...customCost } = updatedRow;
 
     infraWalletApi
@@ -232,6 +237,7 @@ export const CustomCostsComponent: FC = () => {
     {
       field: 'tags',
       headerName: 'Tags (in JSON)',
+      display: 'flex',
       flex: 1,
       editable: !readOnly,
       sortable: false,

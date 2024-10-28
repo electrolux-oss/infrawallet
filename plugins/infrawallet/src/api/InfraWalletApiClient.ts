@@ -108,12 +108,12 @@ export class InfraWalletApiClient implements InfraWalletApi {
   }
 
   async getMetricConfigs(): Promise<MetricConfigsResponse> {
-    const url = 'api/infrawallet/metric/metric_configs';
+    const url = 'api/infrawallet/metric/metric-configs';
     return await this.request(url);
   }
 
   async getWalletMetricsSetting(walletName: string): Promise<MetricsSettingResponse> {
-    const url = `api/infrawallet/${walletName}/metrics_setting`;
+    const url = `api/infrawallet/${walletName}/metrics-setting`;
     return await this.request(url);
   }
 
@@ -121,7 +121,7 @@ export class InfraWalletApiClient implements InfraWalletApi {
     walletName: string,
     metricSetting: MetricSetting,
   ): Promise<{ updated: boolean; status: number }> {
-    const url = `api/infrawallet/${walletName}/metrics_setting`;
+    const url = `api/infrawallet/${walletName}/metrics-setting`;
     return await this.request(url, 'PUT', metricSetting);
   }
 
@@ -129,27 +129,27 @@ export class InfraWalletApiClient implements InfraWalletApi {
     walletName: string,
     metricSetting: MetricSetting,
   ): Promise<{ deleted: boolean; status: number }> {
-    const url = `api/infrawallet/${walletName}/metrics_setting`;
+    const url = `api/infrawallet/${walletName}/metrics-setting`;
     return await this.request(url, 'DELETE', metricSetting);
   }
 
   async getCustomCosts(): Promise<CustomCostsResponse> {
-    const url = `api/infrawallet/custom_costs`;
+    const url = `api/infrawallet/custom-costs`;
     return await this.request(url);
   }
 
-  async createCustomCosts(customCosts: Omit<CustomCost, 'id'>[]): Promise<{ created: number; status: number }> {
-    const url = `api/infrawallet/custom_costs`;
+  async createCustomCosts(customCosts: CustomCost[]): Promise<{ created: number; status: number }> {
+    const url = `api/infrawallet/custom-costs`;
     return await this.request(url, 'POST', customCosts);
   }
 
   async updateCustomCost(customCost: CustomCost): Promise<{ updated: boolean; status: number }> {
-    const url = `api/infrawallet/custom_cost`;
+    const url = `api/infrawallet/custom-cost`;
     return await this.request(url, 'PUT', customCost);
   }
 
   async deleteCustomCost(customCost: CustomCost): Promise<{ deleted: boolean; status: number }> {
-    const url = `api/infrawallet/custom_cost`;
+    const url = `api/infrawallet/custom-cost`;
     return await this.request(url, 'DELETE', customCost);
   }
 }

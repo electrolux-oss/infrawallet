@@ -14,7 +14,10 @@ import InputLabel from '@mui/material/InputLabel';
 import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
 import { useTheme } from '@mui/material/styles';
+import Switch from '@mui/material/Switch';
+import Typography from '@mui/material/Typography';
 import {
+  BarPlot,
   ChartContainer,
   ChartsAxisHighlight,
   ChartsGrid,
@@ -33,20 +36,27 @@ import React, { FC, useCallback, useEffect, useState } from 'react';
 import { aggregateCostReports, formatCurrency, mergeCostReports } from '../../api/functions';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { Budget, Report } from '../../api/types';
+import { colorList } from '../constants';
 import { getProviderIcon } from '../ProviderIcons';
 import { BudgetsProps } from '../types';
 
+const enum BUDGET_VIEW {
+  MONTHLY = 'Monthly',
+  ANNUAL = 'Annual',
+}
+
 interface BudgetChartProps {
   provider: string;
-  costs: number[];
+  monthlyCosts: number[];
+  view: string;
 }
 
 function BudgetChart(props: Readonly<BudgetChartProps>) {
   const { width, height } = useDrawingArea();
   const theme = useTheme();
-  const provider = props.provider;
+  const { provider, monthlyCosts, view } = props;
 
-  const [budget, setBudget] = useState<Budget | undefined>(undefined);
+  const [annualBudget, setAnnualBudget] = useState<Budget | undefined>(undefined);
   const [openManageBudget, setOpenManageBudget] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(false);
 
@@ -56,7 +66,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
     const fetchBudget = async () => {
       const response = await infraWalletApi.getBudget('default', provider);
       const updatedBudget = response.data?.find(a => a.provider.toLowerCase() === provider.toLowerCase());
-      setBudget(updatedBudget);
+      setAnnualBudget(updatedBudget);
     };
 
     fetchBudget();
@@ -65,26 +75,31 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
   const updateBudget = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const name = budget?.name || `${provider} annual budget`;
+    const name = annualBudget?.name || `${provider} annual budget`;
     const amount = formData.get('amount');
-    const newBudget: Budget = {
-      id: budget?.id,
+    const newAnnualBudget: Budget = {
+      id: annualBudget?.id,
       provider: provider,
       name: name,
       amount: amount ? Number(amount) : 0,
     };
-    await infraWalletApi.updateBudget('default', newBudget);
+    await infraWalletApi.updateBudget('default', newAnnualBudget);
     setRefreshTrigger(prev => !prev);
     setOpenManageBudget(false);
   };
 
   const accumulatedCosts: number[] = [];
-  for (let i = 0; i < props.costs.length; i++) {
+  for (let i = 0; i < monthlyCosts.length; i++) {
     if (i === 0) {
-      accumulatedCosts[i] = props.costs[i];
+      accumulatedCosts[i] = monthlyCosts[i];
     } else {
-      accumulatedCosts[i] = accumulatedCosts[i - 1] + props.costs[i];
+      accumulatedCosts[i] = accumulatedCosts[i - 1] + monthlyCosts[i];
     }
+  }
+
+  let budgetAmount = annualBudget?.amount || 0;
+  if (view === BUDGET_VIEW.MONTHLY) {
+    budgetAmount = budgetAmount / 12;
   }
 
   return (
@@ -94,9 +109,9 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
         height={height}
         series={[
           {
-            data: accumulatedCosts,
-            type: 'line',
-            valueFormatter: value => {
+            data: view === BUDGET_VIEW.ANNUAL ? accumulatedCosts : monthlyCosts,
+            type: view === BUDGET_VIEW.ANNUAL ? 'line' : 'bar',
+            valueFormatter: (value: number | null) => {
               return formatCurrency(value || 0);
             },
             showMark: false,
@@ -111,24 +126,33 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
         yAxis={[
           {
             min: 0,
-            max: max([...accumulatedCosts, budget?.amount]),
+            max:
+              view === BUDGET_VIEW.ANNUAL
+                ? max([...accumulatedCosts, budgetAmount])
+                : max([...monthlyCosts, budgetAmount]),
             valueFormatter: value => {
               return formatCurrency(value || 0);
+            },
+            colorMap: {
+              type: 'piecewise',
+              thresholds: [budgetAmount > 0 ? budgetAmount : Number.MAX_SAFE_INTEGER],
+              colors: [colorList[0], theme.palette.error.main],
             },
           },
         ]}
       >
         <ChartsGrid horizontal />
-        <ChartsAxisHighlight x="line" />
+        <ChartsAxisHighlight x={view === BUDGET_VIEW.ANNUAL ? 'line' : 'band'} />
         <LinePlot />
+        <BarPlot />
         <MarkPlot />
         <LineHighlightPlot />
         <ChartsReferenceLine
-          y={budget?.amount || 0}
-          label={budget?.amount ? formatCurrency(budget.amount) : 'no budget set'}
+          y={budgetAmount}
+          label={budgetAmount ? formatCurrency(budgetAmount) : undefined}
           labelAlign="end"
           lineStyle={{
-            stroke: budget?.amount ? theme.palette.error.main : 'transparent',
+            stroke: budgetAmount ? theme.palette.error.main : 'transparent',
             strokeDasharray: '5 5',
             strokeWidth: 1.5,
             strokeOpacity: 0.8,
@@ -158,7 +182,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
                     name="amount"
                     type="number"
                     startAdornment={<InputAdornment position="start">$</InputAdornment>}
-                    defaultValue={budget?.amount}
+                    defaultValue={annualBudget?.amount}
                   />
                 </FormControl>
               </Box>
@@ -178,6 +202,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
 
 export const Budgets: FC<BudgetsProps> = ({ providerErrorsSetter }) => {
   const [reportsAggregatedAndMerged, setReportsAggregatedAndMerged] = useState<Report[] | undefined>(undefined);
+  const [budgetView, setBudgetView] = useState(BUDGET_VIEW.ANNUAL);
 
   const infraWalletApi = useApi(infraWalletApiRef);
   const alertApi = useApi(alertApiRef);
@@ -204,10 +229,25 @@ export const Budgets: FC<BudgetsProps> = ({ providerErrorsSetter }) => {
 
   return (
     <Grid container spacing={3}>
+      <Grid item>
+        <Typography variant="h5">
+          {moment().year()} {budgetView} Budgets
+        </Typography>
+      </Grid>
+      <Grid container justifyContent="flex-end" spacing={1}>
+        <Grid item>Annual</Grid>
+        <Grid item>
+          <Switch
+            size="small"
+            onChange={event => setBudgetView(event.target.checked ? BUDGET_VIEW.MONTHLY : BUDGET_VIEW.ANNUAL)}
+          />
+        </Grid>
+        <Grid item>Monthly</Grid>
+      </Grid>
       {reportsAggregatedAndMerged !== undefined ? (
         reportsAggregatedAndMerged.map(report => (
           <Grid item key={`${report.id}-grid`} xs={4}>
-            <BudgetChart provider={report.id} costs={Object.values(report.reports)} />
+            <BudgetChart provider={report.id} monthlyCosts={Object.values(report.reports)} view={budgetView} />
           </Grid>
         ))
       ) : (

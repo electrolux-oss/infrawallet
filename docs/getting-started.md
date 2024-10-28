@@ -192,21 +192,6 @@ backend:
 
 Datadog doesn't provide daily costs. Current daily costs are calculated by `monthly costs/number of days in that month`.
 
-### Custom Costs Management
-
-If there is no integration available for some of the cloud costs, it is possible to add such costs via InfraWallet
-custom cost management UI (the tab besides the cost tab). The big table on this page shows all of the custom
-costs saved in the plugin's database. For now, custom costs are only at the monthly level. When the granularity is set
-to `daily` in a view, there are amortization modes of transforming monthly custom costs into daily costs:
-
-- Average (by default): the monthly cost is divided by the number of days in that month
-- First day: the monthly cost is assigned to the first day of that month
-- End day: the monthly cost is assigned to the last day of that month
-
-If you would like to create multiple cost records for a provider, you can click the `BULK INSERT COSTS` button at the
-top left corner of the table. Then fill in the necessary information like provider, monthly cost, start month, end
-month, etc. Check the preview and click the `INSERT` button to save the records.
-
 ## Integration Filter
 
 When integrating InfraWallet with your billing account, you have the ability to retrieve and display costs for all sub-accounts. However, if you want to limit the visibility of certain accounts, you can apply filters. Below is an example of how to configure this for AWS:
@@ -226,6 +211,23 @@ backend:
 ```
 
 Currently, only AWS and Datadog integrations support filters.
+
+## Custom Costs
+
+If there is no integration available for some cloud costs, you can add them manually using the Custom Costs UI in InfraWallet. The table on this page displays all saved custom
+costs within InfraWallet’s database.
+
+Currently, custom costs are only available at the monthly level. When viewing costs with `daily` granularity, monthly custom costs can be transformed into daily costs using the following amortization modes:
+
+- Average (default): The monthly cost is divided evenly across all days in the month.
+- First day: The full monthly cost is assigned to the first day of the month.
+- End day: The full monthly cost is assigned to the last day of the month.
+
+To add multiple custom cost records for a single provider, use the `Bulk Add` button. Enter details such as provider, monthly cost, start month, and end month, then check the preview and save the records.
+
+## Budgets
+
+You can track your annual spending from the Budgets page. To set a budget for a provider, click the `Manage Budget` button, then enter the desired annual budget. This will allow you to monitor spending against your set budget and adjust as needed throughout the year.
 
 ## Install the Plugin
 

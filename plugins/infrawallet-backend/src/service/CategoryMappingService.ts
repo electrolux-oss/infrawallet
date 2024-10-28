@@ -5,7 +5,10 @@ import { CategoryMappings, ServiceToCategoryMappings } from './types';
 export class CategoryMappingService {
   private static instance: CategoryMappingService;
 
-  constructor(protected readonly cache: CacheService, protected readonly logger: LoggerService) {}
+  constructor(
+    protected readonly cache: CacheService,
+    protected readonly logger: LoggerService,
+  ) {}
 
   static initInstance(cache: CacheService, logger: LoggerService) {
     if (!CategoryMappingService.instance) {
