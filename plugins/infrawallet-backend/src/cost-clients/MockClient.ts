@@ -28,17 +28,18 @@ export class MockClient extends InfraWalletClient {
     _costResponse: any,
   ): Promise<Report[]> {
     try {
-      const startD = moment.unix(Number(query.startTime) / 1000);
-      let endD = moment.unix(Number(query.endTime) / 1000);
+      const startDate = moment.unix(Number(query.startTime) / 1000);
+      let endDate = moment.unix(Number(query.endTime) / 1000);
+
       const mockDir = resolvePackagePath('@electrolux-oss/plugin-infrawallet-backend', 'mock');
       const mockFilePath = upath.join(mockDir, 'mock_response.json');
       const data = await fsPromises.readFile(mockFilePath, 'utf8');
       const jsonData: Report[] = JSON.parse(data);
       const currentDate = moment();
 
-      if (endD.isAfter(currentDate)) {
-        endD = currentDate.clone();
-        endD.add(1, 'day');
+      if (endDate.isAfter(currentDate)) {
+        endDate = currentDate.clone();
+        endDate.add(1, 'day');
       }
 
       const processedData = await Promise.all(
@@ -46,7 +47,11 @@ export class MockClient extends InfraWalletClient {
           item.providerType = PROVIDER_TYPE.INTEGRATION;
           item.reports = {};
 
-          const StartDate = moment(startD);
+          let tempDate = moment(startDate);
+          if (item.provider === 'GCP') {
+            // to simulate the scenario when there is no cost data for 1 month
+            tempDate = tempDate.add(1, 'month');
+          }
 
           let step: moment.unitOfTime.DurationConstructor = 'months';
           let dateFormat = 'YYYY-MM';
@@ -56,8 +61,8 @@ export class MockClient extends InfraWalletClient {
             dateFormat = 'YYYY-MM-DD';
           }
 
-          while (StartDate.isBefore(endD)) {
-            const dateString = StartDate.format(dateFormat);
+          while (tempDate.isBefore(endDate)) {
+            const dateString = tempDate.format(dateFormat);
 
             if (query.granularity.toLowerCase() === 'monthly') {
               item.reports[dateString] = this.getRandomValue(0.4 * 30, 33.3 * 30);
@@ -65,7 +70,7 @@ export class MockClient extends InfraWalletClient {
               item.reports[dateString] = this.getRandomValue(0.4, 33.3);
             }
 
-            StartDate.add(1, step); // Step based on granularity
+            tempDate.add(1, step); // Step based on granularity
           }
 
           return item;
