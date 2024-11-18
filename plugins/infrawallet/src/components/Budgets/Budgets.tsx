@@ -105,18 +105,16 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
 
   const nonAccumulatedCosts: number[] = [];
   const accumulatedCosts: number[] = [];
-  for (const month of Object.keys(monthList).sort()) {
+  for (const month of Object.keys(monthList).sort((a, b) => Number(a) - Number(b))) {
     const yearMonth = `${moment().year()}-${month}`;
 
     let cost;
     if (yearMonth in monthlyCosts) {
       cost = monthlyCosts[yearMonth];
+    } else if (Number(month) < moment().month()) {
+      cost = 0;
     } else {
-      if (Number(month) < moment().month()) {
-        cost = 0;
-      } else {
-        break;
-      }
+      break;
     }
 
     nonAccumulatedCosts.push(cost);
