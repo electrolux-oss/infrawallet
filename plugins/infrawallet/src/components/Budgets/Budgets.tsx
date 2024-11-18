@@ -45,9 +45,24 @@ const enum BUDGET_VIEW {
   ANNUAL = 'Annual',
 }
 
+const monthList = {
+  '01': 'Jan',
+  '02': 'Feb',
+  '03': 'Mar',
+  '04': 'Apr',
+  '05': 'May',
+  '06': 'Jun',
+  '07': 'Jul',
+  '08': 'Aug',
+  '09': 'Sep',
+  '10': 'Oct',
+  '11': 'Nov',
+  '12': 'Dec',
+};
+
 interface BudgetChartProps {
   provider: string;
-  monthlyCosts: number[];
+  monthlyCosts: Record<string, number>;
   view: string;
 }
 
@@ -88,12 +103,25 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
     setOpenManageBudget(false);
   };
 
+  const nonAccumulatedCosts: number[] = [];
   const accumulatedCosts: number[] = [];
-  for (let i = 0; i < monthlyCosts.length; i++) {
-    if (i === 0) {
-      accumulatedCosts[i] = monthlyCosts[i];
+  for (const month of Object.keys(monthList).sort((a, b) => Number(a) - Number(b))) {
+    const yearMonth = `${moment().year()}-${month}`;
+
+    let cost;
+    if (yearMonth in monthlyCosts) {
+      cost = monthlyCosts[yearMonth];
+    } else if (Number(month) < moment().month()) {
+      cost = 0;
     } else {
-      accumulatedCosts[i] = accumulatedCosts[i - 1] + monthlyCosts[i];
+      break;
+    }
+
+    nonAccumulatedCosts.push(cost);
+    if (month === '01') {
+      accumulatedCosts.push(cost);
+    } else {
+      accumulatedCosts.push(accumulatedCosts[accumulatedCosts.length - 1] + cost);
     }
   }
 
@@ -109,7 +137,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
         height={height}
         series={[
           {
-            data: view === BUDGET_VIEW.ANNUAL ? accumulatedCosts : monthlyCosts,
+            data: view === BUDGET_VIEW.ANNUAL ? accumulatedCosts : nonAccumulatedCosts,
             type: view === BUDGET_VIEW.ANNUAL ? 'line' : 'bar',
             valueFormatter: (value: number | null) => {
               return formatCurrency(value || 0);
@@ -119,7 +147,9 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
         ]}
         xAxis={[
           {
-            data: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+            data: Object.entries(monthList)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([_, value]) => value),
             scaleType: 'band',
           },
         ]}
@@ -129,7 +159,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
             max:
               view === BUDGET_VIEW.ANNUAL
                 ? max([...accumulatedCosts, budgetAmount])
-                : max([...monthlyCosts, budgetAmount]),
+                : max([...nonAccumulatedCosts, budgetAmount]),
             valueFormatter: value => {
               return formatCurrency(value || 0);
             },
@@ -247,7 +277,7 @@ export const Budgets: FC<BudgetsProps> = ({ providerErrorsSetter }) => {
       {reportsAggregatedAndMerged !== undefined ? (
         reportsAggregatedAndMerged.map(report => (
           <Grid item key={`${report.id}-grid`} xs={4}>
-            <BudgetChart provider={report.id} monthlyCosts={Object.values(report.reports)} view={budgetView} />
+            <BudgetChart provider={report.id} monthlyCosts={report.reports} view={budgetView} />
           </Grid>
         ))
       ) : (
