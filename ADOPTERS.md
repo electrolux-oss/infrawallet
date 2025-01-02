@@ -4,8 +4,8 @@ _We are proud to recognize the organizations that have adopted InfraWallet to ma
 
 _If your organization uses InfraWallet, we'd love to have you listed! Simply submit a Pull Request to add your organization name to the list below._
 
-| Organization                             | Contact(s)                                         |
-| ---------------------------------------- | -------------------------------------------------- |
-| [Electrolux](https://www.electrolux.com) | [@kondrashevich](https://github.com/kondrashevich) |
-| [Alithya](https://www.alithya.com)       | [@fjudith](https://github.com/fjudith)             |
-| [Aurora Innovation](https://github.com/aurorainnovation) | [@O5ten](https://github.com/O5ten) |
+| Organization                                             | Contact(s)                                         |
+| -------------------------------------------------------- | -------------------------------------------------- |
+| [Electrolux](https://www.electrolux.com)                 | [@kondrashevich](https://github.com/kondrashevich) |
+| [Alithya](https://www.alithya.com)                       | [@fjudith](https://github.com/fjudith)             |
+| [Aurora Innovation](https://github.com/aurorainnovation) | [@O5ten](https://github.com/O5ten)                 |
