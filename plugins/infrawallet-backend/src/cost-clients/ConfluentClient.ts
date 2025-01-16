@@ -94,7 +94,6 @@ export class ConfluentClient extends InfraWalletClient {
           .map((item: any) => item.resource?.environment?.id)
           .filter((id: any) => id !== undefined))];
 
-        this.logger.info(`Confluent Envs: ${envIds}`);
         const envNamePromises = envIds.map(envId => this.fetchEnvDisplayName(client, envId));
         const envNames = await Promise.all(envNamePromises);
 
