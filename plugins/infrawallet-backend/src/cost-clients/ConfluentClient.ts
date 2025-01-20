@@ -41,7 +41,8 @@ export class ConfluentClient extends InfraWalletClient {
     });
 
     if (!response.ok) {
-      throw new Error(`Failed to fetch environment name for ${envId}: ${response.statusText}`);
+      this.logger.warn(`Failed to fetch environment name for ${envId}: ${response.statusText}`);
+      return envId;
     }
 
     const jsonResponse = await response.json();
@@ -89,7 +90,11 @@ export class ConfluentClient extends InfraWalletClient {
 
         const jsonResponse: { data: any[] } = await response.json();
 
-        const envIds = [...new Set(jsonResponse.data.map((item: any) => item.resource.environment.id))];
+        const envIds = [
+          ...new Set(
+            jsonResponse.data.map((item: any) => item.resource?.environment?.id).filter((id: any) => id !== undefined),
+          ),
+        ];
 
         const envNamePromises = envIds.map(envId => this.fetchEnvDisplayName(client, envId));
         const envNames = await Promise.all(envNamePromises);
@@ -99,13 +104,15 @@ export class ConfluentClient extends InfraWalletClient {
           envIdToName[envId] = envNames[index];
         });
 
-        const dataWithEnvNames = jsonResponse.data.map((item: any) => {
-          const envId = item.resource.environment.id;
-          return {
-            ...item,
-            envDisplayName: envIdToName[envId] || 'Unknown',
-          };
-        });
+        const dataWithEnvNames = jsonResponse.data
+          .filter((item: any) => item.resource?.environment?.id)
+          .map((item: any) => {
+            const envId = item.resource.environment.id;
+            return {
+              ...item,
+              envDisplayName: envIdToName[envId] || 'Unknown',
+            };
+          });
 
         aggregatedData = aggregatedData.concat(dataWithEnvNames);
 
