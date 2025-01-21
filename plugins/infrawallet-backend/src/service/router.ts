@@ -45,15 +45,21 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
   // do database migrations here to support the legacy backend system
   await setUpDatabase(database);
 
-  // put scheduler here for now to support legacy backends
-  await scheduler.scheduleTask({
-    frequency: { cron: '0 */8 * * *' }, // every 8 hours
-    timeout: { hours: 1 },
-    id: 'infrawallet-fetch-and-save-costs',
-    fn: async () => {
-      await fetchAndSaveCosts(options);
-    },
-  });
+  const prefetchCostData = config.getOptionalBoolean('backend.infraWallet.prefetchCostData') ?? true;
+
+  if (prefetchCostData) {
+    // put scheduler here for now to support legacy backends
+    await scheduler.scheduleTask({
+      frequency: { cron: '0 */8 * * *' }, // every 8 hours
+      timeout: { hours: 1 },
+      id: 'infrawallet-fetch-and-save-costs',
+      fn: async () => {
+        await fetchAndSaveCosts(options);
+      },
+    });
+    // trigger this task when the plugin starts up
+    scheduler.triggerTask('infrawallet-fetch-and-save-costs');
+  }
 
   // init CategoryMappingService
   CategoryMappingService.initInstance(cache, logger);

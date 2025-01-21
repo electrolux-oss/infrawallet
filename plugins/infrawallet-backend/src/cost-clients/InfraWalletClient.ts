@@ -255,6 +255,7 @@ export abstract class InfraWalletClient {
   }
 
   async getCostReports(query: CostQuery): Promise<ClientResponse> {
+    const prefetchCostData = this.config.getOptionalBoolean('backend.infraWallet.prefetchCostData') ?? true;
     const integrationConfigs = this.config.getOptionalConfigArray(
       `backend.infraWallet.integrations.${this.provider.toLowerCase()}`,
     );
@@ -265,8 +266,8 @@ export abstract class InfraWalletClient {
     const results: Report[] = [];
     const errors: CloudProviderError[] = [];
 
-    // for a query without any tags or groups, we get the results from the plugin database
-    if (query.tags === '()' && query.groups === '') {
+    // if prefetchCostData enabled, for a query without any tags or groups, we get the results from the plugin database
+    if (query.tags === '()' && query.groups === '' && prefetchCostData) {
       const reportsFromDatabase = await this.getCostReportsFromDatabase(query);
       reportsFromDatabase.forEach(report => {
         results.push(report);
@@ -393,6 +394,8 @@ export abstract class InfraWalletClient {
         costItems,
         (accumulator: { [key: string]: Report }, row: CostItem) => {
           const key = row.key;
+          const otherColumns =
+            typeof row.other_columns === 'string' ? JSON.parse(row.other_columns) : row.other_columns;
 
           if (!accumulator[key]) {
             accumulator[key] = {
@@ -403,7 +406,7 @@ export abstract class InfraWalletClient {
               provider: row.provider,
               providerType: PROVIDER_TYPE.INTEGRATION,
               reports: {},
-              ...row.other_columns,
+              ...otherColumns,
             };
           }
           accumulator[key].reports[usageDateToPeriodString(row.usage_date)] = parseFloat(row.cost as string);
