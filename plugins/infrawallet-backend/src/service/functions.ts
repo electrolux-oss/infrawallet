@@ -254,3 +254,17 @@ export function getDailyPeriodStringsForOneMonth(yyyymm: number): string[] {
 
   return periods;
 }
+
+export function usageDateToPeriodString(usageDate: number): string {
+  // usageDate format: either yyyymm (monthly) or yyyymmdd (daily)
+  // output format: yyyy-mm (monthly) or yyyy-mm-dd (daily)
+  const usageDateStr = usageDate.toString();
+  if (usageDateStr.length === 6) {
+    // Monthly format
+    return `${usageDateStr.slice(0, 4)}-${usageDateStr.slice(4, 6)}`;
+  } else if (usageDateStr.length === 8) {
+    // Daily format
+    return `${usageDateStr.slice(0, 4)}-${usageDateStr.slice(4, 6)}-${usageDateStr.slice(6, 8)}`;
+  }
+  throw new Error('Invalid usageDate format');
+}
