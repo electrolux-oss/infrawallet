@@ -11,7 +11,7 @@ export type CostItem = {
   category: string;
   provider: string;
   usage_date: number; // format YYYYMMDD
-  other_columns: Record<string, string>; // example: {"cluster":"value_a", "project":"value_b"}
+  other_columns: Record<string, string> | string; // example: {"cluster":"value_a", "project":"value_b"}
   // If Postgres is used, the column type is decimal but Knex gets the values as strings
   // see https://stackoverflow.com/questions/45569216/knex-postgres-returns-strings-for-numeric-decimal-values
   cost: number | string;
@@ -121,7 +121,7 @@ export async function bulkInsertCostItems(
           category: report.category,
           provider: report.provider,
           usage_date: usageDate,
-          other_columns: otherColumns,
+          other_columns: knex.client.dialect === 'sqlite3' ? JSON.stringify(otherColumns) : otherColumns,
           cost: cost,
         });
       }
@@ -129,8 +129,10 @@ export async function bulkInsertCostItems(
   });
 
   // bulk insert the records
+  // for sqlite3, we need a smaller chunk size
+  const chunkSize = knex.client.dialect === 'sqlite3' ? 500 : 1000;
   await knex
-    .batchInsert(`cost_items_${granularity}`, rows)
+    .batchInsert(`cost_items_${granularity}`, rows, chunkSize)
     .then(() => {
       console.log(`${reports.length} ${granularity} records have been inserted`);
     })
