@@ -57,6 +57,7 @@
     "express-promise-router": "^4.1.0",
     "lodash": "^4.17.21",
     "moment": "2.29.4",
+    "date-fns": "2.30.0",
     "node-fetch": "^2.6.7",
     "upath": "^2.0.1",
     "urllib": "^4.2.0",
