@@ -255,7 +255,7 @@ export abstract class InfraWalletClient {
   }
 
   async getCostReports(query: CostQuery): Promise<ClientResponse> {
-    const prefetchCostData = this.config.getOptionalBoolean('backend.infraWallet.prefetchCostData') ?? true;
+    const autoloadCostData = this.config.getOptionalBoolean('backend.infraWallet.autoload.enabled') ?? true;
     const integrationConfigs = this.config.getOptionalConfigArray(
       `backend.infraWallet.integrations.${this.provider.toLowerCase()}`,
     );
@@ -266,8 +266,8 @@ export abstract class InfraWalletClient {
     const results: Report[] = [];
     const errors: CloudProviderError[] = [];
 
-    // if prefetchCostData enabled, for a query without any tags or groups, we get the results from the plugin database
-    if (query.tags === '()' && query.groups === '' && prefetchCostData) {
+    // if autoloadCostData enabled, for a query without any tags or groups, we get the results from the plugin database
+    if (query.tags === '()' && query.groups === '' && autoloadCostData) {
       const reportsFromDatabase = await this.getCostReportsFromDatabase(query);
       reportsFromDatabase.forEach(report => {
         results.push(report);
