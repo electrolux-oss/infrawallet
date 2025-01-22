@@ -57,8 +57,12 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
         await fetchAndSaveCosts(options);
       },
     });
-    // trigger this task when the plugin starts up
-    scheduler.triggerTask('infrawallet-fetch-and-save-costs');
+    // trigger this task when the plugin starts up if the task is not running
+    try {
+      scheduler.triggerTask('infrawallet-fetch-and-save-costs');
+    } catch (e) {
+      logger.error(e);
+    }
   }
 
   // init CategoryMappingService
