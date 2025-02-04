@@ -1,6 +1,15 @@
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { CACHE_CATEGORY, CLOUD_PROVIDER } from '../service/consts';
+import { addMonths, endOfMonth, format, startOfMonth } from 'date-fns';
+import { reduce } from 'lodash';
+import { getWallet } from '../controllers/MetricSettingController';
+import { CostItem, bulkInsertCostItems, countCostItems, getCostItems } from '../models/CostItem';
+import {
+  CACHE_CATEGORY,
+  CLOUD_PROVIDER,
+  NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS,
+  PROVIDER_TYPE,
+} from '../service/consts';
 import {
   getDefaultCacheTTL,
   getReportsFromCache,
@@ -10,6 +19,7 @@ import {
   setTagKeysToCache,
   setTagValuesToCache,
   tagExists,
+  usageDateToPeriodString,
 } from '../service/functions';
 import {
   ClientResponse,
@@ -20,6 +30,7 @@ import {
   Tag,
   TagsQuery,
   TagsResponse,
+  Wallet,
 } from '../service/types';
 
 export abstract class InfraWalletClient {
@@ -244,6 +255,7 @@ export abstract class InfraWalletClient {
   }
 
   async getCostReports(query: CostQuery): Promise<ClientResponse> {
+    const autoloadCostData = this.config.getOptionalBoolean('backend.infraWallet.autoload.enabled') ?? true;
     const integrationConfigs = this.config.getOptionalConfigArray(
       `backend.infraWallet.integrations.${this.provider.toLowerCase()}`,
     );
@@ -251,58 +263,162 @@ export abstract class InfraWalletClient {
       return { reports: [], errors: [] };
     }
 
-    const promises = [];
     const results: Report[] = [];
     const errors: CloudProviderError[] = [];
 
-    for (const integrationConfig of integrationConfigs) {
-      const integrationName = integrationConfig.getString('name');
+    // if autoloadCostData enabled, for a query without any tags or groups, we get the results from the plugin database
+    if (query.tags === '()' && query.groups === '' && autoloadCostData) {
+      const reportsFromDatabase = await this.getCostReportsFromDatabase(query);
+      reportsFromDatabase.forEach(report => {
+        results.push(report);
+      });
+    } else {
+      const promises = [];
+      for (const integrationConfig of integrationConfigs) {
+        const integrationName = integrationConfig.getString('name');
 
-      // first check if there is any cached
-      const cachedCosts = await getReportsFromCache(this.cache, this.provider, integrationName, query);
-      if (cachedCosts) {
-        this.logger.debug(`${this.provider}/${integrationName} costs from cache`);
-        cachedCosts.forEach(cost => {
-          results.push(cost);
-        });
-        continue;
-      }
-
-      const promise = (async () => {
-        try {
-          const client = await this.initCloudClient(integrationConfig);
-          const costResponse = await this.fetchCosts(integrationConfig, client, query);
-
-          const transformedReports = await this.transformCostsData(integrationConfig, query, costResponse);
-
-          // cache the results
-          await setReportsToCache(
-            this.cache,
-            transformedReports,
-            this.provider,
-            integrationName,
-            query,
-            getDefaultCacheTTL(CACHE_CATEGORY.COSTS, this.provider),
-          );
-
-          transformedReports.forEach((value: any) => {
-            results.push(value);
+        // first check if there is any cached
+        const cachedCosts = await getReportsFromCache(this.cache, this.provider, integrationName, query);
+        if (cachedCosts) {
+          this.logger.debug(`${this.provider}/${integrationName} costs from cache`);
+          cachedCosts.forEach(cost => {
+            results.push(cost);
           });
-        } catch (e) {
-          this.logger.error(e);
-          errors.push({
-            provider: this.provider,
-            name: `${this.provider}/${integrationName}`,
-            error: e.message,
-          });
+          continue;
         }
-      })();
-      promises.push(promise);
+
+        const promise = (async () => {
+          try {
+            const client = await this.initCloudClient(integrationConfig);
+            const costResponse = await this.fetchCosts(integrationConfig, client, query);
+
+            const transformedReports = await this.transformCostsData(integrationConfig, query, costResponse);
+
+            // cache the results
+            await setReportsToCache(
+              this.cache,
+              transformedReports,
+              this.provider,
+              integrationName,
+              query,
+              getDefaultCacheTTL(CACHE_CATEGORY.COSTS, this.provider),
+            );
+
+            transformedReports.forEach((value: any) => {
+              results.push(value);
+            });
+          } catch (e) {
+            this.logger.error(e);
+            errors.push({
+              provider: this.provider,
+              name: `${this.provider}/${integrationName}`,
+              error: e.message,
+            });
+          }
+        })();
+        promises.push(promise);
+      }
+      await Promise.all(promises);
     }
-    await Promise.all(promises);
+
     return {
       reports: results,
       errors: errors,
     };
+  }
+
+  async saveCostReportsToDatabase(wallet: Wallet, granularity: string): Promise<void> {
+    const count = await countCostItems(this.database, wallet.id, this.provider, granularity);
+
+    const endTime = endOfMonth(new Date());
+    let startTime = startOfMonth(addMonths(new Date(), -1));
+    if (count === 0) {
+      // if there is no record, the first call is going to fetch the last 364 days' cost data
+      // it cannot be 365 day or 1 year because Azure API will responds with the following error
+      // Invalid query definition: The time period for pulling the data cannot exceed 1 year(s)
+      startTime = startOfMonth(
+        addMonths(new Date(), -1 * NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS[this.provider] + 1),
+      );
+    }
+
+    this.logger.debug(`Fetching ${granularity} costs from ${startTime} to ${endTime} for ${this.provider}`);
+
+    const results: Report[] = [];
+    const usageDateFormat = granularity === 'daily' ? 'yyyyMMdd' : 'yyyyMM';
+    try {
+      const clientResponse = await this.getCostReports({
+        filters: '',
+        tags: '',
+        groups: '',
+        granularity: granularity,
+        startTime: startTime.getTime().toString(),
+        endTime: endTime.getTime().toString(),
+      });
+      clientResponse.reports.forEach((cost: Report) => {
+        results.push(cost);
+      });
+    } catch (e) {
+      this.logger.error(e);
+    }
+
+    await bulkInsertCostItems(
+      this.database,
+      wallet.id,
+      this.provider,
+      granularity,
+      parseInt(format(startTime, usageDateFormat), 10),
+      parseInt(format(endTime, usageDateFormat), 10),
+      results,
+    );
+  }
+
+  async getCostReportsFromDatabase(query: CostQuery): Promise<Report[]> {
+    // TODO: support searching for different wallets in the future, for now it is always the default wallet
+    const defaultWallet = await getWallet(this.database, 'default');
+    if (defaultWallet !== undefined) {
+      // query the database
+      const usageDateFormat = query.granularity === 'daily' ? 'yyyyMMdd' : 'yyyyMM';
+      const startUsageDate = parseInt(format(parseInt(query.startTime, 10), usageDateFormat), 10);
+      const endUsageDate = parseInt(format(parseInt(query.endTime, 10), usageDateFormat), 10);
+      const costItems = await getCostItems(
+        this.database,
+        defaultWallet.id,
+        this.provider,
+        query.granularity,
+        startUsageDate,
+        endUsageDate,
+      );
+
+      // transform the cost items into cost reports
+      const transformedData = reduce(
+        costItems,
+        (accumulator: { [key: string]: Report }, row: CostItem) => {
+          const key = row.key;
+          const otherColumns =
+            typeof row.other_columns === 'string' ? JSON.parse(row.other_columns) : row.other_columns;
+
+          if (!accumulator[key]) {
+            accumulator[key] = {
+              id: key,
+              account: row.account,
+              service: row.service,
+              category: row.category,
+              provider: row.provider,
+              providerType: PROVIDER_TYPE.INTEGRATION,
+              reports: {},
+              ...otherColumns,
+            };
+          }
+          accumulator[key].reports[usageDateToPeriodString(row.usage_date)] = parseFloat(row.cost as string);
+
+          return accumulator;
+        },
+        {},
+      );
+
+      return Object.values(transformedData);
+    }
+
+    return [];
   }
 }

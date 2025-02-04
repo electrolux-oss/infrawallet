@@ -4670,6 +4670,7 @@ __metadata:
     "@google-cloud/bigquery": 7.9.1
     "@types/express": "*"
     "@types/supertest": ^2.0.8
+    date-fns: 2.30.0
     express: ^4.17.1
     express-promise-router: ^4.1.0
     knex: ^3.1.0
