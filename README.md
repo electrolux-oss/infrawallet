@@ -1,6 +1,6 @@
 <h1>
   <img style="height: 1em;" src="./plugins/infrawallet/docs/images/iw_logo.png" alt="logo" title="InfraWallet">
-  InfraWallet
+  InfraWallet<sup>®</sup>
 </h1>
 
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)

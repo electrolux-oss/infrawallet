@@ -1,4 +1,7 @@
-# InfraWallet
+<h1>
+  <img style="height: 1em;" src="./docs/images/iw_logo.png" alt="logo" title="InfraWallet">
+  InfraWallet<sup>®</sup>
+</h1>
 
 > Control your cloud costs just in the way how you control your bank accounts
 
