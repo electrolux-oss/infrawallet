@@ -14,14 +14,16 @@ export const infraWalletPlugin = createBackendPlugin({
         httpRouter: coreServices.httpRouter,
         logger: coreServices.logger,
         config: coreServices.rootConfig,
+        scheduler: coreServices.scheduler,
         cache: coreServices.cache,
         database: coreServices.database,
       },
-      async init({ httpRouter, logger, config, cache, database }) {
+      async init({ httpRouter, logger, config, scheduler, cache, database }) {
         httpRouter.use(
           await createRouter({
             logger,
             config,
+            scheduler,
             cache,
             database,
           }),

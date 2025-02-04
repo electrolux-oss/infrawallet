@@ -1,6 +1,6 @@
 {
   "name": "@electrolux-oss/plugin-infrawallet-backend",
-  "version": "0.2.1",
+  "version": "0.3.1",
   "backstage": {
     "role": "backend-plugin",
     "pluginId": "infrawallet",
@@ -53,6 +53,7 @@
     "@datadog/datadog-api-client": "^1.29.0",
     "@google-cloud/bigquery": "7.9.1",
     "@types/express": "*",
+    "date-fns": "2.30.0",
     "express": "^4.17.1",
     "express-promise-router": "^4.1.0",
     "lodash": "^4.17.21",

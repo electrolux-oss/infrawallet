@@ -1,6 +1,10 @@
 export interface Config {
   backend: {
     infraWallet: {
+      // configurations about prefetching cost data and saving them into plugin db
+      autoload?: {
+        enabled?: boolean;
+      };
       integrations: {
         azure?: {
           name: string;

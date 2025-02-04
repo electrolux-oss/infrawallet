@@ -1,6 +1,5 @@
 import { errorHandler } from '@backstage/backend-common';
-import { CacheService, DatabaseService, LoggerService, resolvePackagePath } from '@backstage/backend-plugin-api';
-import { Config } from '@backstage/config';
+import { DatabaseService, resolvePackagePath } from '@backstage/backend-plugin-api';
 import express from 'express';
 import Router from 'express-promise-router';
 import {
@@ -12,24 +11,19 @@ import {
 import { InfraWalletClient } from '../cost-clients/InfraWalletClient';
 import { MetricProvider } from '../metric-providers/MetricProvider';
 import { Budget, getBudget, getBudgets, upsertBudget } from '../models/Budget';
+import { deleteCostItems } from '../models/CostItem';
 import {
-  createCustomCosts,
   CustomCost,
+  createCustomCosts,
   deleteCustomCost,
   getCustomCosts,
   updateOrInsertCustomCost,
 } from '../models/CustomCost';
+import { fetchAndSaveCosts } from '../tasks/fetchAndSaveCosts';
 import { CategoryMappingService } from './CategoryMappingService';
 import { COST_CLIENT_MAPPINGS, METRIC_PROVIDER_MAPPINGS } from './consts';
 import { parseFilters, parseTags, tagsToString } from './functions';
-import { CloudProviderError, Metric, MetricSetting, Report, Tag } from './types';
-
-export interface RouterOptions {
-  logger: LoggerService;
-  config: Config;
-  cache: CacheService;
-  database: DatabaseService;
-}
+import { CloudProviderError, Metric, MetricSetting, Report, RouterOptions, Tag } from './types';
 
 async function setUpDatabase(database: DatabaseService) {
   // check database migrations
@@ -47,9 +41,29 @@ async function setUpDatabase(database: DatabaseService) {
 }
 
 export async function createRouter(options: RouterOptions): Promise<express.Router> {
-  const { logger, config, cache, database } = options;
+  const { logger, config, scheduler, cache, database } = options;
   // do database migrations here to support the legacy backend system
   await setUpDatabase(database);
+
+  const autoloadCostData = config.getOptionalBoolean('backend.infraWallet.autoload.enabled') ?? true;
+
+  if (autoloadCostData) {
+    // put scheduler here for now to support legacy backends
+    await scheduler.scheduleTask({
+      frequency: { cron: '0 */8 * * *' }, // every 8 hours
+      timeout: { hours: 1 },
+      id: 'infrawallet-autoload-costs',
+      fn: async () => {
+        await fetchAndSaveCosts(options);
+      },
+    });
+    // trigger this task when the plugin starts up if the task is not running
+    try {
+      scheduler.triggerTask('infrawallet-autoload-costs');
+    } catch (e) {
+      logger.error(e);
+    }
+  }
 
   // init CategoryMappingService
   CategoryMappingService.initInstance(cache, logger);
@@ -60,6 +74,29 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
   router.get('/health', (_, response) => {
     logger.info('PONG!');
     response.json({ status: 'ok' });
+  });
+
+  // for now this is an endpoint to trigger the fetchAndSaveCosts task manually
+  router.get('/fetch_and_save_costs', (_, response) => {
+    fetchAndSaveCosts(options);
+    response.json({ status: 'ok' });
+  });
+
+  router.post('/:walletName/delete_cost_items', async (request, response) => {
+    const walletName = request.params.walletName;
+    const granularity = request.body.granularity as string;
+    const provider = request.body.provider as string;
+
+    const wallet = await getWallet(database, walletName);
+    if (wallet && granularity && provider) {
+      const rowsDeleted = await deleteCostItems(database, wallet.id, provider, granularity);
+      response.json({
+        message: `Deleted ${rowsDeleted} ${granularity} ${provider} cost records in ${walletName}`,
+        status: 'ok',
+      });
+    } else {
+      response.status(404).json({ error: 'Wallet not found or missing parameters', status: 404 });
+    }
   });
 
   router.get('/reports', async (request, response) => {

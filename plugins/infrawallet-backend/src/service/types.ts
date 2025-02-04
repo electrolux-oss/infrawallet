@@ -1,3 +1,14 @@
+import { CacheService, DatabaseService, LoggerService, SchedulerService } from '@backstage/backend-plugin-api';
+import { Config } from '@backstage/config';
+
+export interface RouterOptions {
+  logger: LoggerService;
+  config: Config;
+  scheduler: SchedulerService;
+  cache: CacheService;
+  database: DatabaseService;
+}
+
 export type CategoryMappings = {
   [category: string]: {
     [provider: string]: string[];

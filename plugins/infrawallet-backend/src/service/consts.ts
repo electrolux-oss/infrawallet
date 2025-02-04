@@ -87,3 +87,18 @@ export const enum PROVIDER_TYPE {
   INTEGRATION = 'Integration',
   CUSTOM = 'Custom',
 }
+
+export const NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS: {
+  [provider in CLOUD_PROVIDER]: number;
+} = {
+  [CLOUD_PROVIDER.AWS]: 18,
+  // for Azure it cannot be 1 year otherwise Azure API will respond with the following error
+  // Invalid query definition: The time period for pulling the data cannot exceed 1 year(s)
+  [CLOUD_PROVIDER.AZURE]: 11, // 12 hours due to Azure rate limit
+  [CLOUD_PROVIDER.GCP]: 18,
+  [CLOUD_PROVIDER.MONGODB_ATLAS]: 18,
+  [CLOUD_PROVIDER.CONFLUENT]: 18,
+  [CLOUD_PROVIDER.DATADOG]: 12,
+  [CLOUD_PROVIDER.CUSTOM]: 0, // NOT USED
+  [CLOUD_PROVIDER.MOCK]: 0, // NOT USED
+};
