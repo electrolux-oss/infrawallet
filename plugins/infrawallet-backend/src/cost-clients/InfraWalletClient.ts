@@ -267,7 +267,8 @@ export abstract class InfraWalletClient {
     const errors: CloudProviderError[] = [];
 
     // if autoloadCostData enabled, for a query without any tags or groups, we get the results from the plugin database
-    if (query.tags === '()' && query.groups === '' && autoloadCostData) {
+    // skip Mock provider for autoloading data
+    if (query.tags === '()' && query.groups === '' && autoloadCostData && this.provider !== CLOUD_PROVIDER.MOCK) {
       const reportsFromDatabase = await this.getCostReportsFromDatabase(query);
       reportsFromDatabase.forEach(report => {
         results.push(report);
