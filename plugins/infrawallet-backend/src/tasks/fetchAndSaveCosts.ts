@@ -20,7 +20,8 @@ export async function fetchAndSaveCosts(options: RouterOptions) {
       const promises: Promise<void>[] = [];
       const conf = config.getConfig('backend.infraWallet.integrations');
       for (const provider of conf.keys()) {
-        if (provider in COST_CLIENT_MAPPINGS) {
+        // skip mock provider as that client has some special logic to manipulate period strings
+        if (provider in COST_CLIENT_MAPPINGS && provider !== 'mock') {
           const client: InfraWalletClient = COST_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
 
           const saveCostReportsToDatabasePromise = (async () => {
