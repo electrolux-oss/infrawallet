@@ -194,7 +194,7 @@ export class ConfluentClient extends InfraWalletClient {
         const envIds = Array.from(
           new Set(
             testResponse.data.map((item: any) => item.resource?.environment?.id).filter((id: any) => id !== undefined),
-          )
+          ),
         );
 
         if (envIds.length > 0) {
@@ -274,7 +274,7 @@ export class ConfluentClient extends InfraWalletClient {
                 result.data
                   .map((item: any) => item.resource?.environment?.id)
                   .filter((id: any): id is string => typeof id === 'string'),
-              )
+              ),
             );
 
             // Fetch any new environment names
