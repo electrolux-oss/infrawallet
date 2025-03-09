@@ -4,7 +4,7 @@ import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 import moment from 'moment';
 import { CategoryMappingService } from '../service/CategoryMappingService';
-import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
+import { CLOUD_PROVIDER, PROVIDER_TYPE, NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS } from '../service/consts';
 
 export class ConfluentClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -127,10 +127,10 @@ export class ConfluentClient extends InfraWalletClient {
   protected async fetchCosts(_subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
     // Confluent API limits:
     // 1. Can only fetch 1 month at a time
-    // 2. Can only go back exactly 11 months
-    const LOOKBACK_MONTHS = 11;
+    // 2. Can only go back exactly the number of months defined in NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS
+    const LOOKBACK_MONTHS = NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS[CLOUD_PROVIDER.CONFLUENT];
 
-    // Calculate the earliest date we can fetch (11 months ago)
+    // Calculate the earliest date we can fetch
     const now = moment();
     const earliestAllowed = now.clone().subtract(LOOKBACK_MONTHS, 'months').startOf('month');
 
@@ -191,11 +191,11 @@ export class ConfluentClient extends InfraWalletClient {
 
       if (testResponse.data && testResponse.data.length > 0) {
         // Process environment names for this data
-        const envIds = [
-          ...new Set(
+        const envIds = Array.from(
+          new Set(
             testResponse.data.map((item: any) => item.resource?.environment?.id).filter((id: any) => id !== undefined),
-          ),
-        ];
+          )
+        );
 
         if (envIds.length > 0) {
           // Fetch environment names
@@ -269,13 +269,13 @@ export class ConfluentClient extends InfraWalletClient {
         for (const result of batchResults) {
           if (result.data.length > 0) {
             // Extract environment IDs from this batch
-            const envIds = [
-              ...new Set(
+            const envIds = Array.from(
+              new Set(
                 result.data
                   .map((item: any) => item.resource?.environment?.id)
                   .filter((id: any): id is string => typeof id === 'string'),
-              ),
-            ];
+              )
+            );
 
             // Fetch any new environment names
             for (const envId of envIds) {
