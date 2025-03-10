@@ -92,6 +92,20 @@ export const EntityInfraWalletCard = () => {
         const filters = `(${filtersArray.join(',')})`;
 
         const tags: Tag[] = [];
+        if (annotations['infrawallet.io/tags'] && annotations['infrawallet.io/provider']) {
+          const tagsString = annotations['infrawallet.io/tags'];
+          const provider = annotations['infrawallet.io/provider'];
+          tagsString.split(',').forEach(pair => {
+            const [key, value] = pair.split(':').map(s => s.trim());
+            if (key && value) {
+              tags[key] = {
+                key,
+                value,
+                provider,
+              };
+            }
+          });
+        }
         const groups = '';
         const granularity = 'monthly';
 
