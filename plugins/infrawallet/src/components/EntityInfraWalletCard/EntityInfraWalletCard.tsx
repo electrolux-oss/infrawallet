@@ -197,21 +197,36 @@ export const EntityInfraWalletCard = () => {
       costData
         .map(report => {
           const project = report.project as string | undefined;
-          return typeof project === 'string' ? project : undefined;
+          const account = report.account as string | undefined;
+          if (typeof project === 'string') {
+            return project;
+          }
+          if (typeof account === 'string') {
+            return account;
+          }
+          return undefined;
         })
         .filter((project): project is string => !!project),
     ),
   );
 
   if (projects.length === 0) {
-    return <Alert severity="warning">No project data available to display in the chart.</Alert>;
+    return <Alert severity="warning">No project/account data available to display in the chart.</Alert>;
   }
 
   // 2. build chart data with per-project costs
   const chartData = sortedPeriods.map(period => {
     const dataPoint: Record<string, any> = { period };
     projects.forEach(project => {
-      const projectReports = costData.filter(report => report.project === project);
+      const projectReports = costData.filter(report => {
+        if (typeof report.account == 'string') {
+          return report.account === project;
+        }
+        if (typeof report.project == 'string') {
+          return report.project === project;
+        }
+        return false;
+      });
       const total = projectReports.reduce((sum, report) => {
         return sum + (report.reports[period] || 0);
       }, 0);
