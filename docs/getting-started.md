@@ -379,6 +379,7 @@ Note that the `EntityInfraWalletCard` only shows up when an entity has at least 
 - `infrawallet.io/category`
 - `infrawallet.io/provider`
 - `infrawallet.io/extra-filters`
+- `infrawallet.io/tags` (requires the `infrawallet.io/provider` annotation)
 
 These annotations are used to filter the costs, similarly to the `Filters` component in the InfraWallet main page.
 `infrawallet.io/extra-filters` takes a string like `"key-x: value-x, key-y: value-y"` as its input while the others take
