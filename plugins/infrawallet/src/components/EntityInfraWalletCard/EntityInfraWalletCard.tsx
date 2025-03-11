@@ -219,10 +219,10 @@ export const EntityInfraWalletCard = () => {
     const dataPoint: Record<string, any> = { period };
     projects.forEach(project => {
       const projectReports = costData.filter(report => {
-        if (typeof report.account == 'string') {
+        if (typeof report.account === 'string') {
           return report.account === project;
         }
-        if (typeof report.project == 'string') {
+        if (typeof report.project === 'string') {
           return report.project === project;
         }
         return false;
