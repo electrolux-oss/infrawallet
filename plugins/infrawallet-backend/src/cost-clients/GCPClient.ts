@@ -174,8 +174,8 @@ export class GCPClient extends InfraWalletClient {
             provider: this.provider,
             providerType: PROVIDER_TYPE.INTEGRATION,
             reports: {},
-            ...{ project: row.project },
-            ...tagKeyValues,
+            ...{ project: row.project }, // TODO: how should we handle the project field? for now, we add project name as a field in the report
+            ...tagKeyValues, // note that if there is a tag `project:foo` in config, it overrides the project field set above
           };
         }
 
