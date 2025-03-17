@@ -212,7 +212,7 @@ backend:
   infraWallet:
     autoload:
       schedule: '0 0 * * *' # midnight
-      initialDelayMinutes: 1 # delay but 1 min
+      initialDelayMinutes: 1 # delay by 1 min
 ```
 
 If there is an issue about the historical data in the plugin database, you can use the following two APIs to clean up
