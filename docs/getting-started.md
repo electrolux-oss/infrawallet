@@ -206,14 +206,14 @@ backend:
 ```
 
 If you want to set your own cron or defer the initial pull on startup
+
 ```yaml
 backend:
   infraWallet:
     autoload:
-      schedule: "0 0 * * *" # midnight
+      schedule: '0 0 * * *' # midnight
       initialDelayMinutes: 1 # delay but 1 min
 ```
-
 
 If there is an issue about the historical data in the plugin database, you can use the following two APIs to clean up
 the data and reload the data.
