@@ -1,8 +1,8 @@
 import { CacheService, DatabaseService, SchedulerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { Logger } from 'winston';
-import { RouterOptions } from '../service/types';
-import { fetchAndSaveCosts } from './fetchAndSaveCosts';
+import { fetchAndSaveCosts } from '../tasks/fetchAndSaveCosts';
+import { RouterOptions } from './types';
 
 /**
  * Responsible for scheduling and executing cost data fetching tasks
@@ -68,7 +68,6 @@ export class CostFetchTaskScheduler {
       }
     };
 
-    // Schedule with proper locking to prevent concurrent execution
     await this.scheduler.scheduleTask({
       id: 'infrawallet-autoload-costs',
       frequency: { cron: schedule },

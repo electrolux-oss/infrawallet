@@ -1,7 +1,7 @@
 import { coreServices, createBackendPlugin } from '@backstage/backend-plugin-api';
 import { Logger } from 'winston';
 import { createRouter } from './service/router';
-import { CostFetchTaskScheduler } from './tasks/scheduler';
+import { CostFetchTaskScheduler } from './service/scheduler';
 
 /**
  * infraWalletPlugin backend plugin
