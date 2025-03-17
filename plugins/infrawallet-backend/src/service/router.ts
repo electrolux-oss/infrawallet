@@ -61,27 +61,27 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     try {
       // Trigger the scheduled task using the scheduler
       await scheduler.triggerTask('infrawallet-autoload-costs');
-      
-      response.json({ 
+
+      response.json({
         status: 'ok',
-        message: 'Cost data fetching task has been triggered. Check logs for execution details.'
+        message: 'Cost data fetching task has been triggered. Check logs for execution details.',
       });
     } catch (error) {
       logger.error(`Error triggering cost data fetch task: ${error.message}`, { error });
-      
+
       // Fall back to direct execution if task triggering fails
       try {
         logger.info('Falling back to direct execution of fetch and save costs');
         await fetchAndSaveCosts(options);
-        response.json({ 
+        response.json({
           status: 'ok',
-          message: 'Cost data fetch completed successfully via direct execution.'
+          message: 'Cost data fetch completed successfully via direct execution.',
         });
       } catch (directError) {
         logger.error(`Direct cost data fetch failed: ${directError.message}`, { error: directError });
         response.status(500).json({
           status: 'error',
-          message: 'Failed to fetch cost data. Check logs for more details.'
+          message: 'Failed to fetch cost data. Check logs for more details.',
         });
       }
     }

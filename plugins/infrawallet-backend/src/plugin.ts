@@ -31,12 +31,12 @@ export const infraWalletPlugin = createBackendPlugin({
             database,
           }),
         );
-        
+
         httpRouter.addAuthPolicy({
           path: '/health',
           allow: 'unauthenticated',
         });
-        
+
         // 2. Initialize the task scheduler
         const taskLogger = logger.child({ component: 'CostFetchTaskScheduler' }) as Logger;
         const taskScheduler = new CostFetchTaskScheduler({
@@ -46,7 +46,7 @@ export const infraWalletPlugin = createBackendPlugin({
           cache,
           database,
         });
-        
+
         await taskScheduler.initialize();
       },
     });
