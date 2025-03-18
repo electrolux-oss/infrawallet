@@ -140,11 +140,26 @@ backend:
     integrations:
       gcp:
         - name: <unique_name_of_this_integration>
-          keyFilePath: <path_to_your_json_key_file> # if you run it in a k8s pod, you may need to create a secret and mount it to the pod
+          keyFilePath: <path_to_your_json_key_file> # Supports environment variables, tilde expansion
           projectId: <GCP_project_that_your_big_query_dataset_belongs_to>
           datasetId: <big_query_dataset_id>
           tableId: <big_query_table_id>
 ```
+
+The `keyFilePath` supports multiple formats:
+
+- Absolute paths: `/path/to/key.json`
+- Relative paths: `./path/to/key.json`
+- Home directory expansion: `~/path/to/key.json`
+- Environment variables: `$HOME/.config/gcloud/key.json` or `${HOME}/.config/gcloud/key.json`
+
+InfraWallet will also check for the standard `GOOGLE_APPLICATION_CREDENTIALS` environment variable. You have these authentication options in order of precedence:
+
+1. Explicitly configured `keyFilePath` in app-config.yaml (highest priority)
+2. `GOOGLE_APPLICATION_CREDENTIALS` environment variable
+3. Application Default Credentials from standard locations
+
+If none of these options are successful, you'll see appropriate error messages in the logs to help troubleshoot the issue.
 
 ### Confluent Cloud Integration
 
@@ -241,7 +256,7 @@ Currently, only AWS and Datadog integrations support filters.
 ## Custom Costs
 
 If there is no integration available for some cloud costs, you can add them manually using the Custom Costs UI in InfraWallet. The table on this page displays all saved custom
-costs within InfraWallet’s database.
+costs within InfraWallet's database.
 
 Currently, custom costs are only available at the monthly level. When viewing costs with `daily` granularity, monthly custom costs can be transformed into daily costs using the following amortization modes:
 
