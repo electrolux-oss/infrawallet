@@ -162,10 +162,10 @@ export class AwsClient extends InfraWalletClient {
   }
 
   protected async fetchCosts(_integrationConfig: Config, client: any, query: CostQuery): Promise<any> {
-    // query this aws account's cost and usage using @aws-sdk/client-cost-explorer
     let costAndUsageResults: any[] = [];
     let nextPageToken = undefined;
-    let filterExpression: Expression = { Dimensions: { Key: Dimension.RECORD_TYPE, Values: ['Usage'] } };
+    let filterExpression: Expression | undefined = undefined; // Initialize as undefined
+
     const tags = parseTags(query.tags);
     if (tags.length) {
       let tagsExpression: Expression = {};
@@ -184,7 +184,7 @@ export class AwsClient extends InfraWalletClient {
         tagsExpression = { Or: tagList };
       }
 
-      filterExpression = { And: [filterExpression, tagsExpression] };
+      filterExpression = { And: [tagsExpression] }; 
     }
 
     do {
@@ -194,14 +194,17 @@ export class AwsClient extends InfraWalletClient {
           End: moment(parseInt(query.endTime, 10)).format('YYYY-MM-DD'),
         },
         Granularity: query.granularity.toUpperCase() as Granularity,
-        Filter: filterExpression,
         GroupBy: [
           { Type: GroupDefinitionType.DIMENSION, Key: Dimension.LINKED_ACCOUNT },
           { Type: GroupDefinitionType.DIMENSION, Key: Dimension.SERVICE },
-        ],
-        Metrics: ['UnblendedCost'],
+        ],        
+        Metrics: ['NetAmortizedCost'],
         NextPageToken: nextPageToken,
       };
+
+      if (filterExpression) {
+        input.Filter = filterExpression;
+      }
 
       const getCostCommand = new GetCostAndUsageCommand(input);
       const costAndUsageResponse = await client.send(getCostCommand);
@@ -272,8 +275,9 @@ export class AwsClient extends InfraWalletClient {
 
             const groupMetrics = group.Metrics;
 
-            if (groupMetrics !== undefined) {
-              accumulator[keyName].reports[period] = parseFloat(groupMetrics.UnblendedCost.Amount ?? '0.0');
+            if (groupMetrics !== undefined) {                            
+              const netAmortizedCost = parseFloat(groupMetrics.NetAmortizedCost?.Amount ?? '0.0');
+              accumulator[keyName].reports[period] = netAmortizedCost;
             }
           });
         }
