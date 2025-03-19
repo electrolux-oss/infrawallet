@@ -45,26 +45,6 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
   // do database migrations here to support the legacy backend system
   await setUpDatabase(database);
 
-  const autoloadCostData = config.getOptionalBoolean('backend.infraWallet.autoload.enabled') ?? true;
-
-  if (autoloadCostData) {
-    // put scheduler here for now to support legacy backends
-    await scheduler.scheduleTask({
-      frequency: { cron: '0 */8 * * *' }, // every 8 hours
-      timeout: { hours: 1 },
-      id: 'infrawallet-autoload-costs',
-      fn: async () => {
-        await fetchAndSaveCosts(options);
-      },
-    });
-    // trigger this task when the plugin starts up if the task is not running
-    try {
-      scheduler.triggerTask('infrawallet-autoload-costs');
-    } catch (e) {
-      logger.error(e);
-    }
-  }
-
   // init CategoryMappingService
   CategoryMappingService.initInstance(cache, logger);
 
@@ -76,10 +56,35 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     response.json({ status: 'ok' });
   });
 
-  // for now this is an endpoint to trigger the fetchAndSaveCosts task manually
-  router.get('/fetch_and_save_costs', (_, response) => {
-    fetchAndSaveCosts(options);
-    response.json({ status: 'ok' });
+  // Endpoint to trigger the fetchAndSaveCosts task manually
+  router.get('/fetch_and_save_costs', async (_, response) => {
+    try {
+      // Trigger the scheduled task using the scheduler
+      await scheduler.triggerTask('infrawallet-autoload-costs');
+
+      response.json({
+        status: 'ok',
+        message: 'Cost data fetching task has been triggered. Check logs for execution details.',
+      });
+    } catch (error) {
+      logger.error(`Error triggering cost data fetch task: ${error.message}`, { error });
+
+      // Fall back to direct execution if task triggering fails
+      try {
+        logger.info('Falling back to direct execution of fetch and save costs');
+        await fetchAndSaveCosts(options);
+        response.json({
+          status: 'ok',
+          message: 'Cost data fetch completed successfully via direct execution.',
+        });
+      } catch (directError) {
+        logger.error(`Direct cost data fetch failed: ${directError.message}`, { error: directError });
+        response.status(500).json({
+          status: 'error',
+          message: 'Failed to fetch cost data. Check logs for more details.',
+        });
+      }
+    }
   });
 
   router.post('/:walletName/delete_cost_items', async (request, response) => {
@@ -125,7 +130,6 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     await categoryMappingService.refreshCategoryMappings();
 
     const conf = config.getConfig('backend.infraWallet.integrations');
-    // concat['custom'] : always enable custom cost
     conf
       .keys()
       .concat(['custom'])

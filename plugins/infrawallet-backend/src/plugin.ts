@@ -1,5 +1,7 @@
 import { coreServices, createBackendPlugin } from '@backstage/backend-plugin-api';
+import { Logger } from 'winston';
 import { createRouter } from './service/router';
+import { CostFetchTaskScheduler } from './service/scheduler';
 
 /**
  * infraWalletPlugin backend plugin
@@ -19,6 +21,7 @@ export const infraWalletPlugin = createBackendPlugin({
         database: coreServices.database,
       },
       async init({ httpRouter, logger, config, scheduler, cache, database }) {
+        // 1. Register the HTTP endpoints
         httpRouter.use(
           await createRouter({
             logger,
@@ -28,10 +31,23 @@ export const infraWalletPlugin = createBackendPlugin({
             database,
           }),
         );
+
         httpRouter.addAuthPolicy({
           path: '/health',
           allow: 'unauthenticated',
         });
+
+        // 2. Initialize the task scheduler
+        const taskLogger = logger.child({ component: 'CostFetchTaskScheduler' }) as Logger;
+        const taskScheduler = new CostFetchTaskScheduler({
+          scheduler,
+          logger: taskLogger,
+          config,
+          cache,
+          database,
+        });
+
+        await taskScheduler.initialize();
       },
     });
   },
