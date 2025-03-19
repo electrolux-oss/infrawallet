@@ -94,6 +94,22 @@ export interface Config {
             },
           ];
         }[];
+        elasticcloud?: {
+          name: string;
+          organizationId: string;
+          /**
+           * @visibility secret
+           */
+          apiKey: string;
+          tags?: string[];
+          filters?: [
+            {
+              type: string;
+              attribute: string;
+              pattern: string;
+            },
+          ];
+        }[];
         mock?: {
           name: string;
         }[];
