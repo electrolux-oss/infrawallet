@@ -3,8 +3,6 @@ import { Config } from '@backstage/config';
 import moment from 'moment';
 import {
   GetChartsRequestSchema,
-  GetChartsByInstanceRequestSchema,
-  GetItemizedCostsByInstanceRequestSchema,
   ChartsResponseSchema,
   InstancesResponseSchema,
   ItemsResponseSchema,
@@ -181,144 +179,6 @@ export class ElasticCloudClient extends InfraWalletClient {
     }
   }
 
-  /**
-   * Fetch instance-specific cost data from Elastic Cloud
-   * @param client The initialized API client
-   * @param organizationId The organization ID
-   * @param instanceId The instance ID to get costs for
-   * @param startDate Start date in ISO format
-   * @param endDate End date in ISO format
-   * @returns Itemized cost data for the specified instance
-   */
-  private async fetchInstanceItemizedCosts(
-    client: any,
-    organizationId: string,
-    instanceId: string,
-    startDate: string,
-    endDate: string,
-  ): Promise<any> {
-    // Convert dates to ISO format if they're not already
-    const isoStartDate = moment(startDate).toISOString();
-    const isoEndDate = moment(endDate).toISOString();
-    const { baseUrl, headers } = client;
-
-    try {
-      // Create params object without schema validation first
-      const params = {
-        from: isoStartDate,
-        to: isoEndDate,
-      };
-
-      // Log validation issues but continue with the request
-      try {
-        GetItemizedCostsByInstanceRequestSchema.parse(params);
-      } catch (error) {
-        if (error instanceof ZodError) {
-          this.logger.warn(
-            `Request parameters didn't match schema for GetItemizedCostsByInstanceRequest: ${JSON.stringify(error.errors)}`,
-          );
-        } else {
-          this.logger.warn(`Unexpected validation error: ${error.message}`);
-        }
-        this.logger.debug(`Using params directly: ${JSON.stringify(params)}`);
-      }
-
-      const queryString = Object.entries(params)
-        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
-        .join('&');
-
-      const url = `${baseUrl}/api/v2/billing/organizations/${organizationId}/costs/instances/${instanceId}/items?${queryString}`;
-
-      const response = await this.fetchWithRetry(url, headers);
-
-      // Log response validation result but continue with the data
-      const validationResult = ItemsResponseSchema.safeParse(response);
-      if (!validationResult.success) {
-        this.logger.warn(
-          `Response validation failed for itemized costs (instance ${instanceId}): ${validationResult.error.message}`,
-        );
-      } else {
-        this.logger.debug(`Response validation passed for itemized costs (instance ${instanceId})`);
-      }
-
-      return response;
-    } catch (error) {
-      this.logger.error(`Error fetching itemized costs for instance ${instanceId}: ${error.message}`);
-      throw error;
-    }
-  }
-
-  /**
-   * Fetch instance-specific chart data from Elastic Cloud
-   * @param client The initialized API client
-   * @param organizationId The organization ID
-   * @param instanceId The instance ID to get charts for
-   * @param startDate Start date in ISO format
-   * @param endDate End date in ISO format
-   * @param bucketingStrategy The time bucketing strategy (daily or monthly)
-   * @returns Chart data for the specified instance
-   */
-  private async fetchInstanceCharts(
-    client: any,
-    organizationId: string,
-    instanceId: string,
-    startDate: string,
-    endDate: string,
-    bucketingStrategy: 'daily' | 'monthly',
-  ): Promise<any> {
-    // Convert dates to ISO format if they're not already
-    const isoStartDate = moment(startDate).toISOString();
-    const isoEndDate = moment(endDate).toISOString();
-    const { baseUrl, headers } = client;
-
-    try {
-      // Create params object without schema validation first
-      const params = {
-        from: isoStartDate,
-        to: isoEndDate,
-        bucketing_strategy: bucketingStrategy,
-        instance_type: 'all',
-      };
-
-      // Log validation issues but continue with the request
-      try {
-        GetChartsByInstanceRequestSchema.parse(params);
-      } catch (error) {
-        if (error instanceof ZodError) {
-          this.logger.warn(
-            `Request parameters didn't match schema for GetChartsByInstanceRequest: ${JSON.stringify(error.errors)}`,
-          );
-        } else {
-          this.logger.warn(`Unexpected validation error: ${error.message}`);
-        }
-        this.logger.debug(`Using params directly: ${JSON.stringify(params)}`);
-      }
-
-      const queryString = Object.entries(params)
-        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
-        .join('&');
-
-      const url = `${baseUrl}/api/v2/billing/organizations/${organizationId}/instances/${instanceId}/charts?${queryString}`;
-
-      const response = await this.fetchWithRetry(url, headers);
-
-      // Log response validation result but continue with the data
-      const validationResult = ChartsResponseSchema.safeParse(response);
-      if (!validationResult.success) {
-        this.logger.warn(
-          `Response validation failed for charts data (instance ${instanceId}): ${validationResult.error.message}`,
-        );
-      } else {
-        this.logger.debug(`Response validation passed for charts data (instance ${instanceId})`);
-      }
-
-      return response;
-    } catch (error) {
-      this.logger.error(`Error fetching charts for instance ${instanceId}: ${error.message}`);
-      throw error;
-    }
-  }
-
   protected async transformCostsData(
     integrationConfig: Config,
     query: CostQuery,
@@ -361,8 +221,8 @@ export class ElasticCloudClient extends InfraWalletClient {
           reports.set(keyName, {
             id: keyName,
             account: `${this.provider}/${accountName}`,
-            service: this.convertServiceName(`Deployment: ${instance.name}`),
-            category: 'Database',
+            service: this.convertServiceName(instance.name),
+            category: 'Database', // TODO: find a better way in the EC API to determine the category
             provider: this.provider,
             providerType: PROVIDER_TYPE.INTEGRATION,
             reports: {},
