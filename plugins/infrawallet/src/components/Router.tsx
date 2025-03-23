@@ -7,6 +7,7 @@ export const Router = (props: ReportsComponentProps) => {
     <Routes>
       <Route path="/" element={<ReportsComponent {...props} />} />
       <Route path="/:name" element={<ReportsComponent {...props} />} />
+      <Route path="/:name/:selectedView" element={<ReportsComponent {...props} />} />
     </Routes>
   );
 };
