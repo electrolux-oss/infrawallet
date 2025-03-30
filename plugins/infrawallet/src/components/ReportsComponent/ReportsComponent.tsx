@@ -65,17 +65,25 @@ const checkIfFiltersActivated = (filters: Filters): boolean => {
   return activated;
 };
 
-const allTabNames = ['Overview', 'Budgets', 'Custom Costs', 'Business Metrics'];
-
 export const ReportsComponent = (props: ReportsComponentProps) => {
   const { title, subTitle } = props;
   const configApi = useApi(configApiRef);
   const params = useParams();
 
   let defaultGroupBy = configApi.getOptionalString('infraWallet.settings.defaultGroupBy') ?? 'none';
-  const hideWalletTabs = configApi.getOptionalStringArray('infraWallet.settings.hideWalletTabs') ?? [];
-  const hideWalletTabsLowerCase = hideWalletTabs.map(tab => tab.toLowerCase());
-  const tabsToShow = allTabNames.filter(tab => !hideWalletTabsLowerCase.includes(tab.toLowerCase()));
+  const budgetsEnabled = configApi.getOptionalBoolean('infraWallet.settings.budgets.enabled') ?? true;
+  const customCostsEnabled = configApi.getOptionalBoolean('infraWallet.settings.customCosts.enabled') ?? true;
+  const businessMetricsEnabled = configApi.getOptionalBoolean('infraWallet.settings.businessMetrics.enabled') ?? true;
+  const tabsToShow = ['Overview'];
+  if (budgetsEnabled) {
+    tabsToShow.push('Budgets');
+  }
+  if (customCostsEnabled) {
+    tabsToShow.push('Custom Costs');
+  }
+  if (businessMetricsEnabled) {
+    tabsToShow.push('Business Metrics');
+  }
   // "name" is renamed to "account", make it backward compatibility
   if (defaultGroupBy === 'name') {
     defaultGroupBy = 'account';

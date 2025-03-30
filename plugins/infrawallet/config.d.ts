@@ -7,7 +7,18 @@ export interface Config {
       defaultGroupBy?: string; // if not set, `none` will be used
       defaultShowLastXMonths?: number; // if not set, 3 will be used
       readOnly?: boolean; // false by default
-      hideWalletTabs?: string[]; // tabs that stay hidden to users, valid values (case insensitive) are: Budgets, Custom Costs, Business Metrics
+
+      budgets?: {
+        enabled?: boolean; // whether to show budgets or not, default is true
+      };
+
+      businessMetrics?: {
+        enabled?: boolean; // whether to show business metrics or not, default is true
+      };
+
+      customCosts?: {
+        enabled?: boolean; // whether to show custom costs or not, default is true
+      };
     };
   };
 }
