@@ -44,7 +44,7 @@ export class ElasticCloudClient extends InfraWalletClient {
         const response = await fetch(url, { method: 'GET', headers });
 
         if (response.status === 429 && attempt < maxRetries) {
-          const retryAfter = parseInt(response.headers.get('retry-after') || '5', 10);
+          const retryAfter = parseInt(response.headers.get('retry-after') ?? '5', 10);
           this.logger.warn(`Rate limited by Elastic Cloud API, retrying after ${retryAfter} seconds...`);
           await new Promise(resolve => setTimeout(resolve, retryAfter * 1000));
           continue;
@@ -125,7 +125,7 @@ export class ElasticCloudClient extends InfraWalletClient {
           } else {
             this.logger.debug(`Response validation passed for instance costs`);
           }
-          this.logger.debug(`Received instance costs data with ${data?.instances?.length || 0} instances`);
+          this.logger.debug(`Received instance costs data with ${data?.instances?.length ?? 0} instances`);
           return data;
         }),
 
@@ -139,7 +139,7 @@ export class ElasticCloudClient extends InfraWalletClient {
           } else {
             this.logger.debug(`Response validation passed for item costs`);
           }
-          this.logger.debug(`Received item costs data with ${data?.products?.length || 0} products`);
+          this.logger.debug(`Received item costs data with ${data?.products?.length ?? 0} products`);
           return data;
         }),
 
@@ -153,7 +153,7 @@ export class ElasticCloudClient extends InfraWalletClient {
           } else {
             this.logger.debug(`Response validation passed for charts data`);
           }
-          this.logger.debug(`Received charts data with ${data?.data?.length || 0} data points`);
+          this.logger.debug(`Received charts data with ${data?.data?.length ?? 0} data points`);
           return data;
         }),
       ]);
@@ -201,7 +201,7 @@ export class ElasticCloudClient extends InfraWalletClient {
   }
 
   private extractConfigTags(integrationConfig: Config): Record<string, string> {
-    const tags = integrationConfig.getOptionalStringArray('tags') || [];
+    const tags = integrationConfig.getOptionalStringArray('tags') ?? [];
     const tagKeyValues: Record<string, string> = {};
 
     tags.forEach(tag => {
@@ -285,7 +285,7 @@ export class ElasticCloudClient extends InfraWalletClient {
 
       const instanceKey = `instance-${value.id}`;
       if (reports.has(instanceKey)) {
-        reports.get(instanceKey)!.reports[period] = value.value || 0;
+        reports.get(instanceKey)!.reports[period] = value.value ?? 0;
       }
 
       this.matchValueWithItemReports(value, period, reports);
@@ -301,7 +301,7 @@ export class ElasticCloudClient extends InfraWalletClient {
         ((report.service && value.name.includes(report.service)) ||
           (report.productType && value.name.includes(report.productType)))
       ) {
-        report.reports[period] = value.value || 0;
+        report.reports[period] = value.value ?? 0;
       }
     }
   }
@@ -332,7 +332,7 @@ export class ElasticCloudClient extends InfraWalletClient {
   }
 
   private distributeItemCost(report: Report, lineItem: any, query: CostQuery, periodFormat: string): number {
-    const totalCost = (lineItem.total_ecu || 0) / 100; // Convert ECU to dollars
+    const totalCost = (lineItem.total_ecu ?? 0) / 100; // Convert ECU to dollars
     if (totalCost <= 0) return 0;
 
     const startMonth = moment(parseInt(query.startTime, 10));
@@ -373,7 +373,9 @@ export class ElasticCloudClient extends InfraWalletClient {
       }
       return moment(timestamp).format(periodFormat);
     } catch (error) {
-      this.logger.warn(`Invalid timestamp format: ${timestamp}`);
+      this.logger.warn(
+        `Error formatting timestamp ${timestamp}: ${error instanceof Error ? error.message : String(error)}`,
+      );
       return null;
     }
   }
