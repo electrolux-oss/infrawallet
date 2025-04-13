@@ -21,7 +21,6 @@ export class ElasticCloudClient extends InfraWalletClient {
   }
 
   protected convertServiceName(serviceName: string): string {
-    // Remove 'Elastic' prefix if present
     return serviceName.startsWith('Elastic')
       ? `${this.provider}/${serviceName.slice('Elastic'.length).trim()}`
       : `${this.provider}/${serviceName}`;
@@ -84,7 +83,6 @@ export class ElasticCloudClient extends InfraWalletClient {
     );
 
     try {
-      // Create param objects without schema validation first
       const params = {
         from: startDate,
         to: endDate,
@@ -110,21 +108,17 @@ export class ElasticCloudClient extends InfraWalletClient {
       const instanceParams = { ...params, include_names: true };
       const itemsParams = { from: params.from, to: params.to };
 
-      // Build URL query parameters
       const createQueryString = (queryParams: Record<string, any>) => {
         return Object.entries(queryParams)
           .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
           .join('&');
       };
 
-      // Fetch all data in parallel for better performance
       const [instanceCostsResponse, itemCostsResponse, chartsResponse] = await Promise.all([
-        // 1. Fetch instance costs
         this.fetchWithRetry(
           `${baseUrl}/api/v2/billing/organizations/${organizationId}/costs/instances?${createQueryString(instanceParams)}`,
           headers,
         ).then(data => {
-          // Log response validation result but continue with the data
           const validationResult = InstancesResponseSchema.safeParse(data);
           if (!validationResult.success) {
             this.logger.warn(`Response validation failed for instance costs: ${validationResult.error.message}`);
@@ -135,12 +129,10 @@ export class ElasticCloudClient extends InfraWalletClient {
           return data;
         }),
 
-        // 2. Fetch item costs breakdown
         this.fetchWithRetry(
           `${baseUrl}/api/v2/billing/organizations/${organizationId}/costs/items?${createQueryString(itemsParams)}`,
           headers,
         ).then(data => {
-          // Log response validation result but continue with the data
           const validationResult = ItemsResponseSchema.safeParse(data);
           if (!validationResult.success) {
             this.logger.warn(`Response validation failed for item costs: ${validationResult.error.message}`);
@@ -151,12 +143,10 @@ export class ElasticCloudClient extends InfraWalletClient {
           return data;
         }),
 
-        // 3. Fetch time-series data
         this.fetchWithRetry(
           `${baseUrl}/api/v2/billing/organizations/${organizationId}/charts?${createQueryString(chartParams)}`,
           headers,
         ).then(data => {
-          // Log response validation result but continue with the data
           const validationResult = ChartsResponseSchema.safeParse(data);
           if (!validationResult.success) {
             this.logger.warn(`Response validation failed for charts data: ${validationResult.error.message}`);
@@ -185,112 +175,192 @@ export class ElasticCloudClient extends InfraWalletClient {
     costResponse: any,
   ): Promise<Report[]> {
     const accountName = integrationConfig.getString('name');
-
-    // Process tags from configuration
-    const tagKeyValues = (integrationConfig.getOptionalStringArray('tags') || []).reduce<Record<string, string>>(
-      (acc, tag) => {
-        const [key, value] = tag.split(':').map(part => part.trim());
-        acc[key] = value;
-        return acc;
-      },
-      {},
-    );
-
-    // Initialize report collections
-    const reports = new Map();
-    const periodFormat = query.granularity.toLowerCase() === 'daily' ? 'YYYY-MM-DD' : 'YYYY-MM';
+    const tagKeyValues = this.extractConfigTags(integrationConfig);
 
     try {
-      // Process instance-level costs
-      if (costResponse?.instanceCosts?.instances?.length) {
-        const validInstances = costResponse.instanceCosts.instances.filter(
-          (instance: { id: any; name: any }) => instance?.id && instance?.name,
-        );
+      const reports = new Map();
+      const periodFormat = this.getPeriodFormat(query);
 
-        this.logger.debug(
-          `Processing ${validInstances.length} valid instances out of ${costResponse.instanceCosts.instances.length}`,
-        );
-
-        for (const instance of validInstances) {
-          // Skip filtered instances
-          if (!this.evaluateIntegrationFilters(instance.name, integrationConfig)) {
-            continue;
-          }
-
-          const keyName = `instance-${instance.id}`;
-          reports.set(keyName, {
-            id: keyName,
-            account: `${this.provider}/${accountName}`,
-            service: this.convertServiceName(instance.name),
-            category: 'Database', // TODO: find a better way in the EC API to determine the category
-            provider: this.provider,
-            providerType: PROVIDER_TYPE.INTEGRATION,
-            reports: {},
-            instanceId: instance.id,
-            instanceName: instance.name,
-            ...tagKeyValues,
-          });
-        }
-      }
-
-      // Process time-series data from charts
-      if (costResponse?.charts?.data?.length) {
-        this.logger.info(`Processing ${costResponse.charts.data.length} time points from chart data`);
-
-        for (const timePoint of costResponse.charts.data) {
-          if (!timePoint?.timestamp) continue;
-
-          // Convert timestamp to period format
-          const period = this.formatTimestamp(timePoint.timestamp, periodFormat);
-          if (!period) continue;
-
-          // Process each value in the time point
-          if (Array.isArray(timePoint.values)) {
-            for (const value of timePoint.values) {
-              if (!value?.id) continue;
-
-              // Try to match with instance reports
-              const instanceKey = `instance-${value.id}`;
-              if (reports.has(instanceKey)) {
-                reports.get(instanceKey).reports[period] = value.value || 0;
-              }
-
-              // Try to match with item reports
-              for (const [key, report] of reports.entries()) {
-                if (
-                  key.startsWith('item-') &&
-                  value.name &&
-                  ((report.service && value.name.includes(report.service)) ||
-                    (report.productType && value.name.includes(report.productType)))
-                ) {
-                  report.reports[period] = value.value || 0;
-                }
-              }
-            }
-          }
-        }
-      }
-
-      // Distribute costs for reports that don't have time-series data
+      this.processInstanceCosts(costResponse, reports, accountName, integrationConfig, tagKeyValues);
+      this.processChartData(costResponse, reports, periodFormat);
       this.distributeRemainingCosts(costResponse, reports, query);
+
+      const filteredReports = this.prepareReportsForOutput(reports, periodFormat);
+
+      this.logger.info(
+        `Returning ${filteredReports.length} reports with ${
+          Object.keys(filteredReports.reduce((acc, r) => ({ ...acc, ...r.reports }), {})).length
+        } periods`,
+      );
+
+      return filteredReports;
     } catch (error) {
       this.logger.error(`Error transforming Elastic Cloud cost data: ${error.message}`);
       throw error;
     }
+  }
 
-    // Convert Map to array and filter out reports with no data
-    const filteredReports = [...reports.values()].filter(report => Object.keys(report.reports).length > 0);
+  private extractConfigTags(integrationConfig: Config): Record<string, string> {
+    const tags = integrationConfig.getOptionalStringArray('tags') || [];
+    const tagKeyValues: Record<string, string> = {};
 
-    // Ensure consistent period formatting for all reports
+    tags.forEach(tag => {
+      const [k, v] = tag.split(':').map(part => part.trim());
+      tagKeyValues[k] = v;
+    });
+
+    return tagKeyValues;
+  }
+
+  // Determine period format based on granularity
+  private getPeriodFormat(query: CostQuery): string {
+    return query.granularity.toLowerCase() === 'daily' ? 'YYYY-MM-DD' : 'YYYY-MM';
+  }
+
+  private processInstanceCosts(
+    costResponse: any,
+    reports: Map<string, Report>,
+    accountName: string,
+    integrationConfig: Config,
+    tagKeyValues: Record<string, string>,
+  ): void {
+    if (!costResponse?.instanceCosts?.instances?.length) {
+      return;
+    }
+
+    const validInstances = costResponse.instanceCosts.instances.filter(
+      (instance: { id: any; name: any }) => instance?.id && instance?.name,
+    );
+
+    this.logger.debug(
+      `Processing ${validInstances.length} valid instances out of ${costResponse.instanceCosts.instances.length}`,
+    );
+
+    for (const instance of validInstances) {
+      // Skip filtered instances
+      if (!this.evaluateIntegrationFilters(instance.name, integrationConfig)) {
+        continue;
+      }
+
+      const keyName = `instance-${instance.id}`;
+      reports.set(keyName, {
+        id: keyName,
+        account: `${this.provider}/${accountName}`,
+        service: this.convertServiceName(instance.name),
+        category: 'Database', // TODO: find a better way in the EC API to determine the category
+        provider: this.provider,
+        providerType: PROVIDER_TYPE.INTEGRATION,
+        reports: {},
+        instanceId: instance.id,
+        instanceName: instance.name,
+        ...tagKeyValues,
+      });
+    }
+  }
+
+  private processChartData(costResponse: any, reports: Map<string, Report>, periodFormat: string): void {
+    if (!costResponse?.charts?.data?.length) {
+      return;
+    }
+
+    this.logger.info(`Processing ${costResponse.charts.data.length} time points from chart data`);
+
+    for (const timePoint of costResponse.charts.data) {
+      if (!timePoint?.timestamp) continue;
+
+      const period = this.formatTimestamp(timePoint.timestamp, periodFormat);
+      if (!period) continue;
+
+      this.processTimePointValues(timePoint, period, reports);
+    }
+  }
+
+  private processTimePointValues(timePoint: any, period: string, reports: Map<string, Report>): void {
+    if (!Array.isArray(timePoint.values)) {
+      return;
+    }
+
+    for (const value of timePoint.values) {
+      if (!value?.id) continue;
+
+      const instanceKey = `instance-${value.id}`;
+      if (reports.has(instanceKey)) {
+        reports.get(instanceKey)!.reports[period] = value.value || 0;
+      }
+
+      this.matchValueWithItemReports(value, period, reports);
+    }
+  }
+
+  private matchValueWithItemReports(value: any, period: string, reports: Map<string, Report>): void {
+    if (!value.name) return;
+
+    for (const [key, report] of reports.entries()) {
+      if (
+        key.startsWith('item-') &&
+        ((report.service && value.name.includes(report.service)) ||
+          (report.productType && value.name.includes(report.productType)))
+      ) {
+        report.reports[period] = value.value || 0;
+      }
+    }
+  }
+
+  private distributeRemainingCosts(costResponse: any, reports: Map<string, Report>, query: CostQuery): void {
+    const itemsData = costResponse?.itemCosts?.products;
+    if (!Array.isArray(itemsData)) return;
+
+    let distributedItems = 0;
+    const periodFormat = this.getPeriodFormat(query);
+
+    for (const product of itemsData) {
+      if (!product?.type || !Array.isArray(product?.product_line_items)) continue;
+
+      for (const lineItem of product.product_line_items) {
+        if (!lineItem?.name) continue;
+
+        const keyName = `item-${product.type}-${lineItem.name}`;
+        const report = reports.get(keyName);
+
+        if (report && Object.keys(report.reports).length === 0) {
+          distributedItems += this.distributeItemCost(report, lineItem, query, periodFormat);
+        }
+      }
+    }
+
+    this.logger.debug(`Distributed costs across ${distributedItems} periods for items without time series data`);
+  }
+
+  private distributeItemCost(report: Report, lineItem: any, query: CostQuery, periodFormat: string): number {
+    const totalCost = (lineItem.total_ecu || 0) / 100; // Convert ECU to dollars
+    if (totalCost <= 0) return 0;
+
+    const startMonth = moment(parseInt(query.startTime, 10));
+    const endMonth = moment(parseInt(query.endTime, 10));
+    const monthCount = Math.max(1, endMonth.diff(startMonth, 'months'));
+    let periodsCreated = 0;
+
+    for (
+      let currentMonth = startMonth.clone().startOf('month');
+      currentMonth.isSameOrBefore(endMonth, 'month');
+      currentMonth.add(1, 'month')
+    ) {
+      const period = currentMonth.format(periodFormat);
+      report.reports[period] = totalCost / monthCount;
+      periodsCreated++;
+    }
+
+    return periodsCreated;
+  }
+
+  private prepareReportsForOutput(reports: Map<string, Report>, periodFormat: string): Report[] {
+    const allReports = [...reports.values()];
+
+    const filteredReports = allReports.filter(report => Object.keys(report.reports).length > 0);
+
     for (const report of filteredReports) {
       this.standardizePeriods(report, periodFormat);
     }
-
-    this.logger.info(
-      `Returning ${filteredReports.length} reports with ${
-        Object.keys(filteredReports.reduce((acc, r) => ({ ...acc, ...r.reports }), {})).length
-      } periods`,
-    );
 
     return filteredReports;
   }
@@ -298,7 +368,6 @@ export class ElasticCloudClient extends InfraWalletClient {
   private formatTimestamp(timestamp: string | number, periodFormat: string): string | null {
     try {
       if (typeof timestamp === 'number') {
-        // Convert seconds to milliseconds if needed
         const timestampMs = timestamp < 10000000000 ? timestamp * 1000 : timestamp;
         return moment(timestampMs).format(periodFormat);
       }
@@ -326,50 +395,6 @@ export class ElasticCloudClient extends InfraWalletClient {
     report.reports = formattedReports;
   }
 
-  private distributeRemainingCosts(costResponse: any, reports: Map<string, Report>, query: CostQuery): void {
-    const itemsData = costResponse?.itemCosts?.products;
-    if (!Array.isArray(itemsData)) return;
-
-    let distributedItems = 0;
-    const periodFormat = query.granularity.toLowerCase() === 'daily' ? 'YYYY-MM-DD' : 'YYYY-MM';
-
-    for (const product of itemsData) {
-      if (!product?.type || !Array.isArray(product?.product_line_items)) continue;
-
-      for (const lineItem of product.product_line_items) {
-        if (!lineItem?.name) continue;
-
-        const keyName = `item-${product.type}-${lineItem.name}`;
-        const report = reports.get(keyName);
-
-        if (report && Object.keys(report.reports).length === 0) {
-          const totalCost = (lineItem.total_ecu || 0) / 100; // Convert ECU to dollars
-
-          if (totalCost > 0) {
-            // Create entries for months in the query range
-            const startMonth = moment(parseInt(query.startTime, 10));
-            const endMonth = moment(parseInt(query.endTime, 10));
-            const monthCount = Math.max(1, endMonth.diff(startMonth, 'months'));
-
-            // Distribute the cost evenly
-            for (
-              let currentMonth = startMonth.clone().startOf('month');
-              currentMonth.isSameOrBefore(endMonth, 'month');
-              currentMonth.add(1, 'month')
-            ) {
-              const period = currentMonth.format(periodFormat);
-              report.reports[period] = totalCost / monthCount;
-              distributedItems++;
-            }
-          }
-        }
-      }
-    }
-
-    this.logger.debug(`Distributed costs across ${distributedItems} periods for items without time series data`);
-  }
-
-  // Override getCostReportsFromDatabase to ensure proper handling of Elastic Cloud data
   async getCostReportsFromDatabase(query: CostQuery): Promise<Report[]> {
     const reports = await super.getCostReportsFromDatabase(query);
     this.logger.debug(`Retrieved ${reports.length} ElasticCloud reports from database`);
