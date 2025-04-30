@@ -65,14 +65,25 @@ const checkIfFiltersActivated = (filters: Filters): boolean => {
   return activated;
 };
 
-const tabs = [{ label: 'Overview' }, { label: 'Budgets' }, { label: 'Custom Costs' }, { label: 'Business Metrics' }];
-
 export const ReportsComponent = (props: ReportsComponentProps) => {
   const { title, subTitle } = props;
   const configApi = useApi(configApiRef);
   const params = useParams();
 
   let defaultGroupBy = configApi.getOptionalString('infraWallet.settings.defaultGroupBy') ?? 'none';
+  const budgetsEnabled = configApi.getOptionalBoolean('infraWallet.settings.budgets.enabled') ?? true;
+  const customCostsEnabled = configApi.getOptionalBoolean('infraWallet.settings.customCosts.enabled') ?? true;
+  const businessMetricsEnabled = configApi.getOptionalBoolean('infraWallet.settings.businessMetrics.enabled') ?? true;
+  const tabsToShow = ['Overview'];
+  if (budgetsEnabled) {
+    tabsToShow.push('Budgets');
+  }
+  if (customCostsEnabled) {
+    tabsToShow.push('Custom Costs');
+  }
+  if (businessMetricsEnabled) {
+    tabsToShow.push('Business Metrics');
+  }
   // "name" is renamed to "account", make it backward compatibility
   if (defaultGroupBy === 'name') {
     defaultGroupBy = 'account';
@@ -153,14 +164,38 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
     fetchMetricsCallback();
   }, [fetchCostReportsCallback, fetchMetricsCallback]);
 
+  // provide a way for users to access these tabs, if they are configfured to be hidden
+  useEffect(() => {
+    if (params.selectedView) {
+      switch (params.selectedView) {
+        case 'budgets': {
+          setSelectedView('Budgets');
+          break;
+        }
+        case 'custom_costs': {
+          setSelectedView('Custom Costs');
+          break;
+        }
+        case 'business_metrics': {
+          setSelectedView('Business Metrics');
+          break;
+        }
+        default: {
+          setSelectedView('Overview');
+          break;
+        }
+      }
+    }
+  }, [params]);
+
   return (
     <Page themeId="tool">
       <Header title={title ?? 'InfraWallet'} subtitle={subTitle ?? ''} />
       <HeaderTabs
-        tabs={tabs.map(tab => {
-          return { id: tab.label, label: tab.label };
+        tabs={tabsToShow.map(tab => {
+          return { id: tab, label: tab };
         })}
-        onChange={index => setSelectedView(tabs[index].label)}
+        onChange={index => setSelectedView(tabsToShow[index])}
       />
       <Content>
         <Grid container spacing={3}>
