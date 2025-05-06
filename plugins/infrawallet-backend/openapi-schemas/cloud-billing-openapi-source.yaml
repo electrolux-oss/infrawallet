@@ -1,0 +1,594 @@
+openapi: 3.0.1
+info:
+  description: The Platform Billing Service API to manage the Elastic Cloud Billing platform.
+  title: Platform Billing Service API
+  version: 1.0.0
+servers:
+  - description: Production
+    url: https://billing.elastic-cloud.com
+tags:
+  - description: The Azure Marketplace API is used to manage the Azure marketplace details.
+    name: Azure Marketplace
+  - description: The Azure Marketplace API is used to manage the Azure marketplace details.
+    name: AWS Marketplace
+  - description: The GCP Marketplace API is used to manage the Azure marketplace details.
+    name: GCP Marketplace
+  - description: The Heroku API is used to manage the Azure marketplace details.
+    name: Heroku
+  - description: The billing accounts API is used to manage the billing accounts details.
+    name: Billing Accounts
+  - description: The billing costs analysis API is used to manage the billing costs analysis details.
+    name: Billing Costs Analysis
+  - description: The billing organization API is used to manage the billing organization details.
+    name: Billing Organization
+  - description: The billing charts API is used to manage the billing charts details.
+    name: Billing Charts
+  - description: The metering API is used to manage the metering details.
+    name: Metering
+  - description: The prices API is used to manage the prices details.
+    name: Prices
+  - description: The line items API is used to manage the line items details.
+    name: Line Items
+  - description: The util functions API is used to manage the util functions details.
+    name: Util Functions
+paths:
+  /api/v2/billing/organizations/{organization_id}/charts:
+    get:
+      description: Retrieves the usage charts for the organization.
+      operationId: getChartsV2
+      parameters:
+        - in: path
+          name: organization_id
+          required: true
+          schema:
+            type: string
+        - description: A datetime for the beginning of the desired range.
+          example: '2021-04-21T00:00:00+00:00'
+          in: query
+          name: from
+          required: true
+          schema:
+            type: string
+        - description: A datetime for the end of the desired range.
+          example: '2021-04-21T00:00:00+00:00'
+          in: query
+          name: to
+          required: true
+          schema:
+            type: string
+        - description: The desired bucketing strategy for the charts.
+          in: query
+          name: bucketing_strategy
+          required: false
+          schema:
+            enum:
+              - daily
+              - monthly
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: The list of chart item.
+                    items:
+                      properties:
+                        timestamp:
+                          description: Axis X position.
+                          format: int64
+                          type: integer
+                        values:
+                          description: The collection of values to plot the chart item.
+                          items:
+                            properties:
+                              id:
+                                description: The id of chart item value.
+                                type: string
+                              name:
+                                description: The name of the chart item value.
+                                type: string
+                              type:
+                                description: Item type.
+                                type: string
+                              value:
+                                description: The actual value of the chart item value.
+                                format: double
+                                type: number
+                            type: object
+                          type: array
+                      type: object
+                    type: array
+                type: object
+          description: Successfully return the usage charts of an organization.
+        '401':
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        '404':
+          description: Not found.
+        '424':
+          description: Failed dependency.
+        '500':
+          description: Internal Server Error.
+      security:
+        - apiKeyAuth: []
+      tags:
+        - Billing Charts
+  /api/v2/billing/organizations/{organization_id}/costs/instances:
+    get:
+      description: Retrieves costs associated with all instances for the organization.
+      operationId: getCostsByInstancesV2
+      parameters:
+        - description: Identifier for the organization
+          in: path
+          name: organization_id
+          required: true
+          schema:
+            type: string
+        - description: A datetime for the beginning of the desired range.
+          example: '2021-04-21T00:00:00+00:00'
+          in: query
+          name: from
+          required: true
+          schema:
+            type: string
+        - description: A datetime for the end of the desired range.
+          example: '2021-04-21T00:00:00+00:00'
+          in: query
+          name: to
+          required: true
+          schema:
+            type: string
+        - description: Specifies whether to include project names in the result by querying the control plane
+          in: query
+          name: include_names
+          required: false
+          schema:
+            type: boolean
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Instances'
+          description: Success. The costs associated to a set of instances.
+        '400':
+          description: The specified data range is invalid.
+        '403':
+          description: Current user does not have access to the requested organization.
+        '404':
+          description: Organization not found.
+        '500':
+          description: Internal server error.
+      security:
+        - apiKeyAuth: []
+      tags:
+        - Billing Costs Analysis
+  /api/v2/billing/organizations/{organization_id}/costs/instances/{instance_id}/items:
+    get:
+      description: Retrieves the costs associated to a set of items billed for a single instance.
+      operationId: getItemizedCostsByInstanceV2
+      parameters:
+        - description: Identifier for the organization
+          in: path
+          name: organization_id
+          required: true
+          schema:
+            type: string
+        - description: Identifier for the instance
+          in: path
+          name: instance_id
+          required: true
+          schema:
+            type: string
+        - description: A datetime for the beginning of the desired range.
+          example: '2021-04-21T00:00:00+00:00'
+          in: query
+          name: from
+          required: true
+          schema:
+            type: string
+        - description: A datetime for the end of the desired range.
+          example: '2021-04-21T00:00:00+00:00'
+          in: query
+          name: to
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Items'
+          description: Success. The costs associated to a set of items billed for a single instance.
+        '400':
+          description: The specified data range is invalid.
+        '403':
+          description: Current user does not have access to the requested organization.
+        '404':
+          description: Organization not found.
+        '500':
+          description: Internal server error.
+      security:
+        - apiKeyAuth: []
+      tags:
+        - Billing Costs Analysis
+  /api/v2/billing/organizations/{organization_id}/costs/items:
+    get:
+      description: Retrieves costs associated with all items for the organization.
+      operationId: getCostsByItemsV2
+      parameters:
+        - description: Identifier for the organization
+          in: path
+          name: organization_id
+          required: true
+          schema:
+            type: string
+        - description: A datetime for the beginning of the desired range.
+          example: '2021-04-21T00:00:00+00:00'
+          in: query
+          name: from
+          required: true
+          schema:
+            type: string
+        - description: A datetime for the end of the desired range.
+          example: '2021-04-21T00:00:00+00:00'
+          in: query
+          name: to
+          required: true
+          schema:
+            type: string
+        - description: How to group the serverless items.
+          in: query
+          name: serverless_group_by
+          required: false
+          schema:
+            enum:
+              - product
+              - product_family
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Items'
+          description: Success. The costs associated to a set of items.
+        '400':
+          description: The specified data range is invalid.
+        '403':
+          description: Current user does not have access to the requested organization.
+        '404':
+          description: Organization not found.
+        '500':
+          description: Internal server error.
+      security:
+        - apiKeyAuth: []
+      tags:
+        - Billing Costs Analysis
+  /api/v2/billing/organizations/{organization_id}/instances/{instance_id}/charts:
+    get:
+      description: Retrieves the usage charts for the organization's instance.
+      operationId: getChartsByInstanceV2
+      parameters:
+        - in: path
+          name: organization_id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: instance_id
+          required: true
+          schema:
+            type: string
+        - description: A datetime for the beginning of the desired range.
+          example: '2021-04-21T00:00:00+00:00'
+          in: query
+          name: from
+          required: true
+          schema:
+            type: string
+        - description: A datetime for the end of the desired range.
+          example: '2021-04-21T00:00:00+00:00'
+          in: query
+          name: to
+          required: true
+          schema:
+            type: string
+        - description: The desired bucketing strategy for the charts.
+          in: query
+          name: bucketing_strategy
+          required: false
+          schema:
+            enum:
+              - daily
+              - monthly
+            type: string
+        - description: The type of the instances to be returned.
+          in: query
+          name: instance_type
+          required: false
+          schema:
+            enum:
+              - all
+              - deployments
+              - projects
+            type: string
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    description: The list of chart item.
+                    items:
+                      properties:
+                        timestamp:
+                          description: Axis X position.
+                          format: int64
+                          type: integer
+                        values:
+                          description: The collection of values to plot the chart item.
+                          items:
+                            properties:
+                              id:
+                                description: The id of chart item value.
+                                type: string
+                              name:
+                                description: The name of the chart item value.
+                                type: string
+                              type:
+                                description: Item type.
+                                type: string
+                              value:
+                                description: The actual value of the chart item value.
+                                format: double
+                                type: number
+                            type: object
+                          type: array
+                      type: object
+                    type: array
+                type: object
+          description: Successfully return the usage charts of an organization's instance.
+        '401':
+          content:
+            text/plain:
+              schema:
+                $ref: '#/components/schemas/UnauthorizedError'
+          description: Unauthorized
+        '404':
+          description: Not found.
+        '424':
+          description: Failed dependency.
+        '500':
+          description: Internal Server Error.
+      security:
+        - apiKeyAuth: []
+      tags:
+        - Billing Charts
+components:
+  schemas:
+    DisplayQuantity:
+      description: Display quantity
+      properties:
+        formatted_value:
+          type: string
+        type:
+          enum:
+            - default
+            - normalized
+          type: string
+          x-enum-name: DisplayQuantityType
+          x-module-name: cloud.costs.v2
+        value:
+          oneOf:
+            - type: integer
+            - type: number
+      required:
+        - value
+        - formatted_value
+        - type
+      type: object
+      x-module-name: cloud.costs.v2
+    Instance:
+      description: "Instance(id: 'str', name: 'str', total_ecu: 'int', type: 'str', product_line_items: 'list[ProductLineItem]')"
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        product_line_items:
+          items:
+            $ref: '#/components/schemas/ProductLineItem'
+          type: array
+        total_ecu:
+          type: integer
+        type:
+          type: string
+      required:
+        - id
+        - name
+        - total_ecu
+        - type
+        - product_line_items
+      type: object
+      x-module-name: cloud.costs.v2
+    Instances:
+      description: "Instances(total_ecu: 'int', instances: 'list[Instance]')"
+      properties:
+        instances:
+          items:
+            $ref: '#/components/schemas/Instance'
+          type: array
+        total_ecu:
+          type: integer
+      required:
+        - total_ecu
+        - instances
+      type: object
+      x-module-name: cloud.costs.v2
+    Items:
+      description: "Items(total_ecu: 'int', products: 'list[Product]')"
+      properties:
+        products:
+          items:
+            $ref: '#/components/schemas/Product'
+          type: array
+        total_ecu:
+          type: integer
+      required:
+        - total_ecu
+        - products
+      type: object
+      x-module-name: cloud.costs.v2
+    Product:
+      description: "Product(total_ecu: 'int', type: 'str', product_line_items: 'list[ProductLineItem]')"
+      properties:
+        product_line_items:
+          items:
+            $ref: '#/components/schemas/ProductLineItem'
+          type: array
+        total_ecu:
+          type: integer
+        type:
+          type: string
+      required:
+        - total_ecu
+        - type
+        - product_line_items
+      type: object
+      x-module-name: cloud.costs.v2
+    ProductLineItem:
+      description: "ProductLineItem(name: 'str', total_ecu: 'int', type: 'str', sku: 'str', unit: 'str', quantity: 'Quantity', display_quantity: 'DisplayQuantity', rate: 'Rate', kind: 'str | None', quantities: 'list[ProductLineItemQuantity]')"
+      properties:
+        display_quantity:
+          $ref: '#/components/schemas/DisplayQuantity'
+        kind:
+          type: string
+        name:
+          type: string
+        quantities:
+          items:
+            $ref: '#/components/schemas/ProductLineItemQuantity'
+          type: array
+        quantity:
+          $ref: '#/components/schemas/Quantity'
+        rate:
+          $ref: '#/components/schemas/Rate'
+        sku:
+          type: string
+        total_ecu:
+          type: integer
+        type:
+          type: string
+        unit:
+          type: string
+      required:
+        - name
+        - total_ecu
+        - type
+        - sku
+        - unit
+        - quantity
+        - display_quantity
+        - rate
+        - quantities
+      type: object
+      x-module-name: cloud.costs.v2
+    ProductLineItemQuantity:
+      description: " Represents the cost structure, segmenting the quantities by price range and allocating the usage to tiers if price is tiered. If price is not tiered and if the pricing didn't change during the entire usage range, quantities will be empty (otherwise it would be redundant data). "
+      properties:
+        from:
+          format: date-time
+          type: string
+        quantity:
+          $ref: '#/components/schemas/Quantity'
+        rate:
+          $ref: '#/components/schemas/Rate'
+        tiers:
+          items:
+            $ref: '#/components/schemas/ProductLineItemTier'
+          type: array
+        to:
+          format: date-time
+          type: string
+        total_ecu:
+          type: integer
+      required:
+        - from
+        - to
+        - total_ecu
+        - rate
+        - tiers
+      type: object
+      x-module-name: cloud.costs.v2
+    ProductLineItemTier:
+      description: "ProductLineItemTier(min: 'int', max: 'int | None', total_ecu: 'int', quantity: 'Quantity', rate: 'Rate')"
+      properties:
+        max:
+          type: integer
+        min:
+          type: integer
+        quantity:
+          $ref: '#/components/schemas/Quantity'
+        rate:
+          $ref: '#/components/schemas/Rate'
+        total_ecu:
+          type: integer
+      required:
+        - min
+        - total_ecu
+        - quantity
+        - rate
+      type: object
+      x-module-name: cloud.costs.v2
+    Quantity:
+      description: Quantity
+      properties:
+        formatted_value:
+          type: string
+        value:
+          oneOf:
+            - type: integer
+            - type: number
+      required:
+        - value
+        - formatted_value
+      type: object
+      x-module-name: cloud.costs.v2
+    Rate:
+      description: "Rate(value: 'int', formatted_value: 'str')"
+      properties:
+        formatted_value:
+          type: string
+        value:
+          type: integer
+      required:
+        - value
+        - formatted_value
+      type: object
+      x-module-name: cloud.costs.v2
+    UnauthorizedError:
+      type: string
+  securitySchemes:
+    apiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey
+    basicAuth:
+      scheme: basic
+      type: http
+    bearerAuth:
+      bearerFormat: token
+      scheme: bearer
+      type: http
+    webhookAuth:
+      bearerFormat: token
+      scheme: bearer
+      type: http
