@@ -1,6 +1,6 @@
 app:
   title: Backstage - InfraWallet
-  baseUrl: http://${INFRAWALLET_DOMAIN} # in our Dockerfile, we set the default value to localhost
+  baseUrl: http://${INFRAWALLET_DOMAIN}
 
 backend:
   baseUrl: http://${INFRAWALLET_DOMAIN}
