@@ -62,7 +62,8 @@
     "upath": "^2.0.1",
     "urllib": "^4.2.0",
     "winston": "^3.2.1",
-    "yn": "^4.0.0"
+    "yn": "^4.0.0",
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@backstage/cli": "^0.30.0",
