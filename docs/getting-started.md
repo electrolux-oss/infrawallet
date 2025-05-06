@@ -1,19 +1,3 @@
-## Try InfraWallet in Docker
-
-Though InfraWallet is a plugin for Backstage, you can explore it quickly using its Docker image. Run the following command and access InfraWallet via `http://localhost:7007`:
-
-```bash
-docker run --rm -p 7007:7007 opensourceelectrolux/infrawallet:latest
-```
-
-This image contains a Backstage instance with InfraWallet installed. It uses a Mock client to generate cloud costs. If
-you would like to try InfraWallet with your cloud credentials, you can create a app-config.infrawallet.yaml file (see [example](../app-config.infrawallet.yaml) here) according to the
-following instructions, and then run the following command instead:
-
-```bash
-docker run --rm -p 7007:7007 -v <path_to_your_config_file>:/app/app-config.infrawallet.yaml opensourceelectrolux/infrawallet:latest
-```
-
 ## Default Settings for Frontend
 
 Site admins can configure the default view for InfraWallet, including the default group by dimension, and the default
