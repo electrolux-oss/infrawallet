@@ -8,13 +8,13 @@ copyright: Copyright &copy; 2024 - 2025 Electrolux Group
 theme:
   name: material
   palette:
-    - media: "(prefers-color-scheme: light)"
+    - media: '(prefers-color-scheme: light)'
       scheme: default
       primary: white
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
+    - media: '(prefers-color-scheme: dark)'
       scheme: slate
       primary: black
       toggle:
@@ -63,7 +63,7 @@ plugins:
 
 extra:
   social:
-    - icon: fontawesome/brands/github 
+    - icon: fontawesome/brands/github
       link: https://github.com/electrolux-oss/infrawallet
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/showcase/infrawallet
