@@ -1,3 +1,5 @@
+# Developer Guide
+
 ## Local Development
 
 First of all, make sure you are using either Node 18 or Node 20 for this project. Your plugin has been added to the example app in this repository, meaning you'll be able to access it by running `yarn install && yarn dev` in the root directory, and then navigating to [/infrawallet](http://localhost:3000/infrawallet).
@@ -52,4 +54,4 @@ For example, here is a report returned from InfraWallet backend:
 
 The aggregation is done by the frontend after getting all the needed cost reports. This means that as long as the backend returns more cost reports in the same format, InfraWallet can always aggregate and visualize the costs.
 
-When adding a new cloud vendor, you need to implement a client based on the abstract class [InfraWalletClient](../plugins/infrawallet-backend/src/service/InfraWalletClient.ts). Check [AwsClient.ts](../plugins/infrawallet-backend/src/service/AwsClient.ts) and [AzureClient.ts](../plugins/infrawallet-backend/src/service/AzureClient.ts) as examples.
+When adding a new cloud vendor, you need to implement a client based on the abstract class [InfraWalletClient](https://github.com/electrolux-oss/infrawallet/blob/main/plugins/infrawallet-backend/src/cost-clients/InfraWalletClient.ts). Check [AwsClient.ts](https://github.com/electrolux-oss/infrawallet/blob/main/plugins/infrawallet-backend/src/cost-clients/AwsClient.ts) and [AzureClient.ts](https://github.com/electrolux-oss/infrawallet/blob/main/plugins/infrawallet-backend/src/cost-clients/AzureClient.ts) as examples.
