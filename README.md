@@ -22,14 +22,14 @@
 
 ## Supported Cloud Providers
 
-| Provider  | Cost Reports | Filter Costs by Tags | Integration Levels                    |
-| --------- | ------------ | -------------------- | ------------------------------------- |
-| AWS       | ✅           | ✅                   | Management account and member account |
-| Azure     | ✅           | ✅                   | Subscription                          |
-| GCP       | ✅           |                      | Billing account                       |
-| MongoDB   | ✅           |                      | Organization                          |
-| Confluent | ✅           |                      | Organization                          |
-| Datadog   | ✅           |                      | Parent organization                   |
+| Provider        | Cost Reports | Filter Costs by Tags | Integration Levels                    |
+| --------------- | ------------ | -------------------- | ------------------------------------- |
+| AWS             | ✅           | ✅                   | Management account and member account |
+| Azure           | ✅           | ✅                   | Subscription                          |
+| Google Cloud    | ✅           |                      | Billing account                       |
+| MongoDB Atlas   | ✅           |                      | Organization                          |
+| Confluent Cloud | ✅           |                      | Organization                          |
+| Datadog         | ✅           |                      | Parent organization                   |
 
 \*_The framework is designed to be extensible to support other cloud providers. Feel free to [contribute](./docs/contributing.md) to the project._
 
@@ -37,7 +37,7 @@
 
 ## Getting started
 
-To start using InfraWallet, see the [documentation](./docs/getting-started.md).
+To start using InfraWallet, see the [documentation](https://opensource.electrolux.one/infrawallet/).
 
 ## Contributing to InfraWallet
 
