@@ -1,0 +1,69 @@
+site_name: InfraWallet
+site_url: https://electrolux-oss.github.io/infrawallet
+repo_name: electrolux-oss/infrawallet
+repo_url: https://github.com/electrolux-oss/infrawallet
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; 2024 - 2025 Electrolux Group
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  icon:
+    repo: fontawesome/brands/github
+  favicon: images/iw_logo.png
+  logo: images/iw_logo.png
+  features:
+    - content.action.edit
+    - content.action.view
+    - content.code.copy
+    - navigation.expand
+    - navigation.footer
+
+nav:
+  - Overview: index.md
+  - Getting Started:
+      - Installation: getting-started/installation.md
+      - Integrations:
+          - AWS: getting-started/integrations/aws.md
+          - Azure: getting-started/integrations/azure.md
+          - Confluent Cloud: getting-started/integrations/confluent-cloud.md
+          - Datadog: getting-started/integrations/datadog.md
+          #- Elastic Cloud: getting-started/integrations/elastic-cloud.md
+          - Google Cloud: getting-started/integrations/google-cloud.md
+          - MongoDB Atlas: getting-started/integrations/mongodb-atlas.md
+      - Budgets: getting-started/budgets.md
+      - Business Metrics: getting-started/business-metrics.md
+      - Custom Costs: getting-started/custom-costs.md
+      - Customization: getting-started/customization.md
+  - Developer Guide: contributing.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+
+plugins:
+  - search
+
+extra:
+  social:
+    - icon: fontawesome/brands/github 
+      link: https://github.com/electrolux-oss/infrawallet
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/showcase/infrawallet
