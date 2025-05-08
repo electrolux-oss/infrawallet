@@ -2,7 +2,7 @@
 
 ## Local Development
 
-First of all, make sure you are using either Node 18 or Node 20 for this project. Your plugin has been added to the example app in this repository, meaning you'll be able to access it by running `yarn install && yarn dev` in the root directory, and then navigating to [/infrawallet](http://localhost:3000/infrawallet).
+First of all, make sure you are using either Node 18 or Node 20 for this project. Your plugin has been added to the example app in this repository, meaning you'll be able to access it by running `yarn install && yarn dev` in the root directory, and then navigating to `http://localhost:3000/infrawallet`.
 
 You can also serve the plugin in isolation by running `yarn start` in the plugin directory.
 This method of serving the plugin provides quicker iteration speed and a faster startup and hot reloads.
@@ -23,7 +23,7 @@ backend:
 We use [Husky](https://typicode.github.io/husky/) to set up a pre-commit hook that runs the linter, type checker and
 code formatter before committing. Run `git config core.hooksPath .husky` from the root folder of this repo to enable it.
 
-## How to Support a New Cloud Vendor?
+## How to Support a New Cloud Provider?
 
 In InfraWallet, all the cost data fetched from different cloud providers are transformed into a generic format:
 
