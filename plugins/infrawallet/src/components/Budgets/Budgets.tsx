@@ -37,8 +37,8 @@ import { aggregateCostReports, formatCurrency, mergeCostReports } from '../../ap
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { Budget, Report } from '../../api/types';
 import { colorList } from '../constants';
-import { getProviderIcon } from '../ProviderIcons';
 import { BudgetsProps } from '../types';
+import { ProviderIcon } from '../ProviderIcon';
 
 const enum BUDGET_VIEW {
   MONTHLY = 'Monthly',
@@ -194,7 +194,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
         <ChartsTooltip />
       </ChartContainer>
       <div style={{ textAlign: 'center', fontWeight: 'bold' }}>
-        {getProviderIcon(provider)} {provider}
+        <ProviderIcon provider={provider} /> {provider}
       </div>
       <div style={{ textAlign: 'center' }}>
         <Button onClick={() => setOpenManageBudget(true)}>Manage budget</Button>
@@ -204,7 +204,8 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
             <DialogContent>
               <DialogContentText>Please enter your {props.provider} annual budget here.</DialogContentText>
               <Box sx={{ display: 'flex', alignItems: 'flex-end' }}>
-                {getProviderIcon(provider)}&nbsp;&nbsp;
+                <ProviderIcon provider={provider} />
+                &nbsp;&nbsp;
                 <FormControl variant="standard">
                   <InputLabel>Amount</InputLabel>
                   <Input

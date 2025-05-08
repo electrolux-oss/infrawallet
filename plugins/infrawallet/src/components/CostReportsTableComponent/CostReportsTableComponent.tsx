@@ -11,7 +11,7 @@ import {
 } from '@mui/x-data-grid';
 import React, { FC } from 'react';
 import { extractAccountInfo, formatCurrency, getPreviousDay, getPreviousMonth } from '../../api/functions';
-import { getProviderIcon } from '../ProviderIcons';
+import { ProviderIcon } from '../ProviderIcon';
 import { CostReportsTableComponentProps } from '../types';
 
 function CustomToolbar() {
@@ -59,7 +59,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
           return undefined;
         }
 
-        return <div>{getProviderIcon(params.row.provider)}</div>;
+        return <ProviderIcon provider={params.row.provider} />;
       },
     });
   }
