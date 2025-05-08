@@ -1,5 +1,4 @@
-import React from 'react';
-import { memo, useEffect, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import { IconType } from 'react-icons';
 
 enum IconLibrary {
