@@ -52,12 +52,14 @@ nav:
 
 markdown_extensions:
   - pymdownx.highlight:
-      anchor_linenums: true
+      auto_title: true
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
   - pymdownx.superfences
+  - toc:
+      permalink: true
 
 plugins:
   - search
@@ -68,3 +70,7 @@ extra:
       link: https://github.com/electrolux-oss/infrawallet
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/showcase/infrawallet
+    - icon: fontawesome/brands/medium
+      link: https://medium.com/@infrawalletbox
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/HAk7caCMf9
