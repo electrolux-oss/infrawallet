@@ -77,7 +77,6 @@ const roleRules = [
     targetName: ['@backstage/backend-app-api'],
     except: [
       // These are legitimate
-      '@backstage/backend-common',
       '@backstage/backend-defaults',
       '@backstage/backend-test-utils',
       '@backstage/backend-dynamic-feature-service',
