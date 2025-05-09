@@ -6,11 +6,6 @@ import EditIcon from '@mui/icons-material/Edit';
 import SaveIcon from '@mui/icons-material/Save';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import React, { FC, useCallback, useEffect, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { infraWalletApiRef } from '../../api/InfraWalletApi';
-import { MetricConfig, MetricSetting, Wallet } from '../../api/types';
-
 import {
   DataGrid,
   GridActionsCellItem,
@@ -26,7 +21,11 @@ import {
   GridToolbarContainer,
   ValueOptions,
 } from '@mui/x-data-grid';
-import { getProviderIcon } from '../ProviderIcons';
+import React, { FC, useCallback, useEffect, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import { infraWalletApiRef } from '../../api/InfraWalletApi';
+import { MetricConfig, MetricSetting, Wallet } from '../../api/types';
+import { ProviderIcon } from '../ProviderIcon';
 
 export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }) => {
   const configApi = useApi(configApiRef);
@@ -160,7 +159,8 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
         const provider = params.row.metric_provider;
         return (
           <>
-            {getProviderIcon(provider)}&nbsp;&nbsp;{provider.charAt(0).toUpperCase() + provider.slice(1)}
+            <ProviderIcon provider={provider} />
+            &nbsp;&nbsp;{provider.charAt(0).toUpperCase() + provider.slice(1)}
           </>
         );
       },

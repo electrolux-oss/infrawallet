@@ -1,1 +1,0 @@
-export { getProviderIcon } from './ProviderIcons';

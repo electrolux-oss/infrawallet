@@ -18,7 +18,7 @@ import React, { FC, useEffect, useState } from 'react';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { extractAccountInfo, extractProvider, getReportKeyAndValues, tagExists } from '../../api/functions';
 import { Tag } from '../../api/types';
-import { getProviderIcon } from '../ProviderIcons';
+import { ProviderIcon } from '../ProviderIcon';
 import { FiltersComponentProps } from '../types';
 
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
@@ -188,10 +188,10 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
                 let accountId = undefined;
                 if (key === 'provider') {
                   provider = option;
-                  providerIcon = getProviderIcon(provider);
+                  providerIcon = <ProviderIcon provider={provider} />;
                 } else if (['account', 'service'].includes(key)) {
                   provider = extractProvider(option);
-                  providerIcon = getProviderIcon(provider);
+                  providerIcon = <ProviderIcon provider={provider} />;
                 }
 
                 if (key === 'account') {
