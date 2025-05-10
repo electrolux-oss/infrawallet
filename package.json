@@ -31,9 +31,9 @@
     ]
   },
   "devDependencies": {
-    "@backstage/cli": "^0.30.0",
+    "@backstage/cli": "^0.31.1",
     "@backstage/e2e-test-utils": "^0.1.1",
-    "@backstage/repo-tools": "^0.13.0",
+    "@backstage/repo-tools": "^0.13.1",
     "@playwright/test": "^1.32.3",
     "@spotify/eslint-plugin": "^15.0.0",
     "@spotify/prettier-config": "^15.0.0",
@@ -43,11 +43,10 @@
     "eslint-plugin-testing-library": "^5.9.1",
     "eslint-plugin-unused-imports": "^3.0.0",
     "husky": "^8.0.0",
-    "lerna": "^7.3.0",
     "lint-staged": "^13.0.0",
     "node-gyp": "^9.0.0",
     "prettier": "^3.3.3",
-    "typescript": "~5.3.0"
+    "typescript": "~5.6.0"
   },
   "resolutions": {
     "@types/react": "^18",
@@ -72,7 +71,7 @@
   },
   "dependencies": {
     "@backstage/catalog-model": "^1.7.3",
-    "@backstage/plugin-catalog-react": "^1.15.2",
+    "@backstage/plugin-catalog-react": "^1.16.0",
     "@hookform/resolvers": "^3.3.2",
     "react-redux": "^9.1.0"
   },

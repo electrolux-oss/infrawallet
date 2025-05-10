@@ -1,4 +1,4 @@
-import { errorHandler } from '@backstage/backend-common';
+import { MiddlewareFactory } from '@backstage/backend-defaults/rootHttpRouter';
 import { DatabaseService, resolvePackagePath } from '@backstage/backend-plugin-api';
 import express from 'express';
 import Router from 'express-promise-router';
@@ -462,6 +462,8 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     response.json({ deleted: deletedMetricSetting, status: 200 });
   });
 
-  router.use(errorHandler());
+  const middleware = MiddlewareFactory.create({ config, logger });
+  router.use(middleware.error());
+
   return router;
 }
