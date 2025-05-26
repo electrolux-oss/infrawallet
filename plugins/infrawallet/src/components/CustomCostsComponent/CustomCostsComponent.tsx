@@ -4,6 +4,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import FilterListIcon from '@mui/icons-material/FilterList';
 import SaveIcon from '@mui/icons-material/Save';
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
@@ -14,6 +15,7 @@ import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
 import {
   DataGrid,
+  FilterPanelTrigger,
   GridActionsCellItem,
   GridColDef,
   GridEditInputCell,
@@ -27,9 +29,8 @@ import {
   GridRowModesModel,
   GridRowsProp,
   GridSlots,
-  GridToolbar,
-  GridToolbarContainer,
-  GridToolbarFilterButton,
+  Toolbar,
+  ToolbarButton,
   ValueOptions,
 } from '@mui/x-data-grid';
 import moment from 'moment';
@@ -300,14 +301,7 @@ export const CustomCostsComponent: FC = () => {
 
         if (isInEditMode) {
           return [
-            <GridActionsCellItem
-              icon={<SaveIcon />}
-              label="Save"
-              sx={{
-                color: 'primary.main',
-              }}
-              onClick={handleSaveClick(id)}
-            />,
+            <GridActionsCellItem icon={<SaveIcon />} label="Save" color="primary" onClick={handleSaveClick(id)} />,
             <GridActionsCellItem
               icon={<CancelIcon />}
               label="Cancel"
@@ -375,13 +369,15 @@ export const CustomCostsComponent: FC = () => {
     };
 
     return (
-      <GridToolbarContainer>
+      <Toolbar>
         <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
           Add custom cost
         </Button>
         <BulkInsertButton reloadFunction={getCustomCosts} />
-        <GridToolbarFilterButton />
-      </GridToolbarContainer>
+        <FilterPanelTrigger render={<ToolbarButton />}>
+          <FilterListIcon fontSize="small" />
+        </FilterPanelTrigger>
+      </Toolbar>
     );
   }
   useEffect(() => {
@@ -415,8 +411,9 @@ export const CustomCostsComponent: FC = () => {
           },
         }}
         slots={{
-          toolbar: readOnly ? GridToolbar : (EditToolbar as GridSlots['toolbar']),
+          toolbar: EditToolbar as GridSlots['toolbar'],
         }}
+        showToolbar={!readOnly}
       />
     </Box>
   );

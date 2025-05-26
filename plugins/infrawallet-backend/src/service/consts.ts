@@ -49,7 +49,7 @@ export const METRIC_PROVIDER_MAPPINGS: {
   mock: MockProvider,
 };
 
-export const enum GRANULARITY {
+export enum GRANULARITY {
   DAILY = 'daily',
   MONTHLY = 'monthly',
 }

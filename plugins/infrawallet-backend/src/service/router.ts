@@ -21,7 +21,7 @@ import {
 } from '../models/CustomCost';
 import { fetchAndSaveCosts } from '../tasks/fetchAndSaveCosts';
 import { CategoryMappingService } from './CategoryMappingService';
-import { COST_CLIENT_MAPPINGS, METRIC_PROVIDER_MAPPINGS } from './consts';
+import { COST_CLIENT_MAPPINGS, GRANULARITY, METRIC_PROVIDER_MAPPINGS } from './consts';
 import { parseFilters, parseTags, tagsToString } from './functions';
 import { CloudProviderError, Metric, MetricSetting, Report, RouterOptions, Tag } from './types';
 
@@ -108,12 +108,16 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     const filters = request.query.filters as string;
     const tags = parseTags(request.query.tags as string);
     const groups = request.query.groups as string;
-    const granularity = request.query.granularity as string;
+    const granularityString = request.query.granularity as string;
     const startTime = request.query.startTime as string;
     const endTime = request.query.endTime as string;
     const promises: Promise<void>[] = [];
     const results: Report[] = [];
     const errors: CloudProviderError[] = [];
+
+    const granularity: GRANULARITY = Object.values(GRANULARITY).includes(granularityString as GRANULARITY)
+      ? (granularityString as GRANULARITY)
+      : GRANULARITY.MONTHLY;
 
     // group tags by providers
     const providerTags: Record<string, Tag[]> = {};
