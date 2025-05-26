@@ -4,7 +4,12 @@ import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 import moment from 'moment';
 import { CategoryMappingService } from '../service/CategoryMappingService';
-import { CLOUD_PROVIDER, PROVIDER_TYPE, NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS } from '../service/consts';
+import {
+  CLOUD_PROVIDER,
+  PROVIDER_TYPE,
+  NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS,
+  GRANULARITY,
+} from '../service/consts';
 
 export class ConfluentClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -358,7 +363,7 @@ export class ConfluentClient extends InfraWalletClient {
       }
 
       let billingPeriod = undefined;
-      if (query.granularity.toUpperCase() === 'MONTHLY') {
+      if (query.granularity === GRANULARITY.MONTHLY) {
         billingPeriod = parsedStartDate.format('YYYY-MM');
       } else {
         billingPeriod = parsedStartDate.format('YYYY-MM-DD');

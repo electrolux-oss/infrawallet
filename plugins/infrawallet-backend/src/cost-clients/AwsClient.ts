@@ -16,7 +16,7 @@ import { reduce } from 'lodash';
 import moment from 'moment';
 import { CategoryMappingService } from '../service/CategoryMappingService';
 import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
-import { parseTags } from '../service/functions';
+import { getBillingPeriod, parseCost, parseTags } from '../service/functions';
 import { CostQuery, Report, TagsQuery } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 
@@ -239,11 +239,7 @@ export class AwsClient extends InfraWalletClient {
         const rowTime = row.TimePeriod?.Start;
         let period = 'unknown';
         if (rowTime) {
-          if (query.granularity.toUpperCase() === 'MONTHLY') {
-            period = rowTime.substring(0, 7);
-          } else {
-            period = rowTime;
-          }
+          period = getBillingPeriod(query.granularity, rowTime, 'YYYY-MM-DD');
         }
         if (row.Groups) {
           row.Groups.forEach((group: any) => {
@@ -273,7 +269,7 @@ export class AwsClient extends InfraWalletClient {
             const groupMetrics = group.Metrics;
 
             if (groupMetrics !== undefined) {
-              accumulator[keyName].reports[period] = parseFloat(groupMetrics.UnblendedCost.Amount ?? '0.0');
+              accumulator[keyName].reports[period] = parseCost(groupMetrics.UnblendedCost.Amount);
             }
           });
         }

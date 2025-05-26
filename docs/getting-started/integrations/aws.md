@@ -1,4 +1,4 @@
-# AWS
+# :simple-amazonwebservices: AWS
 
 InfraWallet uses an IAM role to retrieve cost and usage data via the AWS Cost Explorer APIs. Before configuring InfraWallet, you must set up the necessary AWS IAM role and policy.
 

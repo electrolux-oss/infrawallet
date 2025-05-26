@@ -1,12 +1,13 @@
-import { BigQuery } from '@google-cloud/bigquery';
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { reduce } from 'lodash';
+import { BigQuery } from '@google-cloud/bigquery';
 import { existsSync } from 'fs';
-import { join } from 'path';
+import { reduce } from 'lodash';
 import { homedir } from 'os';
+import { join } from 'path';
 import { CategoryMappingService } from '../service/CategoryMappingService';
-import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
+import { CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from '../service/consts';
+import { parseCost } from '../service/functions';
 import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 
@@ -115,7 +116,7 @@ export class GCPClient extends InfraWalletClient {
     const tableId = subAccountConfig.getString('tableId');
 
     try {
-      const periodFormat = query.granularity.toUpperCase() === 'MONTHLY' ? '%Y-%m' : '%Y-%m-%d';
+      const periodFormat = query.granularity === GRANULARITY.MONTHLY ? '%Y-%m' : '%Y-%m-%d';
       const sql = `
         SELECT
           project.name AS project,
@@ -179,7 +180,7 @@ export class GCPClient extends InfraWalletClient {
           };
         }
 
-        acc[keyName].reports[period] = parseFloat(row.total_cost);
+        acc[keyName].reports[period] = parseCost(row.total_cost);
         return acc;
       },
       {},

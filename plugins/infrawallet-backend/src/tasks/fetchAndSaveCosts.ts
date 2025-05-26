@@ -1,7 +1,7 @@
 import { getWallet } from '../controllers/MetricSettingController';
 import { InfraWalletClient } from '../cost-clients/InfraWalletClient';
 import { CategoryMappingService } from '../service/CategoryMappingService';
-import { COST_CLIENT_MAPPINGS } from '../service/consts';
+import { COST_CLIENT_MAPPINGS, GRANULARITY } from '../service/consts';
 import { RouterOptions } from '../service/types';
 
 export async function fetchAndSaveCosts(options: RouterOptions) {
@@ -12,7 +12,7 @@ export async function fetchAndSaveCosts(options: RouterOptions) {
 
   // for now, this task only fetches costs for the default wallet
   const defaultWallet = await getWallet(database, 'default');
-  const granularities = ['daily', 'monthly'];
+  const granularities = [GRANULARITY.DAILY, GRANULARITY.MONTHLY];
 
   if (defaultWallet !== undefined) {
     logger.debug('fetchAndSaveCosts method executed for the default wallet');

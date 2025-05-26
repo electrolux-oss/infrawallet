@@ -18,7 +18,7 @@ import {
   GridRowModesModel,
   GridRowsProp,
   GridSlots,
-  GridToolbarContainer,
+  Toolbar,
   ValueOptions,
 } from '@mui/x-data-grid';
 import React, { FC, useCallback, useEffect, useState } from 'react';
@@ -61,11 +61,11 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
     };
 
     return (
-      <GridToolbarContainer>
+      <Toolbar>
         <Button color="primary" startIcon={<AddIcon />} onClick={handleClick}>
           Add metric
         </Button>
-      </GridToolbarContainer>
+      </Toolbar>
     );
   }
 
@@ -226,14 +226,7 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
 
         if (isInEditMode) {
           return [
-            <GridActionsCellItem
-              icon={<SaveIcon />}
-              label="Save"
-              sx={{
-                color: 'primary.main',
-              }}
-              onClick={handleSaveClick(id)}
-            />,
+            <GridActionsCellItem icon={<SaveIcon />} label="Save" color="primary" onClick={handleSaveClick(id)} />,
             <GridActionsCellItem
               icon={<CancelIcon />}
               label="Cancel"
@@ -309,9 +302,10 @@ export const MetricConfigurationComponent: FC<{ wallet?: Wallet }> = ({ wallet }
         onRowEditStop={handleRowEditStop}
         processRowUpdate={processRowUpdate}
         slots={{
-          toolbar: readOnly ? null : (EditToolbar as GridSlots['toolbar']),
+          toolbar: EditToolbar as GridSlots['toolbar'],
         }}
         disableColumnMenu
+        showToolbar={!readOnly}
       />
     </Box>
   );
