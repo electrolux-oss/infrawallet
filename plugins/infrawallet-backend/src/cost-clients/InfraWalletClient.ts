@@ -7,6 +7,7 @@ import { CostItem, bulkInsertCostItems, countCostItems, getCostItems } from '../
 import {
   CACHE_CATEGORY,
   CLOUD_PROVIDER,
+  GRANULARITY,
   NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS,
   PROVIDER_TYPE,
 } from '../service/consts';
@@ -43,7 +44,7 @@ export abstract class InfraWalletClient {
   ) {}
 
   protected convertServiceName(serviceName: string): string {
-    return serviceName;
+    return `${this.provider}/${serviceName}`;
   }
 
   protected evaluateIntegrationFilters(account: string, integrationConfig: Config): boolean {
@@ -328,7 +329,7 @@ export abstract class InfraWalletClient {
     };
   }
 
-  async saveCostReportsToDatabase(wallet: Wallet, granularity: string): Promise<void> {
+  async saveCostReportsToDatabase(wallet: Wallet, granularity: GRANULARITY): Promise<void> {
     const count = await countCostItems(this.database, wallet.id, this.provider, granularity);
 
     const endTime = endOfMonth(new Date());
@@ -345,7 +346,7 @@ export abstract class InfraWalletClient {
     this.logger.debug(`Fetching ${granularity} costs from ${startTime} to ${endTime} for ${this.provider}`);
 
     const results: Report[] = [];
-    const usageDateFormat = granularity === 'daily' ? 'yyyyMMdd' : 'yyyyMM';
+    const usageDateFormat = granularity === GRANULARITY.DAILY ? 'yyyyMMdd' : 'yyyyMM';
     try {
       const clientResponse = await this.getCostReports({
         filters: '',

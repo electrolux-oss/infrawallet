@@ -5,6 +5,7 @@ import moment from 'moment';
 import urllib from 'urllib';
 import { CategoryMappingService } from '../service/CategoryMappingService';
 import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
+import { getBillingPeriod } from '../service/functions';
 import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 
@@ -137,22 +138,7 @@ export class MongoAtlasClient extends InfraWalletClient {
         });
 
         const amount = parseFloat(rowData.Amount) || 0;
-
-        const dateFormat = 'MM/DD/YYYY';
-        const date = rowData.Date;
-        const parsedDate = moment(date, dateFormat, true);
-
-        if (!parsedDate.isValid()) {
-          return accumulator;
-        }
-
-        let billingPeriod = undefined;
-        if (query.granularity.toUpperCase() === 'MONTHLY') {
-          billingPeriod = parsedDate.format('YYYY-MM');
-        } else {
-          billingPeriod = parsedDate.format('YYYY-MM-DD');
-        }
-
+        const billingPeriod = getBillingPeriod(query.granularity, rowData.Date, 'MM/DD/YYYY');
         const serviceName = rowData.SKU;
         const cluster = rowData.Cluster || 'Unknown';
         const project = rowData.Project || 'Unknown';

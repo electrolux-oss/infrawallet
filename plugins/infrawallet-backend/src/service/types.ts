@@ -1,5 +1,6 @@
 import { CacheService, DatabaseService, LoggerService, SchedulerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
+import { GRANULARITY } from './consts';
 
 export interface RouterOptions {
   logger: LoggerService;
@@ -28,7 +29,7 @@ export type CostQuery = {
   filters: string;
   tags: string;
   groups: string;
-  granularity: string;
+  granularity: GRANULARITY;
   startTime: string;
   endTime: string;
 };

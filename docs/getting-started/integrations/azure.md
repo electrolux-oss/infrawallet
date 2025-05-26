@@ -1,4 +1,4 @@
-# Azure
+# :material-microsoft: Azure
 
 To manage Azure costs with InfraWallet, you need to register an application in Azure. Note that InfraWallet has been tested with subscription-level cost data only.
 

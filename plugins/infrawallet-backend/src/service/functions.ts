@@ -1,5 +1,5 @@
 import { CacheService } from '@backstage/backend-plugin-api';
-import { CACHE_CATEGORY, CLOUD_PROVIDER, DEFAULT_COSTS_CACHE_TTL, DEFAULT_TAGS_CACHE_TTL } from './consts';
+import { CACHE_CATEGORY, CLOUD_PROVIDER, DEFAULT_COSTS_CACHE_TTL, DEFAULT_TAGS_CACHE_TTL, GRANULARITY } from './consts';
 import { CostQuery, Metric, MetricQuery, Report, Tag, TagsQuery } from './types';
 import moment from 'moment';
 
@@ -240,6 +240,34 @@ export function parseFilters(filters: string): Record<string, string[]> {
   });
 
   return result;
+}
+
+/**
+ * Returns the date format string for a billing period based on granularity.
+ */
+export function getBillingPeriodFormat(granularity: GRANULARITY): string {
+  if (granularity === GRANULARITY.MONTHLY) {
+    return 'YYYY-MM';
+  } else if (granularity === GRANULARITY.DAILY) {
+    return 'YYYY-MM-DD';
+  }
+  throw new Error('Invalid granularity');
+}
+
+/**
+ * Converts a source date string to a billing period string based on granularity and source format.
+ */
+export function getBillingPeriod(granularity: GRANULARITY, sourceDate: string, sourceFormat: string): string {
+  return moment(sourceDate, sourceFormat, true).format(getBillingPeriodFormat(granularity));
+}
+
+/**
+ * Parses a cost value and rounds to 2 decimal places.
+ * Returns 0 if the value is not a valid number.
+ */
+export function parseCost(value: any): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.round(parsed * 100) / 100 : 0;
 }
 
 export function getDailyPeriodStringsForOneMonth(yyyymm: number): string[] {

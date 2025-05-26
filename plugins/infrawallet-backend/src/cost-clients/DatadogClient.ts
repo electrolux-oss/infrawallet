@@ -4,6 +4,7 @@ import { v2 as datadogApiV2, client as datadogClient } from '@datadog/datadog-ap
 import { reduce } from 'lodash';
 import moment from 'moment';
 import { CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from '../service/consts';
+import { parseCost } from '../service/functions';
 import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 
@@ -218,7 +219,7 @@ export class DatadogClient extends InfraWalletClient {
               };
             }
 
-            accumulator[keyName].reports[period] = cost || 0;
+            accumulator[keyName].reports[period] = parseCost(cost);
           });
         }
 

@@ -1,29 +1,11 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
-import {
-  DataGrid,
-  GridColDef,
-  GridColumnGroupingModel,
-  GridRenderCellParams,
-  GridToolbarContainer,
-  GridToolbarExport,
-} from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridColumnGroupingModel, GridRenderCellParams } from '@mui/x-data-grid';
 import React, { FC } from 'react';
 import { extractAccountInfo, formatCurrency, getPreviousDay, getPreviousMonth } from '../../api/functions';
 import { ProviderIcon } from '../ProviderIcon';
 import { CostReportsTableComponentProps } from '../types';
-
-function CustomToolbar() {
-  return (
-    <GridToolbarContainer>
-      <GridToolbarExport
-        csvOptions={{ fileName: 'InfraWallet-export' }}
-        printOptions={{ disableToolbarButton: true }}
-      />
-    </GridToolbarContainer>
-  );
-}
 
 export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ reports, aggregatedBy, periods }) => {
   let rows: any[] | undefined = reports;
@@ -32,8 +14,10 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
   const columnGroupingModel: GridColumnGroupingModel = [];
 
   if (reports && aggregatedBy !== 'none') {
+    const filteredReports = reports.filter(r => r.id !== 'Total');
+
     for (const period of periods) {
-      for (const report of reports) {
+      for (const report of filteredReports) {
         if (columnTotals[period] === undefined) {
           columnTotals[period] = 0;
         }
@@ -42,7 +26,7 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
       }
     }
 
-    rows = [...reports, { id: 'Total', reports: columnTotals }];
+    rows = [...filteredReports, { id: 'Total', reports: columnTotals }];
   }
 
   if (['account', 'provider', 'service'].includes(aggregatedBy)) {
@@ -269,16 +253,26 @@ export const CostReportsTableComponent: FC<CostReportsTableComponentProps> = ({ 
           },
         }}
         pageSizeOptions={[15]}
-        slots={{ toolbar: CustomToolbar }}
         slotProps={{
           loadingOverlay: {
             variant: 'skeleton',
             noRowsVariant: 'skeleton',
           },
+          toolbar: {
+            csvOptions: {
+              fileName: 'InfraWallet-export',
+            },
+            printOptions: {
+              disableToolbarButton: true,
+            },
+          },
         }}
         disableRowSelectionOnClick
         disableColumnMenu
+        disableColumnFilter
+        disableColumnSelector
         density={aggregatedBy === 'account' ? 'standard' : 'compact'}
+        showToolbar
       />
     </Box>
   );
