@@ -48,7 +48,7 @@
     "@mui/material": "^5.16.7",
     "@mui/styles": "^5.16.7",
     "@mui/x-charts": "7.29.1",
-    "@mui/x-data-grid": "7.29.3",
+    "@mui/x-data-grid": "8.4.0",
     "@mui/x-date-pickers": "7.29.3",
     "@stitches/react": "1.2.8",
     "@types/react": "^18",

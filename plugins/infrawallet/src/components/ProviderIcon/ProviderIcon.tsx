@@ -85,6 +85,11 @@ const iconConfigs: Record<string, IconConfig> = {
     library: IconLibrary.SimpleIcons,
     color: '#47A248',
   },
+  github: {
+    icon: 'SiGithub',
+    library: IconLibrary.SimpleIcons,
+    color: '#181717',
+  },
   datadog: {
     icon: 'SiDatadog',
     library: IconLibrary.SimpleIcons,

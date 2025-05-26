@@ -42,6 +42,7 @@ nav:
           - Confluent Cloud: getting-started/integrations/confluent-cloud.md
           - Datadog: getting-started/integrations/datadog.md
           #- Elastic Cloud: getting-started/integrations/elastic-cloud.md
+          - GitHub: getting-started/integrations/github.md
           - Google Cloud: getting-started/integrations/google-cloud.md
           - MongoDB Atlas: getting-started/integrations/mongodb-atlas.md
       - Budgets: getting-started/budgets.md
@@ -51,13 +52,21 @@ nav:
   - Developer Guide: contributing.md
 
 markdown_extensions:
+  - attr_list
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - pymdownx.highlight:
       auto_title: true
       line_spans: __span
       pygments_lang_class: true
   - pymdownx.inlinehilite
   - pymdownx.snippets
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - toc:
       permalink: true
 

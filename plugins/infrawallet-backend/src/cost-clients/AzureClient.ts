@@ -6,8 +6,8 @@ import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
 import { CategoryMappingService } from '../service/CategoryMappingService';
-import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
-import { parseTags } from '../service/functions';
+import { CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from '../service/consts';
+import { getBillingPeriod, parseCost, parseTags } from '../service/functions';
 import { CostQuery, Report, TagsQuery } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 
@@ -28,21 +28,6 @@ export class AzureClient extends InfraWalletClient {
     }
 
     return `${this.provider}/${convertedName}`;
-  }
-
-  private formatDate(dateNumber: number): string | null {
-    // dateNumber example: 20240407
-    const dateString = dateNumber.toString();
-
-    if (dateString.length !== 8) {
-      return null;
-    }
-
-    const year = dateString.slice(0, 4);
-    const month = dateString.slice(4, 6);
-    const day = dateString.slice(6);
-
-    return `${year}-${month}-${day}`;
   }
 
   private async fetchDataWithRetry(client: CostManagementClient, url: string, body: any, maxRetries = 5): Promise<any> {
@@ -235,9 +220,9 @@ export class AzureClient extends InfraWalletClient {
         let date = row[1];
         const serviceName = row[2];
 
-        if (query.granularity.toUpperCase() === 'DAILY') {
+        if (query.granularity === GRANULARITY.DAILY) {
           // 20240407 -> "2024-04-07"
-          date = this.formatDate(date);
+          date = getBillingPeriod(query.granularity, date.toString(), 'YYYYMMDD');
         }
 
         let keyName = accountName;
@@ -259,11 +244,11 @@ export class AzureClient extends InfraWalletClient {
         }
 
         if (!moment(date).isBefore(moment(parseInt(query.startTime, 10)))) {
-          if (query.granularity.toUpperCase() === 'MONTHLY') {
-            const yearMonth = date.substring(0, 7);
-            accumulator[keyName].reports[yearMonth] = parseFloat(cost);
+          if (query.granularity === GRANULARITY.MONTHLY) {
+            const yearMonth = getBillingPeriod(query.granularity, date, 'YYYY-MM-DDTHH:mm:ss');
+            accumulator[keyName].reports[yearMonth] = parseCost(cost);
           } else {
-            accumulator[keyName].reports[date] = parseFloat(cost);
+            accumulator[keyName].reports[date] = parseCost(cost);
           }
         }
         return accumulator;
