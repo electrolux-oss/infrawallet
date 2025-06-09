@@ -63,23 +63,23 @@ export class AwsClient extends InfraWalletClient {
     const accountId = integrationConfig.getString('accountId');
     const assumedRoleName = integrationConfig.getOptionalString('assumedRoleName');
     const accessKeyId = integrationConfig.getOptionalString('accessKeyId');
-    const accessKeySecret = integrationConfig.getOptionalString('accessKeySecret');
+    const secretAccessKey = integrationConfig.getOptionalString('secretAccessKey');
     const region = 'us-east-1';
 
-    if (!accessKeyId && !accessKeySecret && !assumedRoleName) {
+    if (!accessKeyId && !secretAccessKey && !assumedRoleName) {
       // No credentials provided in configuration, assuming credentials are available in the environment
       return new CostExplorerClient({ region: region });
     }
 
     let credentials = undefined;
-    if (accessKeyId || accessKeySecret) {
-      if (accessKeyId && accessKeySecret) {
+    if (accessKeyId || secretAccessKey) {
+      if (accessKeyId && secretAccessKey) {
         credentials = {
           accessKeyId: accessKeyId,
-          secretAccessKey: accessKeySecret,
+          secretAccessKey: secretAccessKey,
         };
       } else {
-        throw new Error('Both accessKeyId and accessKeySecret must be provided');
+        throw new Error('Both accessKeyId and secretAccessKey must be provided');
       }
     }
 

@@ -29,7 +29,7 @@ export interface Config {
           /**
            * @visibility secret
            */
-          accessKeySecret?: string;
+          secretAccessKey?: string;
           tags?: string[];
           filters?: [
             {
