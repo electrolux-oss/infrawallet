@@ -63,8 +63,21 @@ export class AwsClient extends InfraWalletClient {
     const accountId = integrationConfig.getString('accountId');
     const assumedRoleName = integrationConfig.getOptionalString('assumedRoleName');
     const accessKeyId = integrationConfig.getOptionalString('accessKeyId');
-    const secretAccessKey = integrationConfig.getOptionalString('secretAccessKey');
+    let secretAccessKey: string | undefined;
     const region = 'us-east-1';
+    // Attempt to get the new, preferred key
+    const newSecretAccessKey = integrationConfig.getOptionalString('secretAccessKey');
+    // Attempt to get the old, deprecated key
+    const oldAccessKeySecret = integrationConfig.getOptionalString('accessKeySecret');
+
+    if (newSecretAccessKey) {
+      // If the new key is present, use it
+      secretAccessKey = newSecretAccessKey;
+    } else if (oldAccessKeySecret) {
+      // If the new key is NOT present, but the old one IS, use the old one and log a warning
+      secretAccessKey = oldAccessKeySecret;
+      this.logger.warn(`The 'accessKeySecret' configuration key is deprecated. Please rename it to 'secretAccessKey'.`);
+    }
 
     if (!accessKeyId && !secretAccessKey && !assumedRoleName) {
       // No credentials provided in configuration, assuming credentials are available in the environment
