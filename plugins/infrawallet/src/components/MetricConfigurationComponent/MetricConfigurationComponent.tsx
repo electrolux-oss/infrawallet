@@ -21,7 +21,7 @@ import {
   Toolbar,
   ValueOptions,
 } from '@mui/x-data-grid';
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import { FC, default as React, useCallback, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { MetricConfig, MetricSetting, Wallet } from '../../api/types';

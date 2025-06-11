@@ -1,4 +1,4 @@
-import React from 'react';
+import { default as React } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { ReportsComponent, ReportsComponentProps } from './ReportsComponent';
 

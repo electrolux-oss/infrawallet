@@ -1,4 +1,4 @@
-import React from 'react';
+import { default as React } from 'react';
 import { Navigate, Route } from 'react-router-dom';
 import { apis } from './apis';
 import { Root } from './components/Root';

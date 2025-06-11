@@ -1,6 +1,6 @@
-import React from 'react';
 import { createDevApp } from '@backstage/dev-utils';
-import { infraWalletPlugin, InfraWalletPage } from '../src/plugin';
+import { default as React } from 'react';
+import { InfraWalletPage, infraWalletPlugin } from '../src/plugin';
 
 createDevApp()
   .registerPlugin(infraWalletPlugin)

@@ -10,7 +10,7 @@ import TableCell from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
-import React, { FC } from 'react';
+import { FC, default as React } from 'react';
 import { CloudProviderError } from '../../api/types';
 
 export const ErrorsAlertComponent: FC<{ errors: CloudProviderError[] }> = ({ errors }) => {

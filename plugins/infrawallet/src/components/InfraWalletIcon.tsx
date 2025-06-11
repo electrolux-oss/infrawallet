@@ -1,5 +1,5 @@
 import SvgIcon from '@mui/material/SvgIcon';
-import React from 'react';
+import { default as React } from 'react';
 
 export const InfraWalletIcon = () => {
   return (
