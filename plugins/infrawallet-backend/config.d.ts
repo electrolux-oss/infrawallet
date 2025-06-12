@@ -29,7 +29,11 @@ export interface Config {
           /**
            * @visibility secret
            */
-          accessKeySecret?: string;
+          secretAccessKey?: string;
+          /**
+           * @visibility secret
+           */
+          accessKeySecret?: string; // Deprecated Use 'secretAccessKey' instead.
           tags?: string[];
           filters?: [
             {
