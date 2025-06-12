@@ -92,10 +92,10 @@ backend:
           accountId: '<12-digit_account_ID>' # quoted as a string
           assumedRoleName: <name_of_the_AWS_IAM_role_to_be_assumed>
           accessKeyId: <access_key_ID_of_AWS_IAM_user_that_assumes_the_role> # optional, only needed when an IAM user is used to assume the role
-          accessKeySecret: <access_key_secret_of_AWS_IAM_user_that_assumes_the_role> # optional, only needed when an IAM user is used to assume the role
+          secretAccessKey: <secret_access_key_of_AWS_IAM_user_that_assumes_the_role> # optional, only needed when an IAM user is used to assume the role
 ```
 
-InfraWallet's AWS client is built using the AWS SDK for JavaScript. If both `accessKeyId` and `accessKeySecret` are provided in the configuration, the client will use the specified IAM user to assume the role. Otherwise, it follows the [default credential provider chain](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/setting-credentials-node.html#credchain).
+InfraWallet's AWS client is built using the AWS SDK for JavaScript. If both `accessKeyId` and `secretAccessKey` are provided in the configuration, the client will use the specified IAM user to assume the role. Otherwise, it follows the [default credential provider chain](https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/setting-credentials-node.html#credchain).
 
 #### Azure Integration
 
@@ -236,12 +236,12 @@ backend:
           accountId: '<12-digit_account_ID_as_string>'
           assumedRoleName: ...
           accessKeyId: ...
-          accessKeySecret: ...
+          secretAccessKey: ...
         - name: <unique_name_of_this_account>
           accountId: '<12-digit_account_ID_as_string>'
           assumedRoleName: ...
           accessKeyId: ...
-          accessKeySecret: ...
+          secretAccessKey: ...
 ```
 
 4. add InfraWallet to the sidebar (optional)
