@@ -23,21 +23,23 @@
 ## Supported Cloud Providers
 
 | Provider        | Cost Reports | Filter Costs by Tags | Integration Levels                    |
-| --------------- | ------------ | -------------------- | ------------------------------------- |
-| AWS             | ✅           | ✅                   | Management account and member account |
-| Azure           | ✅           | ✅                   | Subscription                          |
-| Google Cloud    | ✅           |                      | Billing account                       |
-| MongoDB Atlas   | ✅           |                      | Organization                          |
-| Confluent Cloud | ✅           |                      | Organization                          |
-| Datadog         | ✅           |                      | Parent organization                   |
+| --------------- | :----------: | :------------------: | ------------------------------------- |
+| AWS             |      ✅      |          ✅          | Management account and member account |
+| Azure           |      ✅      |          ✅          | Subscription                          |
+| Google Cloud    |      ✅      |                      | Billing account                       |
+| Confluent Cloud |      ✅      |                      | Organization                          |
+| Datadog         |      ✅      |                      | Parent organization                   |
+| Elastic Cloud   |      ✅      |                      | Organization                          |
+| GitHub          |      ✅      |                      | Organization                          |
+| MongoDB Atlas   |      ✅      |                      | Organization                          |
 
 \*_The framework is designed to be extensible to support other cloud providers. Feel free to [contribute](./docs/contributing.md) to the project._
 
-\*\*_You can also manually add custom costs using InfraWallet UI if there is no integration. See more about this feature on this [page](./docs/getting-started/custom-costs.md)._
+\*\*_You can also manually add [custom costs](./docs/getting-started/custom-costs.md) using InfraWallet UI if there is no integration._
 
-## Getting started
+## Getting Started
 
-To start using InfraWallet, see the [documentation](https://opensource.electrolux.one/infrawallet/).
+To start using InfraWallet, check out the [documentation](https://opensource.electrolux.one/infrawallet/).
 
 ## Contributing to InfraWallet
 
