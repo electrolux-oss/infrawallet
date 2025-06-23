@@ -2,31 +2,37 @@
 
 InfraWallet's configuration schema is specified in `plugins/infrawallet-backend/config.d.ts`. To set up provider integrations, users must configure them in the `app-config.yaml` file located in the root directory.
 
-## Autoloading Cost Data and Saving Them Into the Database
+## Autoloading Cost Data and Saving to the Database
 
-In order to improve the performance and reduce the number of calls to the cloud providers, by default, for all the integrations, there is a scheduled task in the InfraWallet backend that queries the cost data from the cloud provider APIs and saves them into the database (tables `cost_items_daily` and `cost_items_monthly`). The default interval for this task is 8 hours which will be made configurable in the future. It is recommended to have a value that is larger or equal to 8 because most of the cloud providers do not update the cost data very frequently. This feature works similarly as caching but it only autloads the costs data without any filters (such as a cost allocation tag filter in AWS). If a query contains such a filter condition, InfraWallet still makes API calls to the cloud and then caches the data in memory isntead of the database.
+!!! info
 
-If you want to disable this feature, for example, when you run a local development environment with a Sqlite3 database, you can add the following configuration to your `app-config.yaml` file:
+    This feature is **experimental** and may have breaking changes in the future. We welcome your feedback!
+
+To optimize performance and minimize the number of API calls to cloud providers, InfraWallet includes an automatic background task that periodically fetches cost data from all configured integrations and stores it in the database (`cost_items_daily` and `cost_items_monthly` tables). By default, this autoload task runs every 8 hours.
+
+This mechanism acts as a backend cache: it preloads and persists cost data without any filters (such as AWS cost allocation tags). When a user query includes filters, InfraWallet will still fetch fresh data directly from the cloud provider and cache it in memory, rather than in the database.
+
+By default, this feature is disabled. To enable this feature, add the following configuration to your `app-config.yaml` file:
 
 ```yaml
 backend:
   infraWallet:
     autoload:
-      enabled: false
+      enabled: true
 ```
 
-If you want to set your own cron or defer the initial pull on startup
+To customize the autoload schedule or delay the initial data fetch after startup, use the following configuration:
 
 ```yaml
 backend:
   infraWallet:
     autoload:
+      enabled: true
       schedule: '0 0 * * *' # midnight
       initialDelayMinutes: 1 # delay by 1 min
 ```
 
-If there is an issue about the historical data in the plugin database, you can use the following two APIs to clean up
-the data and reload the data.
+If you need to reset or refresh historical cost data in the plugin database, you can use the following API endpoints to clear existing data and trigger a reload:
 
 ```bash
 # for a prod environment, you may need extra headers like an auth token, etc.
