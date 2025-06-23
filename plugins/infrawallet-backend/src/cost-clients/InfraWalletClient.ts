@@ -256,7 +256,7 @@ export abstract class InfraWalletClient {
   }
 
   async getCostReports(query: CostQuery): Promise<ClientResponse> {
-    const autoloadCostData = this.config.getOptionalBoolean('backend.infraWallet.autoload.enabled') ?? true;
+    const autoloadCostData = this.config.getOptionalBoolean('backend.infraWallet.autoload.enabled') ?? false;
     const integrationConfigs = this.config.getOptionalConfigArray(
       `backend.infraWallet.integrations.${this.provider.toLowerCase()}`,
     );

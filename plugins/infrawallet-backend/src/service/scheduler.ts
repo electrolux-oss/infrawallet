@@ -33,7 +33,7 @@ export class CostFetchTaskScheduler {
    */
   async initialize() {
     const autoloadConfig = this.config.getOptionalConfig('backend.infraWallet.autoload');
-    const autoloadEnabled = autoloadConfig?.getOptionalBoolean('enabled') ?? true;
+    const autoloadEnabled = autoloadConfig?.getOptionalBoolean('enabled') ?? false;
 
     if (!autoloadEnabled) {
       this.logger.info('Autoload cost data is disabled, skipping task scheduling');
