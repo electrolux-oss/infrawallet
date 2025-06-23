@@ -22,6 +22,8 @@ backend.add(import('@backstage/plugin-auth-backend-module-guest-provider'));
 backend.add(import('@backstage/plugin-permission-backend'));
 backend.add(import('@backstage/plugin-permission-backend-module-allow-all-policy'));
 
+backend.add(import('@backstage/plugin-devtools-backend'));
+
 // InfraWallet plugin
 backend.add(import('@electrolux-oss/plugin-infrawallet-backend'));
 
