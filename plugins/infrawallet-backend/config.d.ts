@@ -114,6 +114,14 @@ export interface Config {
             },
           ];
         }[];
+        github?: {
+          name: string;
+          organization: string;
+          /**
+           * @visibility secret
+           */
+          token: string;
+        }[];
         mock?: {
           name: string;
         }[];

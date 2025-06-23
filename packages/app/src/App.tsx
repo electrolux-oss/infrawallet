@@ -6,6 +6,7 @@ import { Root } from './components/Root';
 import { createApp } from '@backstage/app-defaults';
 import { AppRouter, FlatRoutes } from '@backstage/core-app-api';
 import { AlertDisplay, OAuthRequestDialog, SignInPage } from '@backstage/core-components';
+import { DevToolsPage } from '@backstage/plugin-devtools';
 import { InfraWalletPage } from '@electrolux-oss/plugin-infrawallet';
 
 const app = createApp({
@@ -19,6 +20,7 @@ const routes = (
   <FlatRoutes>
     <Route path="/" element={<Navigate to="infrawallet" />} />
     <Route path="/infrawallet" element={<InfraWalletPage />} />
+    <Route path="/devtools" element={<DevToolsPage />} />
   </FlatRoutes>
 );
 
