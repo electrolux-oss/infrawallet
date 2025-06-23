@@ -5,6 +5,7 @@ InfraWallet's configuration schema is specified in `plugins/infrawallet-backend/
 ## Autoloading Cost Data and Saving to the Database
 
 !!! info
+
     This feature is **experimental** and may have breaking changes in the future. We welcome your feedback!
 
 To optimize performance and minimize the number of API calls to cloud providers, InfraWallet includes an automatic background task that periodically fetches cost data from all configured integrations and stores it in the database (`cost_items_daily` and `cost_items_monthly` tables). By default, this autoload task runs every 8 hours.
