@@ -3769,6 +3769,34 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@backstage/plugin-devtools-backend@npm:^0.5.6":
+  version: 0.5.6
+  resolution: "@backstage/plugin-devtools-backend@npm:0.5.6"
+  dependencies:
+    "@backstage/backend-defaults": "npm:^0.11.0"
+    "@backstage/backend-plugin-api": "npm:^1.4.0"
+    "@backstage/cli-common": "npm:^0.1.15"
+    "@backstage/config": "npm:^1.3.2"
+    "@backstage/config-loader": "npm:^1.10.1"
+    "@backstage/errors": "npm:^1.2.7"
+    "@backstage/plugin-devtools-common": "npm:^0.1.16"
+    "@backstage/plugin-permission-common": "npm:^0.9.0"
+    "@backstage/plugin-permission-node": "npm:^0.10.1"
+    "@backstage/types": "npm:^1.2.1"
+    "@manypkg/get-packages": "npm:^1.1.3"
+    "@yarnpkg/lockfile": "npm:^1.1.0"
+    "@yarnpkg/parsers": "npm:^3.0.0"
+    express: "npm:^4.18.1"
+    express-promise-router: "npm:^4.1.0"
+    fs-extra: "npm:^11.0.0"
+    lodash: "npm:^4.17.21"
+    ping: "npm:^0.4.1"
+    semver: "npm:^7.5.3"
+    yn: "npm:^4.0.0"
+  checksum: 10/1483356200fbe1f653f2bcd7e6b11bb3b6ecb106ab4e7ca2fc61cced5848cfaf1861b1e672ab3db72c7d1ad0c67b3d557b7a5d6e77e0bb97da95561d7283a513
+  languageName: node
+  linkType: hard
+
 "@backstage/plugin-devtools-common@npm:^0.1.16":
   version: 0.1.16
   resolution: "@backstage/plugin-devtools-common@npm:0.1.16"
@@ -10738,7 +10766,7 @@ __metadata:
     react: "npm:^18.0.2"
     react-dom: "npm:^18.0.2"
     react-router: "npm:^6.3.0"
-    react-router-dom: "npm:^7.6.2"
+    react-router-dom: "npm:^6.3.0"
     react-use: "npm:^17.2.4"
   languageName: unknown
   linkType: soft
@@ -11314,6 +11342,7 @@ __metadata:
     "@backstage/plugin-auth-backend-module-github-provider": "npm:^0.3.4"
     "@backstage/plugin-auth-backend-module-guest-provider": "npm:^0.2.9"
     "@backstage/plugin-auth-node": "npm:^0.6.4"
+    "@backstage/plugin-devtools-backend": "npm:^0.5.6"
     "@backstage/plugin-permission-backend": "npm:^0.7.1"
     "@backstage/plugin-permission-backend-module-allow-all-policy": "npm:^0.2.9"
     "@backstage/plugin-permission-common": "npm:^0.9.0"
@@ -12766,13 +12795,6 @@ __metadata:
   version: 0.4.2
   resolution: "cookie@npm:0.4.2"
   checksum: 10/2e1de9fdedca54881eab3c0477aeb067f281f3155d9cfee9d28dfb252210d09e85e9d175c0a60689661feb9e35e588515352f2456bc1f8e8db4267e05fd70137
-  languageName: node
-  linkType: hard
-
-"cookie@npm:^1.0.1":
-  version: 1.0.2
-  resolution: "cookie@npm:1.0.2"
-  checksum: 10/f5817cdc84d8977761b12549eba29435e675e65c7fef172bc31737788cd8adc83796bf8abe6d950554e7987325ad2d9ac2971c5bd8ff0c4f81c145f82e4ab1be
   languageName: node
   linkType: hard
 
@@ -15259,7 +15281,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"express@npm:^4.17.1, express@npm:^4.21.2":
+"express@npm:^4.17.1, express@npm:^4.18.1, express@npm:^4.21.2":
   version: 4.21.2
   resolution: "express@npm:4.21.2"
   dependencies:
@@ -22433,6 +22455,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ping@npm:^0.4.1":
+  version: 0.4.4
+  resolution: "ping@npm:0.4.4"
+  checksum: 10/58ef97ce17a964f5714edcd0682d618f5a25d303257cc4a54b5edbb4f5f1f6950738915dade235614aa429505838e1a37eed5c4853d4e359700e864c7ac80c30
+  languageName: node
+  linkType: hard
+
 "pirates@npm:^4.0.1, pirates@npm:^4.0.4, pirates@npm:^4.0.6":
   version: 4.0.7
   resolution: "pirates@npm:4.0.7"
@@ -23723,35 +23752,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-router-dom@npm:^7.6.2":
-  version: 7.6.2
-  resolution: "react-router-dom@npm:7.6.2"
+"react-router-dom@npm:^6.3.0":
+  version: 6.30.1
+  resolution: "react-router-dom@npm:6.30.1"
   dependencies:
-    react-router: "npm:7.6.2"
+    "@remix-run/router": "npm:1.23.0"
+    react-router: "npm:6.30.1"
   peerDependencies:
-    react: ">=18"
-    react-dom: ">=18"
-  checksum: 10/e793578cced33fce83ed8341a70e2238bd247cdc648a105d600e53551ad56fddab8c186d3711c1c46203f77ec6c3f9617a57465494597eadc165c55ef573ab51
+    react: ">=16.8"
+    react-dom: ">=16.8"
+  checksum: 10/d61f04a36ca8a0a61e71bac2616f3f0d4142ced4a473d872738ca363b43d042f4d6dc249e7f7ae1c06f89599277e2fde11583d61cf6b34e999e79caf845acb37
   languageName: node
   linkType: hard
 
-"react-router@npm:7.6.2":
-  version: 7.6.2
-  resolution: "react-router@npm:7.6.2"
-  dependencies:
-    cookie: "npm:^1.0.1"
-    set-cookie-parser: "npm:^2.6.0"
-  peerDependencies:
-    react: ">=18"
-    react-dom: ">=18"
-  peerDependenciesMeta:
-    react-dom:
-      optional: true
-  checksum: 10/38a8473c7358d873eb60cc6660deae16a629701b8867ee00e67871ff61009b90f73853235ef3b0f2e43ebedee697389afc7bf170df069823dc872be79798965b
-  languageName: node
-  linkType: hard
-
-"react-router@npm:^6.3.0":
+"react-router@npm:6.30.1, react-router@npm:^6.3.0":
   version: 6.30.1
   resolution: "react-router@npm:6.30.1"
   dependencies:
@@ -25056,7 +25070,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"set-cookie-parser@npm:^2.4.6, set-cookie-parser@npm:^2.6.0":
+"set-cookie-parser@npm:^2.4.6":
   version: 2.7.1
   resolution: "set-cookie-parser@npm:2.7.1"
   checksum: 10/c92b1130032693342bca13ea1b1bc93967ab37deec4387fcd8c2a843c0ef2fd9a9f3df25aea5bb3976cd05a91c2cf4632dd6164d6e1814208fb7d7e14edd42b4
