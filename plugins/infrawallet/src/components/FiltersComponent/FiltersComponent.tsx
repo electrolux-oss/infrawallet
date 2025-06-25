@@ -14,7 +14,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { Theme, useTheme } from '@mui/material/styles';
 import { withStyles } from '@mui/styles';
-import React, { FC, useEffect, useState } from 'react';
+import { FC, default as React, useEffect, useState } from 'react';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { extractAccountInfo, extractProvider, getReportKeyAndValues, tagExists } from '../../api/functions';
 import { Tag } from '../../api/types';

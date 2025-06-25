@@ -1,5 +1,5 @@
-import React from 'react';
 import { makeStyles } from '@material-ui/core';
+import { default as React } from 'react';
 
 const useStyles = makeStyles({
   svg: {

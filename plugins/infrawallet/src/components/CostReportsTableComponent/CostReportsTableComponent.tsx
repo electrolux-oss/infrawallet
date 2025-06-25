@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { SparkLineChart } from '@mui/x-charts/SparkLineChart';
 import { DataGrid, GridColDef, GridColumnGroupingModel, GridRenderCellParams } from '@mui/x-data-grid';
-import React, { FC } from 'react';
+import { FC, default as React } from 'react';
 import { extractAccountInfo, formatCurrency, getPreviousDay, getPreviousMonth } from '../../api/functions';
 import { ProviderIcon } from '../ProviderIcon';
 import { CostReportsTableComponentProps } from '../types';

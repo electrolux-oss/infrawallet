@@ -11,7 +11,7 @@ import {
 import { InfraWalletIcon } from '@electrolux-oss/plugin-infrawallet';
 import { makeStyles } from '@material-ui/core';
 import BuildIcon from '@material-ui/icons/Build';
-import React, { PropsWithChildren } from 'react';
+import { PropsWithChildren, default as React } from 'react';
 import LogoFull from './LogoFull';
 import LogoIcon from './LogoIcon';
 
