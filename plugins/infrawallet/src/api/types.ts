@@ -1,9 +1,9 @@
 export type Report = {
   id: string;
   account?: string;
-  service: string;
-  category: string;
-  provider: string;
+  service?: string;
+  category?: string;
+  provider?: string;
   project?: string; // optional, can be null
   reports: {
     [period: string]: number;
