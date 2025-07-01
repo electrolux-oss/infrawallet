@@ -131,7 +131,7 @@ function getPeriodsFromReports(costData: Report[] | null): string[] {
   return Array.from(periods).sort();
 }
 
-function getUniqueProjects(costData: Report[] | null): string[] {
+export function getUniqueProjects(costData: Report[] | null): string[] {
   return Array.from(
     new Set(
       (costData ?? [])
@@ -182,7 +182,7 @@ function getRelativeChangeInPercentage(
   return { change: percentageChange, formattedChange: percentageChangeFormatted };
 }
 
-function getChartData(
+export function getChartData(
   costData: Report[] | null,
   projects: string[],
   sortedPeriods: string[],
