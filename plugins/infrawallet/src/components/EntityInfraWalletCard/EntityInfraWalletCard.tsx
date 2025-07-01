@@ -14,7 +14,7 @@ import Typography from '@mui/material/Typography';
 import { default as React, useEffect, useState } from 'react';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
-import { Report, Tag } from '../../api/types';
+import { CostReportsResponse, Report, Tag } from '../../api/types';
 
 const COLORS = [
   '#8884d8',
@@ -29,7 +29,7 @@ const COLORS = [
   '#00ffff',
 ];
 
-async function getFilteredCostReports(infrawalletApi: any, filters: string, tags: Tag[]): Promise<Report[]> {
+async function getFilteredCostReports(infrawalletApi: any, filters: string, tags: Tag[]): Promise<Report[] | null> {
   const groups = '';
   const granularity = 'monthly';
 
@@ -37,7 +37,7 @@ async function getFilteredCostReports(infrawalletApi: any, filters: string, tags
   const startTime = new Date();
   startTime.setMonth(endTime.getMonth() - 2);
 
-  const costReportsResponse = await infrawalletApi.getCostReports(
+  const costReportsResponse: CostReportsResponse = await infrawalletApi.getCostReports(
     filters,
     tags,
     groups,
@@ -399,7 +399,7 @@ export const EntityInfraWalletCard = () => {
       const tags: Tag[] = getTags(annotations);
       const filters = getFilters(annotations);
 
-      let costReports: Report[] = [];
+      let costReports: Report[] | null = [];
       try {
         costReports = await getFilteredCostReports(infrawalletApi, filters, tags);
       } catch (err) {
