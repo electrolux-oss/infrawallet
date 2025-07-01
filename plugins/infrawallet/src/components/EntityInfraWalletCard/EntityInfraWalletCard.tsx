@@ -49,7 +49,7 @@ async function getFilteredCostReports(infrawalletApi: any, filters: string, tags
   if (costReportsResponse.status !== 200) {
     throw new Error('Failed to fetch cost reports');
   }
-  return costReportsResponse.data || null;
+  return costReportsResponse.data ?? null;
 }
 
 function getTags(annotations: Record<string, string>): Tag[] {
@@ -136,8 +136,8 @@ export function getUniqueProjects(costData: Report[] | null): string[] {
     new Set(
       (costData ?? [])
         .map(report => {
-          const project = report.project as string | undefined;
-          const account = report.account as string | undefined;
+          const project = report.project;
+          const account = report.account;
           if (typeof project === 'string') {
             return project;
           }
@@ -157,7 +157,7 @@ function getTotalCostByPeriod(
 ): Array<{ period: string; total: number }> {
   return (sortedPeriods ?? []).map(period => {
     const total = (costData ?? []).reduce((sum, report) => {
-      return sum + (report.reports[period] || 0);
+      return sum + (report.reports[period] ?? 0);
     }, 0);
     return { period, total };
   });
@@ -170,7 +170,7 @@ function getTotalCostForPeriod(
   if (!period) {
     return 0;
   }
-  return (totalCostsByPeriod ?? []).find(item => item.period === period)?.total || 0;
+  return (totalCostsByPeriod ?? []).find(item => item.period === period)?.total ?? 0;
 }
 
 function getRelativeChangeInPercentage(
@@ -200,7 +200,7 @@ export function getChartData(
         return false;
       });
       const total = projectReports.reduce((sum, report) => {
-        return sum + (report.reports[period] || 0);
+        return sum + (report.reports[period] ?? 0);
       }, 0);
       dataPoint[project] = total;
     });
@@ -214,8 +214,8 @@ function getPerServiceCosts(costData: Report[] | null, currentPeriod: string | n
   }
   return (costData ?? []).reduce(
     (acc, report) => {
-      const service = report.service as string | undefined;
-      const cost = report.reports[currentPeriod] || 0;
+      const service = report.service;
+      const cost = report.reports[currentPeriod] ?? 0;
       if (typeof service === 'string') {
         if (!acc[service]) {
           acc[service] = 0;
@@ -233,7 +233,7 @@ function getServiceTableData(
   prevPerServiceCosts: Record<string, number>,
 ): Array<{ service: string; cost: number; change: number }> {
   return Object.entries(perServiceCosts).map(([service, cost]) => {
-    const prevCost = prevPerServiceCosts[service] || 0;
+    const prevCost = prevPerServiceCosts[service] ?? 0;
     const change = prevCost !== 0 ? ((cost - prevCost) / prevCost) * 100 : 0;
     return {
       service,
@@ -394,7 +394,7 @@ export const EntityInfraWalletCard = () => {
     const fetchData = async () => {
       setLoading(true);
       setError(null);
-      const annotations = entity.metadata.annotations || {};
+      const annotations = entity.metadata.annotations ?? {};
 
       const tags: Tag[] = getTags(annotations);
       const filters = getFilters(annotations);
