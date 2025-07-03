@@ -15,7 +15,7 @@ import {
   MarkPlot,
   ResponsiveChartContainer,
 } from '@mui/x-charts';
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import { FC, default as React, useCallback, useEffect, useState } from 'react';
 import { formatCurrency } from '../../api/functions';
 import { colorList } from '../constants';
 import { ColumnsChartComponentProps } from '../types';

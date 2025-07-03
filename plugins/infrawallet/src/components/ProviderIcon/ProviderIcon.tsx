@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useState } from 'react';
+import { default as React, memo, useEffect, useState } from 'react';
 import { IconType } from 'react-icons';
 
 enum IconLibrary {

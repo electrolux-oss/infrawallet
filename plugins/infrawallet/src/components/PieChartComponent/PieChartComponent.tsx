@@ -2,7 +2,7 @@ import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
 import { styled } from '@mui/material/styles';
 import { HighlightItemData, PieChart, useDrawingArea } from '@mui/x-charts';
-import React, { FC } from 'react';
+import { FC, default as React } from 'react';
 import { formatCurrency } from '../../api/functions';
 import { colorList } from '../constants';
 import { PieChartComponentProps } from '../types';
