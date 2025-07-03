@@ -1,9 +1,14 @@
 export type Report = {
   id: string;
-  [dimension: string]: string | { [period: string]: number } | undefined;
+  account?: string;
+  service?: string;
+  category?: string;
+  provider?: string;
+  project?: string; // optional, can be null
   reports: {
     [period: string]: number;
   };
+  [key: string]: string | number | { [period: string]: number } | undefined;
 };
 
 export type Tag = {

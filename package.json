@@ -31,9 +31,9 @@
     ]
   },
   "devDependencies": {
-    "@backstage/cli": "^0.31.1",
+    "@backstage/cli": "^0.33.0",
     "@backstage/e2e-test-utils": "^0.1.1",
-    "@backstage/repo-tools": "^0.13.1",
+    "@backstage/repo-tools": "^0.14.0",
     "@playwright/test": "^1.32.3",
     "@spotify/eslint-plugin": "^15.0.0",
     "@spotify/prettier-config": "^15.0.0",
@@ -70,10 +70,10 @@
     ]
   },
   "dependencies": {
-    "@backstage/catalog-model": "^1.7.3",
-    "@backstage/plugin-catalog-react": "^1.16.0",
+    "@backstage/catalog-model": "^1.7.4",
+    "@backstage/plugin-catalog-react": "^1.19.0",
     "@hookform/resolvers": "^3.3.2",
     "react-redux": "^9.1.0"
   },
-  "packageManager": "yarn@3.2.3"
+  "packageManager": "yarn@4.9.2"
 }

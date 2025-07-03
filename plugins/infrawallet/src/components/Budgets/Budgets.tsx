@@ -32,13 +32,13 @@ import {
 } from '@mui/x-charts';
 import { max } from 'lodash';
 import moment from 'moment';
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import { FC, default as React, useCallback, useEffect, useState } from 'react';
 import { aggregateCostReports, formatCurrency, mergeCostReports } from '../../api/functions';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { Budget, Report } from '../../api/types';
 import { colorList } from '../constants';
-import { BudgetsProps } from '../types';
 import { ProviderIcon } from '../ProviderIcon';
+import { BudgetsProps } from '../types';
 
 const enum BUDGET_VIEW {
   MONTHLY = 'Monthly',
