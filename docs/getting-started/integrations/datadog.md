@@ -1,6 +1,6 @@
 # :simple-datadog: Datadog
 
-To manage Datadog costs, you need to create an API key and an Application Key for your Organization, or [Parent Organization](https://docs.datadoghq.com/account_management/multi_organization/) (if you have Multiple-Organization Accounts), with `usage_read` permission. You can find the documentation [here](https://docs.datadoghq.com/account_management/api-app-keys/). Add the following settings to `app-config.yaml`:
+To manage Datadog costs, you need to create an API key and an Application Key for your Organization, or [Parent Organization](https://docs.datadoghq.com/account_management/multi_organization/) (if you have Multiple-Organization Accounts), with `usage_read` and `billing_read` permissions. You can find the documentation [here](https://docs.datadoghq.com/account_management/api-app-keys/). Add the following settings to `app-config.yaml`:
 
 ```yaml
 backend:
