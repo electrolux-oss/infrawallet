@@ -12,7 +12,7 @@ infraWallet:
     defaultShowLastXMonths: 3 # 3 by default, or other numbers, we recommend it less than 12
 ```
 
-## Customizing the InfraWalletPage Title and Subtitle
+## Custom Title and Subtitle
 
 By default, the `InfraWalletPage` component is configured in the `packages/app/src/App.tsx` file as follows:
 
@@ -24,4 +24,21 @@ To customize the title and subtitle of the InfraWalletPage, you can modify the r
 
 ```ts
 <Route path="/infrawallet" element={<InfraWalletPage title="Custom title" subTitle="Custom subTitle" />} />
+```
+
+## Configuring Tab Visibility
+
+InfraWallet includes tabs for Budgets, Custom Costs, and Business Metrics. You can easily control the visibility of each tab by enabling or disabling them in your `app-config.yaml`.
+
+```yaml
+infraWallet:
+  settings:
+    budgets:
+      enabled: true
+    
+    businessMetrics:
+      enabled: true
+
+    customCosts:
+      enabled: false  # hide Custom Costs tab
 ```
