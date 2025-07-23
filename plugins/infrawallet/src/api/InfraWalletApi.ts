@@ -29,6 +29,15 @@ export interface InfraWalletApi {
     startTime: Date,
     endTime: Date,
   ): Promise<CostReportsResponse>;
+  getEntityCostReports(
+    entityName: string,
+    filters: string,
+    tags: Tag[],
+    groups: string,
+    granularity: string,
+    startTime: Date,
+    endTime: Date,
+  ): Promise<CostReportsResponse>;
   getTagKeys(provider: string, startTime: Date, endTime: Date): Promise<TagResponse>;
   getTagValues(tag: Tag, startTime: Date, endTime: Date): Promise<TagResponse>;
   getBudgets(walletName: string): Promise<BudgetsResponse>;

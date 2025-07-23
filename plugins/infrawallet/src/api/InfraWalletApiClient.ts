@@ -70,6 +70,21 @@ export class InfraWalletApiClient implements InfraWalletApi {
     return await this.request(url);
   }
 
+  async getEntityCostReports(
+    entityName: string,
+    filters: string,
+    tags: Tag[],
+    groups: string,
+    granularity: string,
+    startTime: Date,
+    endTime: Date,
+  ): Promise<CostReportsResponse> {
+    const tagsString = tagsToString(tags);
+    const url = `api/infrawallet/reports/${entityName}?granularity=${granularity}&groups=${groups}&filters=${filters}&tags=${tagsString}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
+
+    return await this.request(url);
+  }
+
   async getTagKeys(provider: string, startTime: Date, endTime: Date): Promise<TagResponse> {
     const url = `api/infrawallet/tag-keys?provider=${provider}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
     return await this.request(url);

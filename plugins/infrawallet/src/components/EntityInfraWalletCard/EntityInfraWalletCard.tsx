@@ -1,3 +1,4 @@
+import { Entity } from '@backstage/catalog-model';
 import { InfoCard, Progress } from '@backstage/core-components';
 import { useApi } from '@backstage/core-plugin-api';
 import { useEntity } from '@backstage/plugin-catalog-react';
@@ -13,7 +14,7 @@ import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 import { default as React, useEffect, useState } from 'react';
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { infraWalletApiRef } from '../../api/InfraWalletApi';
+import { InfraWalletApi, infraWalletApiRef } from '../../api/InfraWalletApi';
 import { CostReportsResponse, Report, Tag } from '../../api/types';
 
 const COLORS = [
@@ -29,7 +30,12 @@ const COLORS = [
   '#00ffff',
 ];
 
-async function getFilteredCostReports(infrawalletApi: any, filters: string, tags: Tag[]): Promise<Report[] | null> {
+async function getFilteredCostReports(
+  infrawalletApi: InfraWalletApi,
+  entity: Entity,
+  filters: string,
+  tags: Tag[],
+): Promise<Report[] | null> {
   const groups = '';
   const granularity = 'monthly';
 
@@ -37,7 +43,8 @@ async function getFilteredCostReports(infrawalletApi: any, filters: string, tags
   const startTime = new Date();
   startTime.setMonth(endTime.getMonth() - 2);
 
-  const costReportsResponse: CostReportsResponse = await infrawalletApi.getCostReports(
+  const costReportsResponse: CostReportsResponse = await infrawalletApi.getEntityCostReports(
+    encodeURIComponent(`${entity.metadata.namespace}/${entity.metadata.name}`),
     filters,
     tags,
     groups,
@@ -401,7 +408,7 @@ export const EntityInfraWalletCard = () => {
 
       let costReports: Report[] | null = [];
       try {
-        costReports = await getFilteredCostReports(infrawalletApi, filters, tags);
+        costReports = await getFilteredCostReports(infrawalletApi, entity, filters, tags);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch cost reports');
         setErrorSeverity('error');
