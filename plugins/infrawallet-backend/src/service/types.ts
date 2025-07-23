@@ -48,6 +48,15 @@ export type Report = {
   [key: string]: string | number | { [period: string]: number } | undefined;
 };
 
+export type ReportParameters = {
+  filters: string;
+  tags: Tag[];
+  groups: string;
+  granularityString: string;
+  startTime: string;
+  endTime: string;
+};
+
 export type Tag = {
   key: string;
   value?: string;

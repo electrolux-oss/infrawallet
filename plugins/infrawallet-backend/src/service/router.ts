@@ -24,7 +24,7 @@ import { fetchAndSaveCosts } from '../tasks/fetchAndSaveCosts';
 import { CategoryMappingService } from './CategoryMappingService';
 import { COST_CLIENT_MAPPINGS, GRANULARITY, METRIC_PROVIDER_MAPPINGS } from './consts';
 import { parseFilters, parseTags, tagsToString } from './functions';
-import { CloudProviderError, Metric, MetricSetting, Report, RouterOptions, Tag } from './types';
+import { CloudProviderError, Metric, MetricSetting, Report, ReportParameters, RouterOptions, Tag } from './types';
 
 async function setUpDatabase(database: DatabaseService) {
   // check database migrations
@@ -42,17 +42,13 @@ async function setUpDatabase(database: DatabaseService) {
 }
 
 async function getReports(
-  filters: string,
-  tags: Tag[],
-  groups: string,
-  granularityString: string,
-  startTime: string,
-  endTime: string,
+  queryParameters: ReportParameters,
   config: Config,
   database: DatabaseService,
   cache: CacheService,
   logger: LoggerService,
 ): Promise<{ reports: Report[]; clientErrors: CloudProviderError[] }> {
+  const { filters, tags, groups, granularityString, startTime, endTime } = queryParameters;
   const promises: Promise<void>[] = [];
   const results: Report[] = [];
   const errors: CloudProviderError[] = [];
@@ -201,12 +197,7 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     const endTime = request.query.endTime as string;
 
     const { reports, clientErrors } = await getReports(
-      filters,
-      tags,
-      groups,
-      granularityString,
-      startTime,
-      endTime,
+      { filters, tags, groups, granularityString, startTime, endTime },
       config,
       database,
       cache,
@@ -233,12 +224,7 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
 
     if (!entityReportCollector) {
       const { reports, clientErrors } = await getReports(
-        filters,
-        tags,
-        groups,
-        granularityString,
-        startTime,
-        endTime,
+        { filters, tags, groups, granularityString, startTime, endTime },
         config,
         database,
         cache,
@@ -247,16 +233,14 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
       results = reports;
       errors = clientErrors;
     } else {
-      const { reports, clientErrors } = await entityReportCollector.collectReports(
-        entityNamespace,
-        entityName,
+      const { reports, clientErrors } = await entityReportCollector.collectReports(entityNamespace, entityName, {
         filters,
         tags,
         groups,
         granularityString,
         startTime,
         endTime,
-      );
+      });
       results = reports;
       errors = clientErrors;
     }

@@ -1,16 +1,11 @@
 import { createExtensionPoint } from '@backstage/backend-plugin-api';
-import { CloudProviderError, Report, Tag } from './service/types';
+import { CloudProviderError, Report, ReportParameters } from './service/types';
 
 export interface InfrawalletReportCollector {
   collectReports(
     entityNamespace: string,
     entityName: string,
-    filters: string,
-    tags: Tag[],
-    groups: string,
-    granularityString: string,
-    startTime: string,
-    endTime: string,
+    queryParameters: ReportParameters,
   ): Promise<{ reports: Report[]; clientErrors: CloudProviderError[] }>;
 }
 
