@@ -9,7 +9,7 @@ export interface RouterOptions {
   scheduler: SchedulerService;
   cache: CacheService;
   database: DatabaseService;
-  entityReportCollector: InfrawalletReportCollector | undefined;
+  entityReportCollector?: InfrawalletReportCollector;
 }
 
 export type CategoryMappings = {
