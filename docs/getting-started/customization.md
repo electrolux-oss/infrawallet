@@ -35,10 +35,10 @@ infraWallet:
   settings:
     budgets:
       enabled: true
-    
+
     businessMetrics:
       enabled: true
 
     customCosts:
-      enabled: false  # hide Custom Costs tab
+      enabled: false # hide Custom Costs tab
 ```
