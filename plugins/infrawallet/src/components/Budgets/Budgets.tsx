@@ -565,9 +565,9 @@ function BudgetInsights({ reports }: BudgetInsightsProps) {
             <Typography variant="subtitle2" gutterBottom>
               Recommendations
             </Typography>
-            {recommendations.map((rec, index) => (
+            {recommendations.map((rec) => (
               <Chip
-                key={index}
+                key={`${rec.type}-${rec.message}`}
                 label={rec.message}
                 size="small"
                 color={getRecommendationColor(rec.type)}
