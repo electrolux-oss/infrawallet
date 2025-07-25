@@ -125,7 +125,9 @@ export class GCPClient extends InfraWalletClient {
         // Check for rate limiting and quota errors
         if (errorCode === 429 || errorMessage.includes('quotaExceeded') || errorMessage.includes('rateLimitExceeded')) {
           const retryDelay = Math.min(60 * Math.pow(2, retries), 300); // Exponential backoff, max 5 minutes
-          this.logger.warn(`Hit BigQuery rate limit/quota, retrying after ${retryDelay} seconds... (attempt ${retries + 1}/${maxRetries})`);
+          this.logger.warn(
+            `Hit BigQuery rate limit/quota, retrying after ${retryDelay} seconds... (attempt ${retries + 1}/${maxRetries})`,
+          );
           await new Promise(resolve => setTimeout(resolve, retryDelay * 1000));
           retries++;
           continue;
@@ -134,7 +136,9 @@ export class GCPClient extends InfraWalletClient {
         // Check for transient backend errors
         if (errorMessage.includes('backendError') || errorMessage.includes('internalError') || errorCode >= 500) {
           const retryDelay = Math.min(30 * Math.pow(2, retries), 120); // Shorter backoff for backend errors
-          this.logger.warn(`BigQuery backend error, retrying after ${retryDelay} seconds... (attempt ${retries + 1}/${maxRetries}): ${errorMessage}`);
+          this.logger.warn(
+            `BigQuery backend error, retrying after ${retryDelay} seconds... (attempt ${retries + 1}/${maxRetries}): ${errorMessage}`,
+          );
           await new Promise(resolve => setTimeout(resolve, retryDelay * 1000));
           retries++;
           continue;
