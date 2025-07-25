@@ -36,7 +36,13 @@ import {
 import { max } from 'lodash';
 import moment from 'moment';
 import React, { FC, useCallback, useEffect, useState } from 'react';
-import { aggregateCostReports, formatCurrency, mergeCostReports, calculateBudgetAnalytics, BudgetAnalytics } from '../../api/functions';
+import {
+  aggregateCostReports,
+  formatCurrency,
+  mergeCostReports,
+  calculateBudgetAnalytics,
+  BudgetAnalytics,
+} from '../../api/functions';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { Budget, Report } from '../../api/types';
 import { colorList } from '../constants';
@@ -71,19 +77,27 @@ interface BudgetHealthIndicatorProps {
 function BudgetHealthIndicator({ status, utilizationPercent }: BudgetHealthIndicatorProps) {
   const getStatusColor = () => {
     switch (status) {
-      case 'healthy': return '#4caf50';
-      case 'warning': return '#ff9800';
-      case 'critical': return '#f44336';
-      default: return '#9e9e9e';
+      case 'healthy':
+        return '#4caf50';
+      case 'warning':
+        return '#ff9800';
+      case 'critical':
+        return '#f44336';
+      default:
+        return '#9e9e9e';
     }
   };
 
   const getStatusLabel = () => {
     switch (status) {
-      case 'healthy': return 'On Track';
-      case 'warning': return 'At Risk';
-      case 'critical': return 'Over Budget';
-      default: return 'Unknown';
+      case 'healthy':
+        return 'On Track';
+      case 'warning':
+        return 'At Risk';
+      case 'critical':
+        return 'Over Budget';
+      default:
+        return 'Unknown';
     }
   };
 
@@ -95,7 +109,7 @@ function BudgetHealthIndicator({ status, utilizationPercent }: BudgetHealthIndic
         backgroundColor: getStatusColor(),
         color: 'white',
         fontWeight: 'bold',
-        '& .MuiChip-label': { fontWeight: 'bold' }
+        '& .MuiChip-label': { fontWeight: 'bold' },
       }}
     />
   );
@@ -136,10 +150,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
 
   const infraWalletApi = useApi(infraWalletApiRef);
 
-  const budgetAnalytics: BudgetAnalytics = calculateBudgetAnalytics(
-    monthlyCosts,
-    annualBudget?.amount || 0
-  );
+  const budgetAnalytics: BudgetAnalytics = calculateBudgetAnalytics(monthlyCosts, annualBudget?.amount || 0);
 
   useEffect(() => {
     const fetchBudget = async () => {
@@ -194,7 +205,6 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
     budgetAmount = budgetAmount / 12;
   }
 
-
   return (
     <Paper sx={{ padding: 2 }}>
       {/* Budget Health Header */}
@@ -206,8 +216,8 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
           </Typography>
         </Box>
         {annualBudget?.amount && (
-          <BudgetHealthIndicator 
-            status={budgetAnalytics.budgetHealthStatus} 
+          <BudgetHealthIndicator
+            status={budgetAnalytics.budgetHealthStatus}
             utilizationPercent={budgetAnalytics.budgetUtilizationPercent}
           />
         )}
@@ -237,17 +247,17 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
                 <Typography variant="caption" color="textSecondary">
                   Projected Annual
                 </Typography>
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   fontWeight="bold"
                   color={budgetAnalytics.projectedAnnualSpending > (annualBudget?.amount || 0) ? 'error' : 'inherit'}
                 >
                   {formatCurrency(budgetAnalytics.projectedAnnualSpending)}
                 </Typography>
                 <Typography variant="caption" color="textSecondary">
-                  {budgetAnalytics.projectedAnnualSpending > (annualBudget?.amount || 0) ? 
-                    `+${formatCurrency(budgetAnalytics.projectedAnnualSpending - annualBudget.amount)} over` : 
-                    `${formatCurrency(annualBudget.amount - budgetAnalytics.projectedAnnualSpending)} under`}
+                  {budgetAnalytics.projectedAnnualSpending > (annualBudget?.amount || 0)
+                    ? `+${formatCurrency(budgetAnalytics.projectedAnnualSpending - annualBudget.amount)} over`
+                    : `${formatCurrency(annualBudget.amount - budgetAnalytics.projectedAnnualSpending)} under`}
                 </Typography>
               </CardContent>
             </Card>
@@ -261,11 +271,8 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
                 <Typography variant="body2" fontWeight="bold">
                   {formatCurrency(budgetAnalytics.monthlyRunRate)}
                 </Typography>
-                <Typography 
-                  variant="caption" 
-                  color={getSpendingVelocityColor(budgetAnalytics.spendingVelocity)}
-                >
-                  {getSpendingVelocityIcon(budgetAnalytics.spendingVelocity)} 
+                <Typography variant="caption" color={getSpendingVelocityColor(budgetAnalytics.spendingVelocity)}>
+                  {getSpendingVelocityIcon(budgetAnalytics.spendingVelocity)}
                   {Math.abs(budgetAnalytics.spendingVelocity).toFixed(1)}% MoM
                 </Typography>
               </CardContent>
@@ -277,10 +284,12 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
                 <Typography variant="caption" color="textSecondary">
                   Target Monthly
                 </Typography>
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   fontWeight="bold"
-                  color={budgetAnalytics.targetMonthlySpending < budgetAnalytics.monthlyRunRate ? 'error' : 'success.main'}
+                  color={
+                    budgetAnalytics.targetMonthlySpending < budgetAnalytics.monthlyRunRate ? 'error' : 'success.main'
+                  }
                 >
                   {formatCurrency(budgetAnalytics.targetMonthlySpending)}
                 </Typography>
@@ -397,8 +406,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
         <ChartsYAxis />
         <ChartsTooltip />
       </ChartContainer>
-      
-      
+
       <Box sx={{ textAlign: 'center' }}>
         <Button onClick={() => setOpenManageBudget(true)}>Manage budget</Button>
         <Dialog fullWidth maxWidth="sm" open={openManageBudget} onClose={() => setOpenManageBudget(false)}>
@@ -454,13 +462,15 @@ function BudgetInsights({ reports }: BudgetInsightsProps) {
     fetchBudgets();
   }, [infraWalletApi]);
 
-  const insights = reports.map(report => {
-    const budget = budgets.find(b => b.provider.toLowerCase() === report.id.toLowerCase());
-    if (!budget?.amount) return null;
-    
-    const analytics = calculateBudgetAnalytics(report.reports, budget.amount);
-    return { provider: report.id, budget, analytics };
-  }).filter(Boolean);
+  const insights = reports
+    .map(report => {
+      const budget = budgets.find(b => b.provider.toLowerCase() === report.id.toLowerCase());
+      if (!budget?.amount) return null;
+
+      const analytics = calculateBudgetAnalytics(report.reports, budget.amount);
+      return { provider: report.id, budget, analytics };
+    })
+    .filter(Boolean);
 
   const totalBudget = budgets.reduce((sum, b) => sum + (b.amount || 0), 0);
   const totalProjected = insights.reduce((sum, i) => sum + (i?.analytics.projectedAnnualSpending || 0), 0);
@@ -469,25 +479,25 @@ function BudgetInsights({ reports }: BudgetInsightsProps) {
 
   const getRecommendations = () => {
     const recommendations = [];
-    
+
     if (overBudgetProviders.length > 0) {
       recommendations.push({
         type: 'critical',
-        message: `${overBudgetProviders.length} provider(s) are over budget: ${overBudgetProviders.map(p => p?.provider).join(', ')}`
+        message: `${overBudgetProviders.length} provider(s) are over budget: ${overBudgetProviders.map(p => p?.provider).join(', ')}`,
       });
     }
-    
+
     if (atRiskProviders.length > 0) {
       recommendations.push({
-        type: 'warning', 
-        message: `${atRiskProviders.length} provider(s) at risk: ${atRiskProviders.map(p => p?.provider).join(', ')}`
+        type: 'warning',
+        message: `${atRiskProviders.length} provider(s) at risk: ${atRiskProviders.map(p => p?.provider).join(', ')}`,
       });
     }
-    
+
     if (totalProjected > totalBudget) {
       recommendations.push({
         type: 'info',
-        message: `Total projected spending (${formatCurrency(totalProjected)}) exceeds total budget (${formatCurrency(totalBudget)}) by ${formatCurrency(totalProjected - totalBudget)}`
+        message: `Total projected spending (${formatCurrency(totalProjected)}) exceeds total budget (${formatCurrency(totalBudget)}) by ${formatCurrency(totalProjected - totalBudget)}`,
       });
     }
 
@@ -495,7 +505,7 @@ function BudgetInsights({ reports }: BudgetInsightsProps) {
     if (highVelocityProviders.length > 0) {
       recommendations.push({
         type: 'warning',
-        message: `High spending acceleration detected in: ${highVelocityProviders.map(p => p?.provider).join(', ')}`
+        message: `High spending acceleration detected in: ${highVelocityProviders.map(p => p?.provider).join(', ')}`,
       });
     }
 
@@ -509,13 +519,17 @@ function BudgetInsights({ reports }: BudgetInsightsProps) {
   return (
     <Card sx={{ mb: 3 }}>
       <CardContent>
-        <Typography variant="h6" gutterBottom>Budget Insights</Typography>
-        
+        <Typography variant="h6" gutterBottom>
+          Budget Insights
+        </Typography>
+
         {/* Overview Stats */}
         <Grid container spacing={2} sx={{ mb: 2 }}>
           <Grid item xs={3}>
             <Box textAlign="center">
-              <Typography variant="h4" color="primary">{insights.length}</Typography>
+              <Typography variant="h4" color="primary">
+                {insights.length}
+              </Typography>
               <Typography variant="caption">Providers</Typography>
             </Box>
           </Grid>
@@ -548,7 +562,9 @@ function BudgetInsights({ reports }: BudgetInsightsProps) {
         {/* Recommendations */}
         {recommendations.length > 0 && (
           <Box>
-            <Typography variant="subtitle2" gutterBottom>Recommendations</Typography>
+            <Typography variant="subtitle2" gutterBottom>
+              Recommendations
+            </Typography>
             {recommendations.map((rec, index) => (
               <Chip
                 key={index}
@@ -610,7 +626,7 @@ export const Budgets: FC<BudgetsProps> = ({ providerErrorsSetter }) => {
           </Box>
         </Box>
       </Grid>
-      
+
       {/* Budget Insights Panel */}
       {reportsAggregatedAndMerged && (
         <Grid item xs={12}>

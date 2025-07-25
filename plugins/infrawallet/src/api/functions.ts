@@ -236,14 +236,14 @@ export const calculateBudgetAnalytics = (
   const currentYear = moment().year();
   const daysIntoCurrentMonth = moment().date();
   const daysInCurrentMonth = moment().daysInMonth();
-  
+
   let yearToDateSpent = 0;
   const monthlySpending: number[] = [];
-  
+
   for (let month = 1; month <= currentMonth; month++) {
     const monthKey = `${currentYear}-${month.toString().padStart(2, '0')}`;
     const monthCost = monthlyCosts[monthKey] || 0;
-    
+
     if (month < currentMonth) {
       yearToDateSpent += monthCost;
       monthlySpending.push(monthCost);
@@ -253,41 +253,47 @@ export const calculateBudgetAnalytics = (
       monthlySpending.push(projectedCurrentMonthCost);
     }
   }
-  
+
   const monthsRemaining = 12 - currentMonth + (1 - daysIntoCurrentMonth / daysInCurrentMonth);
-  const averageMonthlySpending = monthlySpending.length > 0 ? 
-    monthlySpending.reduce((sum, cost) => sum + cost, 0) / monthlySpending.length : 0;
-  
+  const averageMonthlySpending =
+    monthlySpending.length > 0 ? monthlySpending.reduce((sum, cost) => sum + cost, 0) / monthlySpending.length : 0;
+
   const monthlyRunRate = monthlySpending.length > 0 ? monthlySpending[monthlySpending.length - 1] || 0 : 0;
-  
-  const projectedAnnualSpending = yearToDateSpent + (averageMonthlySpending * monthsRemaining);
-  
+
+  const projectedAnnualSpending = yearToDateSpent + averageMonthlySpending * monthsRemaining;
+
   const budgetUtilizationPercent = annualBudget > 0 ? (yearToDateSpent / annualBudget) * 100 : 0;
   const expectedUtilizationPercent = ((currentMonth - 1 + daysIntoCurrentMonth / daysInCurrentMonth) / 12) * 100;
-  
+
   let budgetHealthStatus: 'healthy' | 'warning' | 'critical' = 'healthy';
   if (budgetUtilizationPercent > expectedUtilizationPercent + 20) {
     budgetHealthStatus = 'critical';
   } else if (budgetUtilizationPercent > expectedUtilizationPercent + 10) {
     budgetHealthStatus = 'warning';
   }
-  
-  const targetMonthlySpending = monthsRemaining > 0 ? 
-    (annualBudget - yearToDateSpent) / monthsRemaining : 0;
-  
-  const spendingVariance = monthlySpending.length > 1 ? 
-    Math.sqrt(monthlySpending.reduce((sum, cost) => 
-      sum + Math.pow(cost - averageMonthlySpending, 2), 0) / (monthlySpending.length - 1)) : 0;
-  
-  const spendingVelocity = monthlySpending.length >= 2 ? 
-    ((monthlySpending[monthlySpending.length - 1] - monthlySpending[monthlySpending.length - 2]) / 
-     monthlySpending[monthlySpending.length - 2]) * 100 : 0;
-  
+
+  const targetMonthlySpending = monthsRemaining > 0 ? (annualBudget - yearToDateSpent) / monthsRemaining : 0;
+
+  const spendingVariance =
+    monthlySpending.length > 1
+      ? Math.sqrt(
+          monthlySpending.reduce((sum, cost) => sum + Math.pow(cost - averageMonthlySpending, 2), 0) /
+            (monthlySpending.length - 1),
+        )
+      : 0;
+
+  const spendingVelocity =
+    monthlySpending.length >= 2
+      ? ((monthlySpending[monthlySpending.length - 1] - monthlySpending[monthlySpending.length - 2]) /
+          monthlySpending[monthlySpending.length - 2]) *
+        100
+      : 0;
+
   const confidenceRange = {
-    low: Math.max(0, projectedAnnualSpending - (spendingVariance * 2 * Math.sqrt(monthsRemaining))),
-    high: projectedAnnualSpending + (spendingVariance * 2 * Math.sqrt(monthsRemaining))
+    low: Math.max(0, projectedAnnualSpending - spendingVariance * 2 * Math.sqrt(monthsRemaining)),
+    high: projectedAnnualSpending + spendingVariance * 2 * Math.sqrt(monthsRemaining),
   };
-  
+
   return {
     yearToDateSpent,
     monthlyRunRate,
@@ -298,6 +304,6 @@ export const calculateBudgetAnalytics = (
     monthsRemaining,
     averageMonthlySpending,
     spendingVelocity,
-    confidenceRange
+    confidenceRange,
   };
 };
