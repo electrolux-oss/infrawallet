@@ -70,8 +70,7 @@ const customProviderModule = createBackendModule({
       async init({ costClients }) {
         costClients.registerCostClient({
           provider: 'mycustomprovider',
-          factory: (config, database, cache, logger) => 
-            new MyCustomProviderClient(config, database, cache, logger),
+          factory: (config, database, cache, logger) => new MyCustomProviderClient(config, database, cache, logger),
         });
       },
     });
@@ -112,8 +111,7 @@ export const infraWalletModuleMyProvider = createBackendModule({
       async init({ costClients }) {
         costClients.registerCostClient({
           provider: 'myprovider',
-          factory: (config, database, cache, logger) => 
-            new MyProviderClient(config, database, cache, logger),
+          factory: (config, database, cache, logger) => new MyProviderClient(config, database, cache, logger),
         });
       },
     });
@@ -147,11 +145,7 @@ export class MyCustomProviderClient extends InfraWalletClient {
   }
 
   // Fetch raw cost data from your provider
-  protected async fetchCosts(
-    integrationConfig: Config,
-    client: any,
-    query: CostQuery
-  ): Promise<any> {
+  protected async fetchCosts(integrationConfig: Config, client: any, query: CostQuery): Promise<any> {
     // Make API calls to fetch cost data
     // Return raw data from your provider
   }
@@ -160,11 +154,11 @@ export class MyCustomProviderClient extends InfraWalletClient {
   protected async transformCostsData(
     integrationConfig: Config,
     query: CostQuery,
-    costResponse: any
+    costResponse: any,
   ): Promise<Report[]> {
     // Transform data into Report[] format
     const reports: Report[] = [];
-    
+
     // Each report represents a cost item
     for (const item of costResponse.items) {
       reports.push({
@@ -176,12 +170,12 @@ export class MyCustomProviderClient extends InfraWalletClient {
         providerType: PROVIDER_TYPE.INTEGRATION,
         reports: {
           // Map of date -> cost
-          '2024-01-01': 100.50,
+          '2024-01-01': 100.5,
           '2024-01-02': 105.25,
         },
       });
     }
-    
+
     return reports;
   }
 }
@@ -242,13 +236,14 @@ Each cost report must follow this structure:
 
 ```typescript
 interface Report {
-  id: string;              // Unique identifier for this cost item
-  account: string;         // Account name (format: "provider/account-name")
-  service: string;         // Service name (format: "provider/service-name")
-  category?: string;       // Cost category (e.g., "Compute", "Storage", "Network")
-  provider: string;        // Your provider identifier
+  id: string; // Unique identifier for this cost item
+  account: string; // Account name (format: "provider/account-name")
+  service: string; // Service name (format: "provider/service-name")
+  category?: string; // Cost category (e.g., "Compute", "Storage", "Network")
+  provider: string; // Your provider identifier
   providerType: PROVIDER_TYPE; // Use PROVIDER_TYPE.INTEGRATION
-  reports: {               // Cost data by date
+  reports: {
+    // Cost data by date
     [date: string]: number; // Date format: "YYYY-MM-DD" for daily, "YYYY-MM" for monthly
   };
   // Optional fields
@@ -263,12 +258,12 @@ Your cost client will receive queries with these parameters:
 
 ```typescript
 interface CostQuery {
-  startTime: string;      // Unix timestamp in milliseconds
-  endTime: string;        // Unix timestamp in milliseconds
-  granularity: string;    // "daily" or "monthly"
-  filters: string;        // Filter expression
-  tags: string;           // Tag filter expression
-  groups: string;         // Grouping fields
+  startTime: string; // Unix timestamp in milliseconds
+  endTime: string; // Unix timestamp in milliseconds
+  granularity: string; // "daily" or "monthly"
+  filters: string; // Filter expression
+  tags: string; // Tag filter expression
+  groups: string; // Grouping fields
 }
 ```
 
@@ -282,11 +277,13 @@ interface CostQuery {
    } catch (error) {
      return {
        reports: [],
-       errors: [{
-         provider: this.provider,
-         name: integrationConfig.getString('name'),
-         error: error.message,
-       }],
+       errors: [
+         {
+           provider: this.provider,
+           name: integrationConfig.getString('name'),
+           error: error.message,
+         },
+       ],
      };
    }
    ```
@@ -295,11 +292,11 @@ interface CostQuery {
 
    ```typescript
    import { getReportsFromCache, setReportsToCache } from '@electrolux-oss/plugin-infrawallet-node';
-   
+
    // Check cache first
    const cached = await getReportsFromCache(this.cache, this.provider, integrationName, query);
    if (cached) return cached;
-   
+
    // Fetch and cache results
    const reports = await this.fetchAndTransform(...);
    await setReportsToCache(this.cache, reports, this.provider, integrationName, query, ttl);
@@ -343,7 +340,7 @@ export class MockProviderClient extends InfraWalletClient {
     // Generate mock data based on query parameters
     const startDate = new Date(parseInt(query.startTime, 10));
     const endDate = new Date(parseInt(query.endTime, 10));
-    
+
     return {
       items: [
         {
@@ -360,10 +357,10 @@ export class MockProviderClient extends InfraWalletClient {
   protected async transformCostsData(
     _integrationConfig: Config,
     query: CostQuery,
-    costResponse: any
+    costResponse: any,
   ): Promise<Report[]> {
     const reports: Report[] = [];
-    
+
     for (const item of costResponse.items) {
       const report: Report = {
         id: `${item.accountId}_${item.service}`,
@@ -374,39 +371,39 @@ export class MockProviderClient extends InfraWalletClient {
         providerType: PROVIDER_TYPE.INTEGRATION,
         reports: {},
       };
-      
+
       // Add cost data for each period
       for (const cost of item.costs) {
         const dateKey = this.formatDate(cost.date, query.granularity);
         report.reports[dateKey] = cost.amount;
       }
-      
+
       reports.push(report);
     }
-    
+
     return reports;
   }
-  
+
   private generateMockCosts(start: Date, end: Date, granularity: string, baseCost: number): any[] {
     const costs = [];
     const current = new Date(start);
-    
+
     while (current <= end) {
       costs.push({
         date: current.toISOString(),
         amount: baseCost * (0.8 + Math.random() * 0.4), // ±20% variance
       });
-      
+
       if (granularity === 'daily') {
         current.setDate(current.getDate() + 1);
       } else {
         current.setMonth(current.getMonth() + 1);
       }
     }
-    
+
     return costs;
   }
-  
+
   private formatDate(date: string, granularity: string): string {
     const d = new Date(date);
     if (granularity === 'daily') {

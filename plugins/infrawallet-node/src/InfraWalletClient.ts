@@ -1,8 +1,7 @@
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { addMonths, endOfMonth, format, startOfMonth } from 'date-fns';
-import { reduce } from 'lodash';
-import { CACHE_CATEGORY, CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from './consts';
+import { format } from 'date-fns';
+import { CACHE_CATEGORY, CLOUD_PROVIDER, GRANULARITY } from './consts';
 import {
   ClientResponse,
   CloudProviderError,
@@ -62,7 +61,7 @@ export async function getReportsFromCache(
 ): Promise<Report[] | undefined> {
   const cacheKey = `costs:${provider}:${integrationName}:${JSON.stringify(query)}`;
   const cached = await cache.get(cacheKey);
-  return cached ? JSON.parse(cached) : undefined;
+  return cached && typeof cached === 'string' ? JSON.parse(cached) : undefined;
 }
 
 export async function setReportsToCache(
@@ -85,7 +84,7 @@ export async function getTagKeysFromCache(
 ): Promise<Tag[] | undefined> {
   const cacheKey = `tagKeys:${provider}:${integrationName}:${JSON.stringify(query)}`;
   const cached = await cache.get(cacheKey);
-  return cached ? JSON.parse(cached) : undefined;
+  return cached && typeof cached === 'string' ? JSON.parse(cached) : undefined;
 }
 
 export async function setTagKeysToCache(
@@ -109,7 +108,7 @@ export async function getTagValuesFromCache(
 ): Promise<Tag[] | undefined> {
   const cacheKey = `tagValues:${provider}:${integrationName}:${tagKey}:${JSON.stringify(query)}`;
   const cached = await cache.get(cacheKey);
-  return cached ? JSON.parse(cached) : undefined;
+  return cached && typeof cached === 'string' ? JSON.parse(cached) : undefined;
 }
 
 export async function setTagValuesToCache(
@@ -133,20 +132,6 @@ export function usageDateToPeriodString(usageDate: number): string {
   const date = new Date(usageDate);
   return format(date, 'yyyy-MM-dd');
 }
-
-// Constants for historical cost fetching
-const NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS: { [provider in CLOUD_PROVIDER]: number } = {
-  [CLOUD_PROVIDER.AWS]: 18,
-  [CLOUD_PROVIDER.AZURE]: 11,
-  [CLOUD_PROVIDER.GCP]: 18,
-  [CLOUD_PROVIDER.MONGODB_ATLAS]: 18,
-  [CLOUD_PROVIDER.CONFLUENT]: 11,
-  [CLOUD_PROVIDER.DATADOG]: 12,
-  [CLOUD_PROVIDER.ELASTIC_CLOUD]: 11,
-  [CLOUD_PROVIDER.GITHUB]: 12,
-  [CLOUD_PROVIDER.CUSTOM]: 0,
-  [CLOUD_PROVIDER.MOCK]: 0,
-};
 
 export abstract class InfraWalletClient {
   constructor(
@@ -454,7 +439,7 @@ export abstract class InfraWalletClient {
     // 3. Fetch and save cost data using models
   }
 
-  async getCostReportsFromDatabase(query: CostQuery): Promise<Report[]> {
+  async getCostReportsFromDatabase(_query: CostQuery): Promise<Report[]> {
     // This method would need proper database models implementation
     // For now, return empty array as it requires backend-specific database access
     this.logger.debug(`Getting cost reports from database for ${this.provider}`);
