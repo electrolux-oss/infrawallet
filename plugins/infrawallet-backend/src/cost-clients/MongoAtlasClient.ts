@@ -6,7 +6,15 @@ import urllib from 'urllib';
 import { CategoryMappingService } from '../service/CategoryMappingService';
 import { CLOUD_PROVIDER, PROVIDER_TYPE } from '@electrolux-oss/plugin-infrawallet-node';
 import { getBillingPeriod } from '../service/functions';
-import { CostQuery, Report, TagsQuery, CloudProviderError, ClientResponse, TagsResponse, Wallet } from '@electrolux-oss/plugin-infrawallet-node';
+import {
+  CostQuery,
+  Report,
+  TagsQuery,
+  CloudProviderError,
+  ClientResponse,
+  TagsResponse,
+  Wallet,
+} from '@electrolux-oss/plugin-infrawallet-node';
 import { InfraWalletClient } from '@electrolux-oss/plugin-infrawallet-node';
 
 export class MongoAtlasClient extends InfraWalletClient {

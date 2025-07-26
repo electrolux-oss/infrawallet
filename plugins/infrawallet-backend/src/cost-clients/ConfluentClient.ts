@@ -1,6 +1,14 @@
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { CostQuery, Report, TagsQuery, CloudProviderError, ClientResponse, TagsResponse, Wallet } from '@electrolux-oss/plugin-infrawallet-node';
+import {
+  CostQuery,
+  Report,
+  TagsQuery,
+  CloudProviderError,
+  ClientResponse,
+  TagsResponse,
+  Wallet,
+} from '@electrolux-oss/plugin-infrawallet-node';
 import { InfraWalletClient } from '@electrolux-oss/plugin-infrawallet-node';
 import moment from 'moment';
 import { CategoryMappingService } from '../service/CategoryMappingService';

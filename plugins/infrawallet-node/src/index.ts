@@ -8,7 +8,7 @@
 export { InfraWalletClient } from './InfraWalletClient';
 
 // Extension points
-export { 
+export {
   infraWalletCostClientsExtensionPoint,
   type InfraWalletCostClientsExtensionPoint,
   type CostClientRegistration,

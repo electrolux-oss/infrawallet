@@ -3,7 +3,15 @@ import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import { CLOUD_PROVIDER, PROVIDER_TYPE } from '@electrolux-oss/plugin-infrawallet-node';
 import { getBillingPeriod, parseCost } from '../service/functions';
-import { CostQuery, Report, TagsQuery, CloudProviderError, ClientResponse, TagsResponse, Wallet } from '@electrolux-oss/plugin-infrawallet-node';
+import {
+  CostQuery,
+  Report,
+  TagsQuery,
+  CloudProviderError,
+  ClientResponse,
+  TagsResponse,
+  Wallet,
+} from '@electrolux-oss/plugin-infrawallet-node';
 import { InfraWalletClient } from '@electrolux-oss/plugin-infrawallet-node';
 
 export class GitHubClient extends InfraWalletClient {

@@ -16,7 +16,6 @@ export interface InfraWalletCostClientsExtensionPoint {
   registerCostClient(registration: CostClientRegistration): void;
 }
 
-export const infraWalletCostClientsExtensionPoint = 
-  createExtensionPoint<InfraWalletCostClientsExtensionPoint>({
-    id: 'infrawallet.costClients',
-  });
+export const infraWalletCostClientsExtensionPoint = createExtensionPoint<InfraWalletCostClientsExtensionPoint>({
+  id: 'infrawallet.costClients',
+});

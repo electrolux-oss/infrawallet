@@ -13,18 +13,18 @@ export async function fetchAndSaveCosts(options: RouterOptions) {
   // Helper function to get cost client
   const getCostClient = (provider: string): InfraWalletClient | undefined => {
     const normalizedProvider = provider.toLowerCase();
-    
+
     // Check external registry first
     if (costClientRegistry?.has(normalizedProvider)) {
       const registration = costClientRegistry.get(normalizedProvider)!;
       return registration.factory(config, database, cache, logger);
     }
-    
+
     // Fall back to built-in clients for backward compatibility
     if (normalizedProvider in COST_CLIENT_MAPPINGS) {
       return COST_CLIENT_MAPPINGS[normalizedProvider].create(config, database, cache, logger);
     }
-    
+
     return undefined;
   };
 

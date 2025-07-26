@@ -2,6 +2,29 @@
 
 InfraWallet's configuration schema is specified in `plugins/infrawallet-backend/config.d.ts`. To set up provider integrations, users must configure them in the `app-config.yaml` file located in the root directory.
 
+## Built-in Integrations
+
+InfraWallet comes with built-in support for major cloud providers and services:
+
+- :simple-amazonwebservices: [AWS](./aws.md)
+- :simple-microsoftazure: [Azure](./azure.md)
+- :simple-googlecloud: [Google Cloud](./google-cloud.md)
+- :simple-mongodb: [MongoDB Atlas](./mongodb-atlas.md)
+- :simple-datadog: [Datadog](./datadog.md)
+- :material-api: [Confluent Cloud](./confluent-cloud.md)
+- :simple-elastic: [Elastic Cloud](./elastic-cloud.md)
+- :simple-github: [GitHub](./github.md)
+
+## Custom Integrations
+
+In addition to built-in providers, InfraWallet supports custom cost client integrations through its extension point system. This allows you to:
+
+- Add support for proprietary or internal billing systems
+- Integrate with any service that provides cost data via API
+- Create mock providers for testing and development
+
+See the [Custom Providers](./custom-providers.md) guide for implementation details.
+
 ## Autoloading Cost Data and Saving to the Database
 
 !!! info

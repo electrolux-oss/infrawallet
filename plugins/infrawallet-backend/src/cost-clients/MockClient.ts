@@ -4,7 +4,15 @@ import { promises as fsPromises } from 'fs';
 import moment from 'moment';
 import * as upath from 'upath';
 import { CLOUD_PROVIDER, PROVIDER_TYPE } from '@electrolux-oss/plugin-infrawallet-node';
-import { CostQuery, Report, TagsQuery, CloudProviderError, ClientResponse, TagsResponse, Wallet } from '@electrolux-oss/plugin-infrawallet-node';
+import {
+  CostQuery,
+  Report,
+  TagsQuery,
+  CloudProviderError,
+  ClientResponse,
+  TagsResponse,
+  Wallet,
+} from '@electrolux-oss/plugin-infrawallet-node';
 import { InfraWalletClient } from '@electrolux-oss/plugin-infrawallet-node';
 
 export class MockClient extends InfraWalletClient {

@@ -2,12 +2,7 @@ import { CacheService, DatabaseService, LoggerService } from '@backstage/backend
 import { Config } from '@backstage/config';
 import { addMonths, endOfMonth, format, startOfMonth } from 'date-fns';
 import { reduce } from 'lodash';
-import {
-  CACHE_CATEGORY,
-  CLOUD_PROVIDER,
-  GRANULARITY,
-  PROVIDER_TYPE,
-} from './consts';
+import { CACHE_CATEGORY, CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from './consts';
 import {
   ClientResponse,
   CloudProviderError,
@@ -59,36 +54,72 @@ export function getDefaultCacheTTL(category: CACHE_CATEGORY, provider: CLOUD_PRO
 }
 
 // Cache helper functions (simplified versions)
-export async function getReportsFromCache(cache: CacheService, provider: CLOUD_PROVIDER, integrationName: string, query: CostQuery): Promise<Report[] | undefined> {
+export async function getReportsFromCache(
+  cache: CacheService,
+  provider: CLOUD_PROVIDER,
+  integrationName: string,
+  query: CostQuery,
+): Promise<Report[] | undefined> {
   const cacheKey = `costs:${provider}:${integrationName}:${JSON.stringify(query)}`;
   const cached = await cache.get(cacheKey);
   return cached ? JSON.parse(cached) : undefined;
 }
 
-export async function setReportsToCache(cache: CacheService, reports: Report[], provider: CLOUD_PROVIDER, integrationName: string, query: CostQuery, ttl: number): Promise<void> {
+export async function setReportsToCache(
+  cache: CacheService,
+  reports: Report[],
+  provider: CLOUD_PROVIDER,
+  integrationName: string,
+  query: CostQuery,
+  ttl: number,
+): Promise<void> {
   const cacheKey = `costs:${provider}:${integrationName}:${JSON.stringify(query)}`;
   await cache.set(cacheKey, JSON.stringify(reports), { ttl });
 }
 
-export async function getTagKeysFromCache(cache: CacheService, provider: CLOUD_PROVIDER, integrationName: string, query: TagsQuery): Promise<Tag[] | undefined> {
+export async function getTagKeysFromCache(
+  cache: CacheService,
+  provider: CLOUD_PROVIDER,
+  integrationName: string,
+  query: TagsQuery,
+): Promise<Tag[] | undefined> {
   const cacheKey = `tagKeys:${provider}:${integrationName}:${JSON.stringify(query)}`;
   const cached = await cache.get(cacheKey);
   return cached ? JSON.parse(cached) : undefined;
 }
 
-export async function setTagKeysToCache(cache: CacheService, tags: Tag[], provider: CLOUD_PROVIDER, integrationName: string, query: TagsQuery): Promise<void> {
+export async function setTagKeysToCache(
+  cache: CacheService,
+  tags: Tag[],
+  provider: CLOUD_PROVIDER,
+  integrationName: string,
+  query: TagsQuery,
+): Promise<void> {
   const cacheKey = `tagKeys:${provider}:${integrationName}:${JSON.stringify(query)}`;
   const ttl = getDefaultCacheTTL(CACHE_CATEGORY.TAGS, provider);
   await cache.set(cacheKey, JSON.stringify(tags), { ttl });
 }
 
-export async function getTagValuesFromCache(cache: CacheService, provider: CLOUD_PROVIDER, integrationName: string, tagKey: string, query: TagsQuery): Promise<Tag[] | undefined> {
+export async function getTagValuesFromCache(
+  cache: CacheService,
+  provider: CLOUD_PROVIDER,
+  integrationName: string,
+  tagKey: string,
+  query: TagsQuery,
+): Promise<Tag[] | undefined> {
   const cacheKey = `tagValues:${provider}:${integrationName}:${tagKey}:${JSON.stringify(query)}`;
   const cached = await cache.get(cacheKey);
   return cached ? JSON.parse(cached) : undefined;
 }
 
-export async function setTagValuesToCache(cache: CacheService, tags: Tag[], provider: CLOUD_PROVIDER, integrationName: string, tagKey: string, query: TagsQuery): Promise<void> {
+export async function setTagValuesToCache(
+  cache: CacheService,
+  tags: Tag[],
+  provider: CLOUD_PROVIDER,
+  integrationName: string,
+  tagKey: string,
+  query: TagsQuery,
+): Promise<void> {
   const cacheKey = `tagValues:${provider}:${integrationName}:${tagKey}:${JSON.stringify(query)}`;
   const ttl = getDefaultCacheTTL(CACHE_CATEGORY.TAGS, provider);
   await cache.set(cacheKey, JSON.stringify(tags), { ttl });
@@ -416,7 +447,7 @@ export abstract class InfraWalletClient {
     // This method would need to be implemented with proper database access
     // For now, this is a placeholder that logs the operation
     this.logger.info(`Saving ${granularity} cost data for ${this.provider} to wallet ${wallet.name}`);
-    
+
     // In a real implementation, this would:
     // 1. Check existing cost data in database
     // 2. Determine appropriate time range
