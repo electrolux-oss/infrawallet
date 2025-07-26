@@ -2,6 +2,10 @@ import { coreServices, createBackendPlugin } from '@backstage/backend-plugin-api
 import { Logger } from 'winston';
 import { createRouter } from './service/router';
 import { CostFetchTaskScheduler } from './service/scheduler';
+import { 
+  infraWalletCostClientsExtensionPoint, 
+  type CostClientRegistration 
+} from '@electrolux-oss/plugin-infrawallet-node';
 
 /**
  * infraWalletPlugin backend plugin
@@ -11,6 +15,19 @@ import { CostFetchTaskScheduler } from './service/scheduler';
 export const infraWalletPlugin = createBackendPlugin({
   pluginId: 'infrawallet',
   register(env) {
+    // Cost client registry
+    const costClientRegistry = new Map<string, CostClientRegistration>();
+    
+    // Register extension point
+    env.registerExtensionPoint(
+      infraWalletCostClientsExtensionPoint,
+      {
+        registerCostClient(registration) {
+          costClientRegistry.set(registration.provider.toLowerCase(), registration);
+        },
+      }
+    );
+
     env.registerInit({
       deps: {
         httpRouter: coreServices.httpRouter,
@@ -29,6 +46,7 @@ export const infraWalletPlugin = createBackendPlugin({
             scheduler,
             cache,
             database,
+            costClientRegistry,
           }),
         );
 
@@ -45,6 +63,7 @@ export const infraWalletPlugin = createBackendPlugin({
           config,
           cache,
           database,
+          costClientRegistry,
         });
 
         await taskScheduler.initialize();

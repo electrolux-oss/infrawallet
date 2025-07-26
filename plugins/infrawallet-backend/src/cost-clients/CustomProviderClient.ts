@@ -10,8 +10,8 @@ import {
   getReportsFromCache,
   setReportsToCache,
 } from '../service/functions';
-import { ClientResponse, CloudProviderError, CostQuery, Report } from '../service/types';
-import { InfraWalletClient } from './InfraWalletClient';
+import { CostQuery, Report, TagsQuery, CloudProviderError, ClientResponse, TagsResponse, Wallet } from '@electrolux-oss/plugin-infrawallet-node';
+import { InfraWalletClient } from '@electrolux-oss/plugin-infrawallet-node';
 
 export class CustomProviderClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {

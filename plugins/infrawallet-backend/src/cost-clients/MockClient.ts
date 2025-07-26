@@ -3,9 +3,9 @@ import { Config } from '@backstage/config';
 import { promises as fsPromises } from 'fs';
 import moment from 'moment';
 import * as upath from 'upath';
-import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
-import { CostQuery, Report } from '../service/types';
-import { InfraWalletClient } from './InfraWalletClient';
+import { CLOUD_PROVIDER, PROVIDER_TYPE } from '@electrolux-oss/plugin-infrawallet-node';
+import { CostQuery, Report, TagsQuery, CloudProviderError, ClientResponse, TagsResponse, Wallet } from '@electrolux-oss/plugin-infrawallet-node';
+import { InfraWalletClient } from '@electrolux-oss/plugin-infrawallet-node';
 
 export class MockClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {

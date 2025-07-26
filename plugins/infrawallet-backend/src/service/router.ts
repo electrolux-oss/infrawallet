@@ -8,7 +8,7 @@ import {
   getWalletMetricSettings,
   updateOrInsertWalletMetricSetting,
 } from '../controllers/MetricSettingController';
-import { InfraWalletClient } from '../cost-clients/InfraWalletClient';
+import { InfraWalletClient } from '@electrolux-oss/plugin-infrawallet-node';
 import { MetricProvider } from '../metric-providers/MetricProvider';
 import { Budget, getBudget, getBudgets, upsertBudget } from '../models/Budget';
 import { deleteCostItems } from '../models/CostItem';
@@ -41,12 +41,30 @@ async function setUpDatabase(database: DatabaseService) {
 }
 
 export async function createRouter(options: RouterOptions): Promise<express.Router> {
-  const { logger, config, scheduler, cache, database } = options;
+  const { logger, config, scheduler, cache, database, costClientRegistry } = options;
   // do database migrations here to support the legacy backend system
   await setUpDatabase(database);
 
   // init CategoryMappingService
   CategoryMappingService.initInstance(cache, logger);
+
+  // Helper function to get cost client
+  const getCostClient = (provider: string): InfraWalletClient | undefined => {
+    const normalizedProvider = provider.toLowerCase();
+    
+    // Check external registry first
+    if (costClientRegistry?.has(normalizedProvider)) {
+      const registration = costClientRegistry.get(normalizedProvider)!;
+      return registration.factory(config, database, cache, logger);
+    }
+    
+    // Fall back to built-in clients for backward compatibility
+    if (normalizedProvider in COST_CLIENT_MAPPINGS) {
+      return COST_CLIENT_MAPPINGS[normalizedProvider].create(config, database, cache, logger);
+    }
+    
+    return undefined;
+  };
 
   const router = Router();
   router.use(express.json());
@@ -138,8 +156,8 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
       .keys()
       .concat(['custom'])
       .forEach((provider: string) => {
-        if (provider in COST_CLIENT_MAPPINGS) {
-          const client: InfraWalletClient = COST_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
+        const client = getCostClient(provider);
+        if (client) {
           const fetchCloudCosts = (async () => {
             try {
               const clientResponse = await client.getCostReports({
@@ -201,30 +219,32 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
 
     const conf = config.getConfig('backend.infraWallet.integrations');
     conf.keys().forEach((provider: string) => {
-      if (provider.toLowerCase() === tagProvider.toLowerCase() && provider in COST_CLIENT_MAPPINGS) {
-        const client: InfraWalletClient = COST_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
-        const getTagKeys = (async () => {
-          try {
-            const clientResponse = await client.getTagKeys({
-              startTime: startTime,
-              endTime: endTime,
-            });
-            clientResponse.errors.forEach((e: CloudProviderError) => {
-              errors.push(e);
-            });
-            clientResponse.tags.forEach((tag: Tag) => {
-              tags.push(tag);
-            });
-          } catch (e) {
-            logger.error(e);
-            errors.push({
-              provider: client.constructor.name,
-              name: client.constructor.name,
-              error: e.message,
-            });
-          }
-        })();
-        promises.push(getTagKeys);
+      if (provider.toLowerCase() === tagProvider.toLowerCase()) {
+        const client = getCostClient(provider);
+        if (client) {
+          const getTagKeys = (async () => {
+            try {
+              const clientResponse = await client.getTagKeys({
+                startTime: startTime,
+                endTime: endTime,
+              });
+              clientResponse.errors.forEach((e: CloudProviderError) => {
+                errors.push(e);
+              });
+              clientResponse.tags.forEach((tag: Tag) => {
+                tags.push(tag);
+              });
+            } catch (e) {
+              logger.error(e);
+              errors.push({
+                provider: client.constructor.name,
+                name: client.constructor.name,
+                error: e.message,
+              });
+            }
+          })();
+          promises.push(getTagKeys);
+        }
       }
     });
 
@@ -249,33 +269,35 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
 
     const conf = config.getConfig('backend.infraWallet.integrations');
     conf.keys().forEach((provider: string) => {
-      if (provider in COST_CLIENT_MAPPINGS && provider.toLowerCase() === tagProvider.toLowerCase()) {
-        const client: InfraWalletClient = COST_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
-        const getTagValues = (async () => {
-          try {
-            const clientResponse = await client.getTagValues(
-              {
-                startTime: startTime,
-                endTime: endTime,
-              },
-              tagKey,
-            );
-            clientResponse.errors.forEach((e: CloudProviderError) => {
-              errors.push(e);
-            });
-            clientResponse.tags.forEach((tag: Tag) => {
-              tags.push(tag);
-            });
-          } catch (e) {
-            logger.error(e);
-            errors.push({
-              provider: client.constructor.name,
-              name: client.constructor.name,
-              error: e.message,
-            });
-          }
-        })();
-        promises.push(getTagValues);
+      if (provider.toLowerCase() === tagProvider.toLowerCase()) {
+        const client = getCostClient(provider);
+        if (client) {
+          const getTagValues = (async () => {
+            try {
+              const clientResponse = await client.getTagValues(
+                {
+                  startTime: startTime,
+                  endTime: endTime,
+                },
+                tagKey,
+              );
+              clientResponse.errors.forEach((e: CloudProviderError) => {
+                errors.push(e);
+              });
+              clientResponse.tags.forEach((tag: Tag) => {
+                tags.push(tag);
+              });
+            } catch (e) {
+              logger.error(e);
+              errors.push({
+                provider: client.constructor.name,
+                name: client.constructor.name,
+                error: e.message,
+              });
+            }
+          })();
+          promises.push(getTagValues);
+        }
       }
     });
 

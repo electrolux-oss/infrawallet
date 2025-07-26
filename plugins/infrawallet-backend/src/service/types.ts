@@ -1,5 +1,6 @@
 import { CacheService, DatabaseService, LoggerService, SchedulerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
+import { type CostClientRegistration } from '@electrolux-oss/plugin-infrawallet-node';
 import { GRANULARITY } from './consts';
 
 export interface RouterOptions {
@@ -8,6 +9,7 @@ export interface RouterOptions {
   scheduler: SchedulerService;
   cache: CacheService;
   database: DatabaseService;
+  costClientRegistry?: Map<string, CostClientRegistration>;
 }
 
 export type CategoryMappings = {
