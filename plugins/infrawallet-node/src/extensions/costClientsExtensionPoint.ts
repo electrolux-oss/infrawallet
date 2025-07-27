@@ -2,9 +2,12 @@ import { createExtensionPoint, CacheService, DatabaseService, LoggerService } fr
 import { Config } from '@backstage/config';
 import { InfraWalletClient } from '../InfraWalletClient';
 
-export interface CostClientFactory {
-  (config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService): InfraWalletClient;
-}
+export type CostClientFactory = (
+  config: Config,
+  database: DatabaseService,
+  cache: CacheService,
+  logger: LoggerService,
+) => InfraWalletClient;
 
 export interface CostClientRegistration {
   provider: string;
