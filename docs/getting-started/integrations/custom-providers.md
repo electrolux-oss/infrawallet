@@ -391,7 +391,7 @@ export class MockProviderClient extends InfraWalletClient {
     while (current <= end) {
       costs.push({
         date: current.toISOString(),
-        amount: baseCost * (0.8 + (crypto.getRandomValues(new Uint32Array(1))[0] / 0xFFFFFFFF) * 0.4), // ±20% variance
+        amount: baseCost * (0.8 + (crypto.getRandomValues(new Uint32Array(1))[0] / 0xffffffff) * 0.4), // ±20% variance
       });
 
       if (granularity === 'daily') {

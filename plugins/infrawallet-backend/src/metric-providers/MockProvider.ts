@@ -46,7 +46,7 @@ export class MockProvider extends MetricProvider {
       const period = cursor.format(query.granularity === 'daily' ? 'YYYY-MM-DD' : 'YYYY-MM');
       const randomArray = new Uint32Array(1);
       crypto.getRandomValues(randomArray);
-      const randomValue = randomArray[0] / 0xFFFFFFFF;
+      const randomValue = randomArray[0] / 0xffffffff;
       metric.reports[period] = Math.floor(randomValue * (maxValue - minValue) + minValue);
       cursor = cursor.add(1, query.granularity === 'daily' ? 'days' : 'months');
     }
