@@ -245,7 +245,9 @@ export class MyCustomProviderClient extends InfraWalletClient {
 
     while (current <= endDate) {
       // Add some randomness to the cost (±20%)
-      const randomFactor = 0.8 + Math.random() * 0.4;
+      const randomArray = new Uint32Array(1);
+      crypto.getRandomValues(randomArray);
+      const randomFactor = 0.8 + (randomArray[0] / 0xFFFFFFFF) * 0.4;
       const cost = Math.round(baseCost * randomFactor * 100) / 100;
 
       costs.push({

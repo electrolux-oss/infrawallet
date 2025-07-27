@@ -21,7 +21,7 @@ For simple integrations or when you want to keep everything in one place, you ca
 
 1. Create a directory for your custom providers in the backend:
 
-   ```
+   ```sh
    packages/backend/src/customProviders/
    ```
 
@@ -391,7 +391,7 @@ export class MockProviderClient extends InfraWalletClient {
     while (current <= end) {
       costs.push({
         date: current.toISOString(),
-        amount: baseCost * (0.8 + Math.random() * 0.4), // ±20% variance
+        amount: baseCost * (0.8 + (crypto.getRandomValues(new Uint32Array(1))[0] / 0xFFFFFFFF) * 0.4), // ±20% variance
       });
 
       if (granularity === 'daily') {

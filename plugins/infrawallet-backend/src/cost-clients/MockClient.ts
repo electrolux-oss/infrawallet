@@ -85,7 +85,9 @@ export class MockClient extends InfraWalletClient {
   }
 
   getRandomValue(min: number, max: number): number {
-    const random = Math.random();
+    const randomArray = new Uint32Array(1);
+    crypto.getRandomValues(randomArray);
+    const random = randomArray[0] / 0xFFFFFFFF;
     const amplifiedRandom = Math.pow(random, 3);
     return amplifiedRandom * (max - min) + min;
   }

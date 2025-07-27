@@ -100,7 +100,9 @@ export class ConfluentClient extends InfraWalletClient {
       if (response.status === 429 && retryCount < maxRetries) {
         // Apply exponential backoff with jitter for rate limiting
         const retryAfter = parseInt(response.headers.get('retry-after') || '30', 10);
-        const jitter = Math.random() * 2;
+        const randomArray = new Uint32Array(1);
+        crypto.getRandomValues(randomArray);
+        const jitter = (randomArray[0] / 0xFFFFFFFF) * 2;
         const backoffTime = Math.min(120, retryAfter * Math.pow(1.5, retryCount) * jitter);
         this.logger.warn(`Rate limited, backing off for ${Math.ceil(backoffTime)} seconds...`);
         await new Promise(resolve => setTimeout(resolve, backoffTime * 1000));
