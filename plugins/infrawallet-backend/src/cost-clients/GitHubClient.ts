@@ -1,10 +1,14 @@
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
-import { CLOUD_PROVIDER, PROVIDER_TYPE } from '@electrolux-oss/plugin-infrawallet-node';
+import {
+  CLOUD_PROVIDER,
+  PROVIDER_TYPE,
+  CostQuery,
+  Report,
+  InfraWalletClient,
+} from '@electrolux-oss/plugin-infrawallet-node';
 import { getBillingPeriod, parseCost } from '../service/functions';
-import { CostQuery, Report } from '@electrolux-oss/plugin-infrawallet-node';
-import { InfraWalletClient } from '@electrolux-oss/plugin-infrawallet-node';
 
 export class GitHubClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {

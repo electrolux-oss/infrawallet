@@ -6,10 +6,15 @@ import { reduce } from 'lodash';
 import { homedir } from 'os';
 import { join } from 'path';
 import { CategoryMappingService } from '../service/CategoryMappingService';
-import { CLOUD_PROVIDER, PROVIDER_TYPE, GRANULARITY } from '@electrolux-oss/plugin-infrawallet-node';
+import {
+  CLOUD_PROVIDER,
+  PROVIDER_TYPE,
+  GRANULARITY,
+  CostQuery,
+  Report,
+  InfraWalletClient,
+} from '@electrolux-oss/plugin-infrawallet-node';
 import { parseCost } from '../service/functions';
-import { CostQuery, Report } from '@electrolux-oss/plugin-infrawallet-node';
-import { InfraWalletClient } from '@electrolux-oss/plugin-infrawallet-node';
 
 export class GCPClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {

@@ -4,15 +4,22 @@ import { reduce } from 'lodash';
 import moment from 'moment';
 import { getCustomCostsByDateRange } from '../models/CustomCost';
 import { CACHE_CATEGORY } from '../service/consts';
-import { CLOUD_PROVIDER, PROVIDER_TYPE, GRANULARITY } from '@electrolux-oss/plugin-infrawallet-node';
+import {
+  CostQuery,
+  Report,
+  CLOUD_PROVIDER,
+  PROVIDER_TYPE,
+  GRANULARITY,
+  InfraWalletClient,
+  CloudProviderError,
+  ClientResponse,
+} from '@electrolux-oss/plugin-infrawallet-node';
 import {
   getDailyPeriodStringsForOneMonth,
   getDefaultCacheTTL,
   getReportsFromCache,
   setReportsToCache,
 } from '../service/functions';
-import { CostQuery, Report, ClientResponse, CloudProviderError } from '@electrolux-oss/plugin-infrawallet-node';
-import { InfraWalletClient } from '@electrolux-oss/plugin-infrawallet-node';
 
 export class CustomProviderClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {

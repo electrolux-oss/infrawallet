@@ -6,10 +6,16 @@ import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
 import { CategoryMappingService } from '../service/CategoryMappingService';
-import { CLOUD_PROVIDER, PROVIDER_TYPE, GRANULARITY } from '@electrolux-oss/plugin-infrawallet-node';
+import {
+  CLOUD_PROVIDER,
+  PROVIDER_TYPE,
+  GRANULARITY,
+  CostQuery,
+  Report,
+  TagsQuery,
+  InfraWalletClient,
+} from '@electrolux-oss/plugin-infrawallet-node';
 import { getBillingPeriod, parseCost, parseTags } from '../service/functions';
-import { CostQuery, Report, TagsQuery } from '@electrolux-oss/plugin-infrawallet-node';
-import { InfraWalletClient } from '@electrolux-oss/plugin-infrawallet-node';
 
 export class AzureClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {

@@ -3,10 +3,15 @@ import { Config } from '@backstage/config';
 import { v2 as datadogApiV2, client as datadogClient } from '@datadog/datadog-api-client';
 import { reduce } from 'lodash';
 import moment from 'moment';
-import { CLOUD_PROVIDER, PROVIDER_TYPE, GRANULARITY } from '@electrolux-oss/plugin-infrawallet-node';
+import {
+  CLOUD_PROVIDER,
+  PROVIDER_TYPE,
+  GRANULARITY,
+  CostQuery,
+  Report,
+  InfraWalletClient,
+} from '@electrolux-oss/plugin-infrawallet-node';
 import { parseCost } from '../service/functions';
-import { CostQuery, Report } from '@electrolux-oss/plugin-infrawallet-node';
-import { InfraWalletClient } from '@electrolux-oss/plugin-infrawallet-node';
 
 export class DatadogClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {

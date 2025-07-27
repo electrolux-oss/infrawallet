@@ -15,10 +15,15 @@ import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
 import { CategoryMappingService } from '../service/CategoryMappingService';
-import { CLOUD_PROVIDER, PROVIDER_TYPE } from '@electrolux-oss/plugin-infrawallet-node';
+import {
+  CLOUD_PROVIDER,
+  PROVIDER_TYPE,
+  CostQuery,
+  Report,
+  TagsQuery,
+  InfraWalletClient,
+} from '@electrolux-oss/plugin-infrawallet-node';
 import { getBillingPeriod, parseCost, parseTags } from '../service/functions';
-import { CostQuery, Report, TagsQuery } from '@electrolux-oss/plugin-infrawallet-node';
-import { InfraWalletClient } from '@electrolux-oss/plugin-infrawallet-node';
 
 export class AwsClient extends InfraWalletClient {
   private readonly accounts: Map<string, string> = new Map();

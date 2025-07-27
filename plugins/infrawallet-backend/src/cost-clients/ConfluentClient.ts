@@ -1,10 +1,15 @@
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { CostQuery, Report } from '@electrolux-oss/plugin-infrawallet-node';
-import { InfraWalletClient } from '@electrolux-oss/plugin-infrawallet-node';
+import {
+  CostQuery,
+  Report,
+  CLOUD_PROVIDER,
+  PROVIDER_TYPE,
+  GRANULARITY,
+  InfraWalletClient,
+} from '@electrolux-oss/plugin-infrawallet-node';
 import moment from 'moment';
 import { CategoryMappingService } from '../service/CategoryMappingService';
-import { CLOUD_PROVIDER, PROVIDER_TYPE, GRANULARITY } from '@electrolux-oss/plugin-infrawallet-node';
 import { NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS } from '../service/consts';
 
 export class ConfluentClient extends InfraWalletClient {
