@@ -1,7 +1,19 @@
 import { CacheService, DatabaseService, LoggerService, SchedulerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { type CostClientRegistration } from '@electrolux-oss/plugin-infrawallet-node';
-import { GRANULARITY } from './consts';
+import { type CostClientRegistration, type CloudProviderError } from '@electrolux-oss/plugin-infrawallet-node';
+
+// Re-export types from node package for backward compatibility
+export type {
+  Report,
+  Tag,
+  CloudProviderError,
+  ClientResponse,
+  TagsResponse,
+  TagsQuery,
+  CostQuery,
+  Wallet,
+  Filter,
+} from '@electrolux-oss/plugin-infrawallet-node';
 
 export interface RouterOptions {
   logger: LoggerService;
@@ -20,54 +32,6 @@ export type CategoryMappings = {
 
 export type ServiceToCategoryMappings = {
   [provider: string]: { [service: string]: string };
-};
-
-export type TagsQuery = {
-  startTime: string;
-  endTime: string;
-};
-
-export type CostQuery = {
-  filters: string;
-  tags: string;
-  groups: string;
-  granularity: GRANULARITY;
-  startTime: string;
-  endTime: string;
-};
-
-export type Report = {
-  id: string;
-  account: string;
-  service: string;
-  category: string;
-  provider: string;
-  reports: {
-    [period: string]: number;
-  };
-  [key: string]: string | number | { [period: string]: number } | undefined;
-};
-
-export type Tag = {
-  key: string;
-  value?: string;
-  provider: string;
-};
-
-export type CloudProviderError = {
-  provider: string; // AWS, GCP, Azure or MongoAtlas
-  name: string; // the name defined in the configuration file
-  error: string; // error message from the cloud provider
-};
-
-export type ClientResponse = {
-  reports: Report[];
-  errors: CloudProviderError[];
-};
-
-export type TagsResponse = {
-  tags: Tag[];
-  errors: CloudProviderError[];
 };
 
 export type MetricQuery = {
@@ -103,17 +67,4 @@ export type MetricSetting = {
   description?: string;
   group?: string;
   query: string;
-};
-
-export type Wallet = {
-  id: string;
-  name: string;
-  currenty: string;
-  description?: string;
-};
-
-export type Filter = {
-  type: string; // 'include' or 'exclude'
-  attribute: string;
-  pattern: string;
 };

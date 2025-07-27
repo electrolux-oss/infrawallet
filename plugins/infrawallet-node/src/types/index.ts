@@ -52,7 +52,7 @@ export type TagsResponse = {
 export type Wallet = {
   id: string;
   name: string;
-  currenty: string;
+  currency: string;
   description?: string;
 };
 

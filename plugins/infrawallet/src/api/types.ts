@@ -1,3 +1,6 @@
+// Frontend-specific types that extend or differ from the node package types
+// The frontend Report type has optional fields and includes a project field
+// which is not present in the backend/node types
 export type Report = {
   id: string;
   account?: string;
