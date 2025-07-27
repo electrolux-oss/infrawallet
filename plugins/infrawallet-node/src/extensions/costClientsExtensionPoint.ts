@@ -1,5 +1,4 @@
-import { createExtensionPoint } from '@backstage/backend-plugin-api';
-import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
+import { createExtensionPoint, CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { InfraWalletClient } from '../InfraWalletClient';
 
