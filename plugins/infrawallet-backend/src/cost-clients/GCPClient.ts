@@ -110,6 +110,49 @@ export class GCPClient extends InfraWalletClient {
     return bigqueryClient;
   }
 
+  private async fetchDataWithRetry(client: any, queryOptions: any, maxRetries = 5): Promise<any> {
+    let retries = 0;
+
+    while (retries < maxRetries) {
+      try {
+        const [job] = await client.createQueryJob(queryOptions);
+        const [rows] = await job.getQueryResults();
+        return rows;
+      } catch (err) {
+        const errorMessage = err.message || '';
+        const errorCode = err.code || '';
+
+        // Check for rate limiting and quota errors
+        if (errorCode === 429 || errorMessage.includes('quotaExceeded') || errorMessage.includes('rateLimitExceeded')) {
+          const retryDelay = Math.min(60 * Math.pow(2, retries), 300); // Exponential backoff, max 5 minutes
+          this.logger.warn(
+            `Hit BigQuery rate limit/quota, retrying after ${retryDelay} seconds... (attempt ${retries + 1}/${maxRetries})`,
+          );
+          await new Promise(resolve => setTimeout(resolve, retryDelay * 1000));
+          retries++;
+          continue;
+        }
+
+        // Check for transient backend errors
+        if (errorMessage.includes('backendError') || errorMessage.includes('internalError') || errorCode >= 500) {
+          const retryDelay = Math.min(30 * Math.pow(2, retries), 120); // Shorter backoff for backend errors
+          this.logger.warn(
+            `BigQuery backend error, retrying after ${retryDelay} seconds... (attempt ${retries + 1}/${maxRetries}): ${errorMessage}`,
+          );
+          await new Promise(resolve => setTimeout(resolve, retryDelay * 1000));
+          retries++;
+          continue;
+        }
+
+        // For non-retryable errors, throw immediately
+        this.logger.error(`Non-retryable BigQuery error: ${errorMessage}`);
+        throw err;
+      }
+    }
+
+    throw new Error(`Max retries (${maxRetries}) exceeded for BigQuery operation`);
+  }
+
   protected async fetchCosts(subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
     const projectId = subAccountConfig.getString('projectId');
     const datasetId = subAccountConfig.getString('datasetId');
@@ -135,14 +178,13 @@ export class GCPClient extends InfraWalletClient {
         ORDER BY
           project, period, total_cost DESC`;
 
-      const [job] = await client.createQueryJob({
+      const queryOptions = {
         query: sql,
-      });
+      };
 
-      const [rows] = await job.getQueryResults();
-      return rows;
+      return await this.fetchDataWithRetry(client, queryOptions);
     } catch (err) {
-      this.logger.error(`Error executing BigQuery: ${err.message}`);
+      this.logger.error(`Error executing BigQuery after retries: ${err.message}`);
       throw new Error(err.message);
     }
   }
