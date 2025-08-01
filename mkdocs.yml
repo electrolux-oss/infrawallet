@@ -45,6 +45,7 @@ nav:
           - GitHub: getting-started/integrations/github.md
           - Google Cloud: getting-started/integrations/google-cloud.md
           - MongoDB Atlas: getting-started/integrations/mongodb-atlas.md
+          - Custom Providers: getting-started/integrations/custom-providers.md
       - Budgets: getting-started/budgets.md
       - Business Metrics: getting-started/business-metrics.md
       - Custom Costs: getting-started/custom-costs.md

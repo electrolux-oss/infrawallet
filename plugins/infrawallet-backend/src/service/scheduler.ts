@@ -1,6 +1,7 @@
 import { CacheService, DatabaseService, SchedulerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { Logger } from 'winston';
+import { type CostClientRegistration } from '@electrolux-oss/plugin-infrawallet-node';
 import { fetchAndSaveCosts } from '../tasks/fetchAndSaveCosts';
 import { RouterOptions } from './types';
 
@@ -13,6 +14,7 @@ export class CostFetchTaskScheduler {
   private readonly config: Config;
   private readonly database: DatabaseService;
   private readonly cache: CacheService;
+  private readonly costClientRegistry?: Map<string, CostClientRegistration>;
 
   constructor(options: {
     scheduler: SchedulerService;
@@ -20,12 +22,14 @@ export class CostFetchTaskScheduler {
     config: Config;
     database: DatabaseService;
     cache: CacheService;
+    costClientRegistry?: Map<string, CostClientRegistration>;
   }) {
     this.scheduler = options.scheduler;
     this.logger = options.logger;
     this.config = options.config;
     this.database = options.database;
     this.cache = options.cache;
+    this.costClientRegistry = options.costClientRegistry;
   }
 
   /**
@@ -57,6 +61,7 @@ export class CostFetchTaskScheduler {
           scheduler: this.scheduler,
           cache: this.cache,
           database: this.database,
+          costClientRegistry: this.costClientRegistry,
         };
 
         await fetchAndSaveCosts(routerOptions);

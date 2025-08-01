@@ -1,15 +1,16 @@
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
-import { CostQuery, Report } from '../service/types';
-import { InfraWalletClient } from './InfraWalletClient';
-import moment from 'moment';
-import { CategoryMappingService } from '../service/CategoryMappingService';
 import {
+  CostQuery,
+  Report,
   CLOUD_PROVIDER,
   PROVIDER_TYPE,
-  NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS,
   GRANULARITY,
-} from '../service/consts';
+  InfraWalletClient,
+} from '@electrolux-oss/plugin-infrawallet-node';
+import moment from 'moment';
+import { CategoryMappingService } from '../service/CategoryMappingService';
+import { NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS } from '../service/consts';
 
 export class ConfluentClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -104,7 +105,9 @@ export class ConfluentClient extends InfraWalletClient {
       if (response.status === 429 && retryCount < maxRetries) {
         // Apply exponential backoff with jitter for rate limiting
         const retryAfter = parseInt(response.headers.get('retry-after') || '30', 10);
-        const jitter = Math.random() * 2;
+        const randomArray = new Uint32Array(1);
+        crypto.getRandomValues(randomArray);
+        const jitter = (randomArray[0] / 0xffffffff) * 2;
         const backoffTime = Math.min(120, retryAfter * Math.pow(1.5, retryCount) * jitter);
         this.logger.warn(`Rate limited, backing off for ${Math.ceil(backoffTime)} seconds...`);
         await new Promise(resolve => setTimeout(resolve, backoffTime * 1000));
