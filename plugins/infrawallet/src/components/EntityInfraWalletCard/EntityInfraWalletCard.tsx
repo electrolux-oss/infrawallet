@@ -43,14 +43,14 @@ async function getFilteredCostReports(
   const startTime = new Date();
   startTime.setMonth(endTime.getMonth() - 2);
 
-  const costReportsResponse: CostReportsResponse = await infrawalletApi.getEntityCostReports(
-    encodeURIComponent(`${entity.metadata.namespace}/${entity.metadata.name}`),
+  const costReportsResponse: CostReportsResponse = await infrawalletApi.getCostReports(
     filters,
     tags,
     groups,
     granularity,
     startTime,
     endTime,
+    encodeURI(`${entity.metadata.namespace}/${entity.metadata.name}`),
   );
 
   if (costReportsResponse.status !== 200) {
