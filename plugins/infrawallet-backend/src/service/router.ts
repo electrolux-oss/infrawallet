@@ -125,7 +125,7 @@ async function getReports(
 }
 
 export async function createRouter(options: RouterOptions): Promise<express.Router> {
-  const { logger, config, scheduler, cache, database, entityReportCollector } = options;
+  const { logger, config, scheduler, cache, database, additionalFilters } = options;
   // do database migrations here to support the legacy backend system
   await setUpDatabase(database);
 
@@ -195,60 +195,30 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     const granularityString = request.query.granularity as string;
     const startTime = request.query.startTime as string;
     const endTime = request.query.endTime as string;
+    const [entityNamespace, entityName] = decodeURI(request.query.entity as string)?.split('/') || [];
 
-    const { reports, clientErrors } = await getReports(
-      { filters, tags, groups, granularityString, startTime, endTime },
-      config,
-      database,
-      cache,
-      logger,
-    );
+    let reportFilters: ReportParameters = {
+      filters,
+      tags,
+      groups,
+      granularityString,
+      startTime,
+      endTime,
+      entityNamespace,
+      entityName,
+    };
+    if (additionalFilters.length > 0) {
+      for (const filter of additionalFilters) {
+        reportFilters = filter.augmentFilters(reportFilters);
+      }
+    }
+
+    const { reports, clientErrors } = await getReports(reportFilters, config, database, cache, logger);
 
     if (clientErrors.length > 0) {
       response.status(207).json({ data: reports, errors: clientErrors, status: 207 });
     } else {
       response.json({ data: reports, errors: clientErrors, status: 200 });
-    }
-  });
-
-  router.get('/reports/:entityName', async (request, response) => {
-    const [entityNamespace, entityName] = decodeURIComponent(request.params.entityName).split('/');
-    const filters = request.query.filters as string;
-    const tags = parseTags(request.query.tags as string);
-    const groups = request.query.groups as string;
-    const granularityString = request.query.granularity as string;
-    const startTime = request.query.startTime as string;
-    const endTime = request.query.endTime as string;
-    let results: Report[];
-    let errors: CloudProviderError[];
-
-    if (!entityReportCollector) {
-      const { reports, clientErrors } = await getReports(
-        { filters, tags, groups, granularityString, startTime, endTime },
-        config,
-        database,
-        cache,
-        logger,
-      );
-      results = reports;
-      errors = clientErrors;
-    } else {
-      const { reports, clientErrors } = await entityReportCollector.collectReports(entityNamespace, entityName, {
-        filters,
-        tags,
-        groups,
-        granularityString,
-        startTime,
-        endTime,
-      });
-      results = reports;
-      errors = clientErrors;
-    }
-
-    if (errors.length > 0) {
-      response.status(207).json({ data: results, errors: errors, status: 207 });
-    } else {
-      response.json({ data: results, errors: errors, status: 200 });
     }
   });
 

@@ -1,6 +1,6 @@
 import { coreServices, createBackendPlugin } from '@backstage/backend-plugin-api';
 import { Logger } from 'winston';
-import { infrawalletEntityReportExtensionPoint, InfrawalletReportCollector } from './extension';
+import { InfrawalletFilterExtension, infrawalletReportFilterExtensionPoint } from './extension';
 import { createRouter } from './service/router';
 import { CostFetchTaskScheduler } from './service/scheduler';
 
@@ -12,14 +12,11 @@ import { CostFetchTaskScheduler } from './service/scheduler';
 export const infraWalletPlugin = createBackendPlugin({
   pluginId: 'infrawallet',
   register(env) {
-    let entityReportCollector: InfrawalletReportCollector | undefined = undefined;
+    const additionalFilters: Array<InfrawalletFilterExtension> = [];
 
-    env.registerExtensionPoint(infrawalletEntityReportExtensionPoint, {
-      addReportCollector(collector: InfrawalletReportCollector) {
-        if (entityReportCollector) {
-          throw new Error('A report collector has already been registered.');
-        }
-        entityReportCollector = collector;
+    env.registerExtensionPoint(infrawalletReportFilterExtensionPoint, {
+      addReportFilter(filter: InfrawalletFilterExtension) {
+        additionalFilters.push(filter);
       },
     });
 
@@ -41,7 +38,7 @@ export const infraWalletPlugin = createBackendPlugin({
             scheduler,
             cache,
             database,
-            entityReportCollector,
+            additionalFilters,
           }),
         );
 

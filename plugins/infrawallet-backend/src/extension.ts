@@ -1,18 +1,14 @@
 import { createExtensionPoint } from '@backstage/backend-plugin-api';
-import { CloudProviderError, Report, ReportParameters } from './service/types';
+import { ReportParameters } from './service/types';
 
-export interface InfrawalletReportCollector {
-  collectReports(
-    entityNamespace: string,
-    entityName: string,
-    queryParameters: ReportParameters,
-  ): Promise<{ reports: Report[]; clientErrors: CloudProviderError[] }>;
+export interface InfrawalletFilterExtension {
+  augmentFilters(parameters: ReportParameters): ReportParameters;
 }
 
-export interface InfrawalletEntityReportExtensionPoint {
-  addReportCollector(collector: InfrawalletReportCollector): void;
+export interface InfrawalletReportFilterExtensionPoint {
+  addReportFilter(filter: InfrawalletFilterExtension): void;
 }
 
-export const infrawalletEntityReportExtensionPoint = createExtensionPoint<InfrawalletEntityReportExtensionPoint>({
-  id: 'infrawallet.entity.report',
+export const infrawalletReportFilterExtensionPoint = createExtensionPoint<InfrawalletReportFilterExtensionPoint>({
+  id: 'infrawallet.report.filter',
 });
