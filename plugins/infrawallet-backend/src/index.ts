@@ -3,4 +3,3 @@ export type { InfrawalletFilterExtension, InfrawalletReportFilterExtensionPoint 
 export { infraWalletPlugin as default } from './plugin';
 export * from './service/router';
 export type { ReportParameters, Tag } from './service/types';
-
