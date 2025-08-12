@@ -195,7 +195,7 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     const granularityString = request.query.granularity as string;
     const startTime = request.query.startTime as string;
     const endTime = request.query.endTime as string;
-    const [entityNamespace, entityName] = decodeURI(request.query.entity as string)?.split('/') || [];
+    const [entityNamespace, entityName] = decodeURI(request.query.entityName as string)?.split('/') || [];
 
     let reportFilters: ReportParameters = {
       filters,
