@@ -1,5 +1,6 @@
 import { CacheService, DatabaseService, LoggerService, SchedulerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
+import { InfrawalletFilterExtension } from '../extension';
 import { GRANULARITY } from './consts';
 
 export interface RouterOptions {
@@ -8,6 +9,7 @@ export interface RouterOptions {
   scheduler: SchedulerService;
   cache: CacheService;
   database: DatabaseService;
+  additionalFilters: Array<InfrawalletFilterExtension>;
 }
 
 export type CategoryMappings = {
@@ -44,6 +46,17 @@ export type Report = {
     [period: string]: number;
   };
   [key: string]: string | number | { [period: string]: number } | undefined;
+};
+
+export type ReportParameters = {
+  filters: string;
+  tags: Tag[];
+  groups: string;
+  granularityString: string;
+  startTime: string;
+  endTime: string;
+  entityNamespace?: string;
+  entityName?: string;
 };
 
 export type Tag = {

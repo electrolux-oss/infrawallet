@@ -63,9 +63,11 @@ export class InfraWalletApiClient implements InfraWalletApi {
     granularity: string,
     startTime: Date,
     endTime: Date,
+    entityName?: string,
   ): Promise<CostReportsResponse> {
     const tagsString = tagsToString(tags);
-    const url = `api/infrawallet/reports?granularity=${granularity}&groups=${groups}&filters=${filters}&tags=${tagsString}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}`;
+    const entityNameParam = entityName ? `&entityName=${entityName}` : '';
+    const url = `api/infrawallet/reports?granularity=${granularity}&groups=${groups}&filters=${filters}&tags=${tagsString}&startTime=${startTime.getTime()}&endTime=${endTime.getTime()}${entityNameParam}`;
 
     return await this.request(url);
   }

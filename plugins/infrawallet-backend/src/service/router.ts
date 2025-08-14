@@ -1,5 +1,6 @@
 import { MiddlewareFactory } from '@backstage/backend-defaults/rootHttpRouter';
-import { DatabaseService, resolvePackagePath } from '@backstage/backend-plugin-api';
+import { CacheService, DatabaseService, LoggerService, resolvePackagePath } from '@backstage/backend-plugin-api';
+import { Config } from '@backstage/config/index';
 import express from 'express';
 import Router from 'express-promise-router';
 import {
@@ -23,7 +24,7 @@ import { fetchAndSaveCosts } from '../tasks/fetchAndSaveCosts';
 import { CategoryMappingService } from './CategoryMappingService';
 import { COST_CLIENT_MAPPINGS, GRANULARITY, METRIC_PROVIDER_MAPPINGS } from './consts';
 import { parseFilters, parseTags, tagsToString } from './functions';
-import { CloudProviderError, Metric, MetricSetting, Report, RouterOptions, Tag } from './types';
+import { CloudProviderError, Metric, MetricSetting, Report, ReportParameters, RouterOptions, Tag } from './types';
 
 async function setUpDatabase(database: DatabaseService) {
   // check database migrations
@@ -40,8 +41,91 @@ async function setUpDatabase(database: DatabaseService) {
   await client.seed.run({ directory: seedsDir });
 }
 
+async function getReports(
+  queryParameters: ReportParameters,
+  config: Config,
+  database: DatabaseService,
+  cache: CacheService,
+  logger: LoggerService,
+): Promise<{ reports: Report[]; clientErrors: CloudProviderError[] }> {
+  const { filters, tags, groups, granularityString, startTime, endTime } = queryParameters;
+  const promises: Promise<void>[] = [];
+  const results: Report[] = [];
+  const errors: CloudProviderError[] = [];
+
+  const granularity: GRANULARITY = Object.values(GRANULARITY).includes(granularityString as GRANULARITY)
+    ? (granularityString as GRANULARITY)
+    : GRANULARITY.MONTHLY;
+
+  // group tags by providers
+  const providerTags: Record<string, Tag[]> = {};
+  for (const tag of tags) {
+    const provider = tag.provider.toLowerCase();
+    if (!providerTags[provider]) {
+      providerTags[provider] = [];
+    }
+
+    providerTags[provider].push(tag);
+  }
+
+  const categoryMappingService = CategoryMappingService.getInstance();
+  await categoryMappingService.refreshCategoryMappings();
+
+  const conf = config.getConfig('backend.infraWallet.integrations');
+  conf
+    .keys()
+    .concat(['custom'])
+    .forEach((provider: string) => {
+      if (provider in COST_CLIENT_MAPPINGS) {
+        const client: InfraWalletClient = COST_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
+        const fetchCloudCosts = (async () => {
+          try {
+            const clientResponse = await client.getCostReports({
+              filters: filters,
+              tags: tagsToString(providerTags[provider.toLowerCase()]),
+              groups: groups,
+              granularity: granularity,
+              startTime: startTime,
+              endTime: endTime,
+            });
+            clientResponse.errors.forEach((e: CloudProviderError) => {
+              errors.push(e);
+            });
+            clientResponse.reports.forEach((cost: Report) => {
+              results.push(cost);
+            });
+          } catch (e) {
+            logger.error(e);
+            errors.push({
+              provider: client.constructor.name,
+              name: client.constructor.name,
+              error: e.message,
+            });
+          }
+        })();
+        promises.push(fetchCloudCosts);
+      }
+    });
+
+  await Promise.all(promises);
+
+  const parsedFilters = parseFilters(filters);
+
+  const filteredResults = results.filter(report => {
+    return Object.entries(parsedFilters).every(([key, values]) => {
+      const reportValue = report[key];
+      if (typeof reportValue !== 'string') {
+        return false;
+      }
+      return values.includes(reportValue);
+    });
+  });
+
+  return { reports: filteredResults, clientErrors: errors };
+}
+
 export async function createRouter(options: RouterOptions): Promise<express.Router> {
-  const { logger, config, scheduler, cache, database } = options;
+  const { logger, config, scheduler, cache, database, additionalFilters } = options;
   // do database migrations here to support the legacy backend system
   await setUpDatabase(database);
 
@@ -111,82 +195,30 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     const granularityString = request.query.granularity as string;
     const startTime = request.query.startTime as string;
     const endTime = request.query.endTime as string;
-    const promises: Promise<void>[] = [];
-    const results: Report[] = [];
-    const errors: CloudProviderError[] = [];
+    const [entityNamespace, entityName] = decodeURI(request.query.entityName as string)?.split('/') || [];
 
-    const granularity: GRANULARITY = Object.values(GRANULARITY).includes(granularityString as GRANULARITY)
-      ? (granularityString as GRANULARITY)
-      : GRANULARITY.MONTHLY;
-
-    // group tags by providers
-    const providerTags: Record<string, Tag[]> = {};
-    for (const tag of tags) {
-      const provider = tag.provider.toLowerCase();
-      if (!providerTags[provider]) {
-        providerTags[provider] = [];
+    let reportFilters: ReportParameters = {
+      filters,
+      tags,
+      groups,
+      granularityString,
+      startTime,
+      endTime,
+      entityNamespace,
+      entityName,
+    };
+    if (additionalFilters.length > 0) {
+      for (const filter of additionalFilters) {
+        reportFilters = await filter.augmentFilters(reportFilters);
       }
-
-      providerTags[provider].push(tag);
     }
 
-    const categoryMappingService = CategoryMappingService.getInstance();
-    await categoryMappingService.refreshCategoryMappings();
+    const { reports, clientErrors } = await getReports(reportFilters, config, database, cache, logger);
 
-    const conf = config.getConfig('backend.infraWallet.integrations');
-    conf
-      .keys()
-      .concat(['custom'])
-      .forEach((provider: string) => {
-        if (provider in COST_CLIENT_MAPPINGS) {
-          const client: InfraWalletClient = COST_CLIENT_MAPPINGS[provider].create(config, database, cache, logger);
-          const fetchCloudCosts = (async () => {
-            try {
-              const clientResponse = await client.getCostReports({
-                filters: filters,
-                tags: tagsToString(providerTags[provider.toLowerCase()]),
-                groups: groups,
-                granularity: granularity,
-                startTime: startTime,
-                endTime: endTime,
-              });
-              clientResponse.errors.forEach((e: CloudProviderError) => {
-                errors.push(e);
-              });
-              clientResponse.reports.forEach((cost: Report) => {
-                results.push(cost);
-              });
-            } catch (e) {
-              logger.error(e);
-              errors.push({
-                provider: client.constructor.name,
-                name: client.constructor.name,
-                error: e.message,
-              });
-            }
-          })();
-          promises.push(fetchCloudCosts);
-        }
-      });
-
-    await Promise.all(promises);
-
-    const parsedFilters = parseFilters(filters);
-
-    const filteredResults = results.filter(report => {
-      return Object.entries(parsedFilters).every(([key, values]) => {
-        const reportValue = report[key];
-        if (typeof reportValue !== 'string') {
-          return false;
-        }
-        return values.includes(reportValue);
-      });
-    });
-
-    if (errors.length > 0) {
-      response.status(207).json({ data: filteredResults, errors: errors, status: 207 });
+    if (clientErrors.length > 0) {
+      response.status(207).json({ data: reports, errors: clientErrors, status: 207 });
     } else {
-      response.json({ data: filteredResults, errors: errors, status: 200 });
+      response.json({ data: reports, errors: clientErrors, status: 200 });
     }
   });
 
