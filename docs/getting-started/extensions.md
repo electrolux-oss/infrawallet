@@ -61,7 +61,6 @@ class InfraWalletFilter implements InfrawalletFilterExtension {
   ) {}
 
   async augmentFilters(filters: ReportParameters): Promise<ReportParameters> {
-
     if (filters.entityName === undefined || filters.entityNamespace === undefined) {
       return filters;
     }
