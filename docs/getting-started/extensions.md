@@ -61,6 +61,11 @@ class InfraWalletFilter implements InfrawalletFilterExtension {
   ) {}
 
   async augmentFilters(filters: ReportParameters): Promise<ReportParameters> {
+
+    if (filters.entityName === undefined || filters.entityNamespace === undefined) {
+      return filters;
+    }
+
     const entity = await this.catalogApi.getEntityByRef(`${filters.entityNamespace}/${filters.entityName}`, {
       credentials: await this.auth.getOwnServiceCredentials(),
     });
