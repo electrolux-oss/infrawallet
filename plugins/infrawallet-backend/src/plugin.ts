@@ -1,5 +1,6 @@
 import { coreServices, createBackendPlugin } from '@backstage/backend-plugin-api';
 import { Logger } from 'winston';
+import { InfrawalletFilterExtension, infrawalletReportFilterExtensionPoint } from './extension';
 import { createRouter } from './service/router';
 import { CostFetchTaskScheduler } from './service/scheduler';
 
@@ -11,6 +12,14 @@ import { CostFetchTaskScheduler } from './service/scheduler';
 export const infraWalletPlugin = createBackendPlugin({
   pluginId: 'infrawallet',
   register(env) {
+    const additionalFilters: Array<InfrawalletFilterExtension> = [];
+
+    env.registerExtensionPoint(infrawalletReportFilterExtensionPoint, {
+      addReportFilter(filter: InfrawalletFilterExtension) {
+        additionalFilters.push(filter);
+      },
+    });
+
     env.registerInit({
       deps: {
         httpRouter: coreServices.httpRouter,
@@ -29,6 +38,7 @@ export const infraWalletPlugin = createBackendPlugin({
             scheduler,
             cache,
             database,
+            additionalFilters,
           }),
         );
 

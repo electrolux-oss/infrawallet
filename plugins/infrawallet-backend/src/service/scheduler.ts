@@ -57,6 +57,7 @@ export class CostFetchTaskScheduler {
           scheduler: this.scheduler,
           cache: this.cache,
           database: this.database,
+          additionalFilters: [],
         };
 
         await fetchAndSaveCosts(routerOptions);
