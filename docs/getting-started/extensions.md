@@ -4,7 +4,7 @@ The plugin offers extension points that allow parts of the report generation to 
 
 ## InfrawalletReportFilterExtensionPoint
 
-This extension point allows to augement or append to the provided filters through custom information.
+This extension point allows to augment or append to the provided filters through custom information.
 
 For this the following interface can be used
 
