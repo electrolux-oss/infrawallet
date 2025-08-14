@@ -2,7 +2,7 @@ import { createExtensionPoint } from '@backstage/backend-plugin-api';
 import { ReportParameters } from './service/types';
 
 export interface InfrawalletFilterExtension {
-  augmentFilters(parameters: ReportParameters): ReportParameters;
+  augmentFilters(parameters: ReportParameters): Promise<ReportParameters>;
 }
 
 export interface InfrawalletReportFilterExtensionPoint {

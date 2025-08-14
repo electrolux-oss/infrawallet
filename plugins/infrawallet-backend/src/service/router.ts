@@ -209,7 +209,7 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
     };
     if (additionalFilters.length > 0) {
       for (const filter of additionalFilters) {
-        reportFilters = filter.augmentFilters(reportFilters);
+        reportFilters = await filter.augmentFilters(reportFilters);
       }
     }
 

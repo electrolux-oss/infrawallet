@@ -10,7 +10,7 @@ For this the following interface can be used
 
 ```ts
 export interface InfrawalletFilterExtension {
-  augmentFilters(parameters: ReportParameters): ReportParameters;
+  augmentFilters(parameters: ReportParameters): Promise<ReportParameters>;
 }
 ```
 
@@ -42,29 +42,39 @@ The following keys are defined through the annotations of the `EntityInfraWallet
 Below an example implementation of the extension point.
 
 ```ts
+import { AuthService, coreServices, createBackendModule, LoggerService } from '@backstage/backend-plugin-api';
+import { CatalogService, catalogServiceRef } from '@backstage/plugin-catalog-node';
+import {
+  InfrawalletFilterExtension,
+  infrawalletReportFilterExtensionPoint,
+  ReportParameters,
+  Tag,
+} from '@electrolux-oss/plugin-infrawallet-backend';
+
 class InfraWalletFilter implements InfrawalletFilterExtension {
-  readonly logger: LoggerService;
-  readonly catalogApi: CatalogApi;
-  readonly myProvider = 'theProvider';
+  private readonly myProvider = 'theProvider';
 
-  constructor(logger: LoggerService, catalogApi: CatalogApi) {
-    this.logger = logger;
-    this.catalogApi = catalogApi;
-  }
+  constructor(
+    private readonly auth: AuthService,
+    private readonly catalogApi: CatalogService,
+    private readonly logger: LoggerService,
+  ) {}
 
-  augmentFilters(filters: ReportParameters): ReportParameters {
-    this.catalogApi.getEntityByRef(`${filters.entityNamespace}/${filters.entityName}`).then(entity => {
-      if (entity) {
-        const entityTags: Tag[] = [];
-
-        if (entity.metadata.labels) {
-          for (const [key, value] of Object.entries(entity.metadata.labels)) {
-            entityTags.push({ key, value, provider: this.myProvider });
-          }
-        }
-        filters.tags.push(...entityTags);
-      }
+  async augmentFilters(filters: ReportParameters): Promise<ReportParameters> {
+    const entity = await this.catalogApi.getEntityByRef(`${filters.entityNamespace}/${filters.entityName}`, {
+      credentials: await this.auth.getOwnServiceCredentials(),
     });
+    if (entity) {
+      const entityTags: Tag[] = [];
+
+      if (entity.metadata.labels) {
+        this.logger.info(`Adding tags from entity ${filters.entityName} in namespace ${filters.entityNamespace}`);
+        for (const [key, value] of Object.entries(entity.metadata.labels)) {
+          entityTags.push({ key, value, provider: this.myProvider });
+        }
+      }
+      filters.tags.push(...entityTags);
+    }
     return filters;
   }
 }
@@ -75,12 +85,13 @@ export const infrawalletModuleFilterextension = createBackendModule({
   register(reg) {
     reg.registerInit({
       deps: {
-        logger: coreServices.logger,
-        infraWalletExtension: infrawalletReportFilterExtensionPoint,
+        auth: coreServices.auth,
         catalogApi: catalogServiceRef,
+        infraWalletExtension: infrawalletReportFilterExtensionPoint,
+        logger: coreServices.logger,
       },
-      async init({ logger, infraWalletExtension, catalogApi }) {
-        infraWalletExtension.addReportFilter(new InfraWalletFilter(logger, catalogApi));
+      async init({ auth, catalogApi, infraWalletExtension, logger }) {
+        infraWalletExtension.addReportFilter(new InfraWalletFilter(auth, catalogApi, logger));
       },
     });
   },
