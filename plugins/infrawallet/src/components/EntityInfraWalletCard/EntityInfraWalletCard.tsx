@@ -30,8 +30,8 @@ const COLORS = [
   '#00ffff',
 ];
 
-const MONTHS_TO_INCLUDE = 2
-const NUM_DIGITS_AFTER_DECIMALPOINT = 2
+const MONTHS_TO_INCLUDE = 2;
+const NUM_DIGITS_AFTER_DECIMALPOINT = 2;
 
 async function getFilteredCostReports(
   infrawalletApi: InfraWalletApi,
