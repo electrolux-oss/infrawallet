@@ -30,6 +30,9 @@ const COLORS = [
   '#00ffff',
 ];
 
+const MONTHS_TO_INCLUDE = 2;
+const NUM_DIGITS_AFTER_DECIMALPOINT = 2;
+
 async function getFilteredCostReports(
   infrawalletApi: InfraWalletApi,
   entity: Entity,
@@ -41,7 +44,7 @@ async function getFilteredCostReports(
 
   const endTime = new Date();
   const startTime = new Date();
-  startTime.setMonth(endTime.getMonth() - 2);
+  startTime.setMonth(endTime.getMonth() - MONTHS_TO_INCLUDE);
 
   const costReportsResponse: CostReportsResponse = await infrawalletApi.getCostReports(
     filters,
@@ -185,7 +188,7 @@ function getRelativeChangeInPercentage(
   previousCost: number,
 ): { change: number; formattedChange: string } {
   const percentageChange = previousCost !== 0 ? ((currentCost - previousCost) / previousCost) * 100 : 0;
-  const percentageChangeFormatted = Math.abs(percentageChange).toFixed(2);
+  const percentageChangeFormatted = Math.abs(percentageChange).toFixed(NUM_DIGITS_AFTER_DECIMALPOINT);
   return { change: percentageChange, formattedChange: percentageChangeFormatted };
 }
 
@@ -209,7 +212,7 @@ export function getChartData(
       const total = projectReports.reduce((sum, report) => {
         return sum + (report.reports[period] ?? 0);
       }, 0);
-      dataPoint[project] = total;
+      dataPoint[project] = total.toFixed(NUM_DIGITS_AFTER_DECIMALPOINT);
     });
     return dataPoint;
   });
@@ -299,7 +302,7 @@ const TotalCostTab = ({
           </Box>
         )}
         <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-          Current Month: ${totalCost.toFixed(2)}
+          Current Month: ${totalCost.toFixed(NUM_DIGITS_AFTER_DECIMALPOINT)}
         </Typography>
       </Box>
       <ResponsiveContainer width="100%" height={300}>
@@ -358,13 +361,13 @@ const ServiceBreakDownTab = ({
               serviceMark = '▲';
             }
 
-            const changeFormatted = Math.abs(row.change).toFixed(2);
+            const changeFormatted = Math.abs(row.change).toFixed(NUM_DIGITS_AFTER_DECIMALPOINT);
             return (
               <TableRow key={row.service}>
                 <TableCell component="th" scope="row">
                   {row.service}
                 </TableCell>
-                <TableCell align="right">${row.cost.toFixed(2)}</TableCell>
+                <TableCell align="right">${row.cost.toFixed(NUM_DIGITS_AFTER_DECIMALPOINT)}</TableCell>
                 <TableCell align="right">
                   <Box
                     sx={{
