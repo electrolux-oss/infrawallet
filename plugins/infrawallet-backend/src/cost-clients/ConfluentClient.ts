@@ -10,6 +10,7 @@ import {
   NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS,
   GRANULARITY,
 } from '../service/consts';
+import { cryptoRandom } from '../service/crypto';
 import { ConfluentEnvironmentSchema, ConfluentBillingResponseSchema } from '../schemas/ConfluentBilling';
 import { ZodError } from 'zod';
 
@@ -118,7 +119,7 @@ export class ConfluentClient extends InfraWalletClient {
       if (response.status === 429 && retryCount < maxRetries) {
         // Apply exponential backoff with jitter for rate limiting
         const retryAfter = parseInt(response.headers.get('retry-after') || '30', 10);
-        const jitter = Math.random() * 2;
+        const jitter = cryptoRandom() * 2;
         const backoffTime = Math.min(120, retryAfter * Math.pow(1.5, retryCount) * jitter);
         this.logger.warn(`Rate limited, backing off for ${Math.ceil(backoffTime)} seconds...`);
         await new Promise(resolve => setTimeout(resolve, backoffTime * 1000));

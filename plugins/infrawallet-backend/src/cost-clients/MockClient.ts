@@ -4,8 +4,11 @@ import { promises as fsPromises } from 'fs';
 import moment from 'moment';
 import * as upath from 'upath';
 import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
+import { cryptoRandom } from '../service/crypto';
 import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
+
+// Helper function to generate cryptographically secure random numbers
 
 export class MockClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -85,7 +88,7 @@ export class MockClient extends InfraWalletClient {
   }
 
   getRandomValue(min: number, max: number): number {
-    const random = Math.random();
+    const random = cryptoRandom();
     const amplifiedRandom = Math.pow(random, 3);
     return amplifiedRandom * (max - min) + min;
   }
