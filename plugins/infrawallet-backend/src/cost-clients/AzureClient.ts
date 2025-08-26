@@ -5,6 +5,8 @@ import { CacheService, DatabaseService, LoggerService } from '@backstage/backend
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
+import { ZodError } from 'zod';
+import { QueryResponseSchema, CostQuerySchema, TagsQuerySchema } from '../schemas/AzureBilling';
 import { CategoryMappingService } from '../service/CategoryMappingService';
 import { CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from '../service/consts';
 import { getBillingPeriod, parseCost, parseTags } from '../service/functions';
@@ -45,7 +47,15 @@ export class AzureClient extends InfraWalletClient {
       });
       const response = await client.pipeline.sendRequest(client, request);
       if (response.status === 200) {
-        return JSON.parse(response.bodyAsText || '{}');
+        const data = JSON.parse(response.bodyAsText || '{}');
+
+        // Validate response with Zod schema
+        const validationResult = QueryResponseSchema.safeParse(data);
+        if (!validationResult.success) {
+          this.logger.warn(`Azure query response validation failed: ${validationResult.error.message}`);
+        }
+
+        return data;
       } else if (response.status === 429) {
         const retryAfter = parseInt(
           response.headers.get('x-ms-ratelimit-microsoft.costmanagement-entity-retry-after') || '60',
@@ -119,6 +129,17 @@ export class AzureClient extends InfraWalletClient {
     client: any,
     query: TagsQuery,
   ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
+    // Validate query parameters with Zod schema
+    try {
+      TagsQuerySchema.parse(query);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        this.logger.error(`Invalid tags query parameters: ${error.message}`);
+        throw new Error(`Invalid tags query parameters: ${error.message}`);
+      }
+      throw error;
+    }
+
     const tagKeys = await this._fetchTags(subAccountConfig, client, query, '');
     return { tagKeys: tagKeys, provider: this.provider };
   }
@@ -129,11 +150,33 @@ export class AzureClient extends InfraWalletClient {
     query: TagsQuery,
     tagKey: string,
   ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
+    // Validate query parameters with Zod schema
+    try {
+      TagsQuerySchema.parse(query);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        this.logger.error(`Invalid tags query parameters: ${error.message}`);
+        throw new Error(`Invalid tags query parameters: ${error.message}`);
+      }
+      throw error;
+    }
+
     const tagValues = await this._fetchTags(subAccountConfig, client, query, tagKey);
     return { tagValues: tagValues, provider: this.provider };
   }
 
   protected async fetchCosts(subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
+    // Validate query parameters with Zod schema
+    try {
+      CostQuerySchema.parse(query);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        this.logger.error(`Invalid cost query parameters: ${error.message}`);
+        throw new Error(`Invalid cost query parameters: ${error.message}`);
+      }
+      throw error;
+    }
+
     // Azure SDK doesn't support pagination, so sending HTTP request directly
     const subscriptionId = subAccountConfig.getString('subscriptionId');
     const url = `https://management.azure.com/subscriptions/${subscriptionId}/providers/Microsoft.CostManagement/query?api-version=2023-11-01`;

@@ -1,6 +1,8 @@
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
+import { ZodError } from 'zod';
+import { BillingUsageResponseSchema, CostQuerySchema } from '../schemas/GitHubBilling';
 import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
 import { getBillingPeriod, parseCost } from '../service/functions';
 import { CostQuery, Report } from '../service/types';
@@ -16,6 +18,17 @@ export class GitHubClient extends InfraWalletClient {
   }
 
   protected async fetchCosts(integrationConfig: Config, _client: any, query: CostQuery): Promise<any> {
+    // Validate query parameters with Zod schema
+    try {
+      CostQuerySchema.parse(query);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        this.logger.error(`Invalid cost query parameters: ${error.message}`);
+        throw new Error(`Invalid cost query parameters: ${error.message}`);
+      }
+      throw error;
+    }
+
     const token = integrationConfig.getString('token');
     const organization = integrationConfig.getString('organization');
 
@@ -41,6 +54,15 @@ export class GitHubClient extends InfraWalletClient {
       }
 
       const data = await response.json();
+
+      // Validate response with Zod schema
+      const validationResult = BillingUsageResponseSchema.safeParse(data);
+      if (!validationResult.success) {
+        this.logger.warn(
+          `GitHub billing response validation failed for year ${year}: ${validationResult.error.message}`,
+        );
+      }
+
       if (Array.isArray(data.usageItems)) {
         allUsageItems = allUsageItems.concat(data.usageItems);
       }

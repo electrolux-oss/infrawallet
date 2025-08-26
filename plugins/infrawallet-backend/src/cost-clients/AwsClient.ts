@@ -14,6 +14,13 @@ import { CacheService, DatabaseService, LoggerService } from '@backstage/backend
 import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
+import { ZodError } from 'zod';
+import {
+  GetCostAndUsageResponseSchema,
+  GetTagsResponseSchema,
+  CostQuerySchema,
+  TagsQuerySchema,
+} from '../schemas/AWSBilling';
 import { CategoryMappingService } from '../service/CategoryMappingService';
 import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
 import { getBillingPeriod, parseCost, parseTags } from '../service/functions';
@@ -142,7 +149,14 @@ export class AwsClient extends InfraWalletClient {
       };
       const command = new GetTagsCommand(input);
       const response = await client.send(command);
-      for (const tag of response.Tags) {
+
+      // Validate response with Zod schema
+      const validationResult = GetTagsResponseSchema.safeParse(response);
+      if (!validationResult.success) {
+        this.logger.warn(`AWS Tags response validation failed: ${validationResult.error.message}`);
+      }
+
+      for (const tag of response.Tags || []) {
         if (tag) {
           tags.push(tag);
         }
@@ -160,6 +174,17 @@ export class AwsClient extends InfraWalletClient {
     client: any,
     query: TagsQuery,
   ): Promise<{ tagKeys: string[]; provider: CLOUD_PROVIDER }> {
+    // Validate query parameters with Zod schema
+    try {
+      TagsQuerySchema.parse(query);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        this.logger.error(`Invalid tags query parameters: ${error.message}`);
+        throw new Error(`Invalid tags query parameters: ${error.message}`);
+      }
+      throw error;
+    }
+
     const tagKeys = await this._fetchTags(client, query);
     return { tagKeys: tagKeys, provider: this.provider };
   }
@@ -170,11 +195,33 @@ export class AwsClient extends InfraWalletClient {
     query: TagsQuery,
     tagKey: string,
   ): Promise<{ tagValues: string[]; provider: CLOUD_PROVIDER }> {
+    // Validate query parameters with Zod schema
+    try {
+      TagsQuerySchema.parse(query);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        this.logger.error(`Invalid tags query parameters: ${error.message}`);
+        throw new Error(`Invalid tags query parameters: ${error.message}`);
+      }
+      throw error;
+    }
+
     const tagValues = await this._fetchTags(client, query, tagKey);
     return { tagValues: tagValues, provider: this.provider };
   }
 
   protected async fetchCosts(_integrationConfig: Config, client: any, query: CostQuery): Promise<any> {
+    // Validate query parameters with Zod schema
+    try {
+      CostQuerySchema.parse(query);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        this.logger.error(`Invalid cost query parameters: ${error.message}`);
+        throw new Error(`Invalid cost query parameters: ${error.message}`);
+      }
+      throw error;
+    }
+
     // query this aws account's cost and usage using @aws-sdk/client-cost-explorer
     let costAndUsageResults: any[] = [];
     let nextPageToken = undefined;
@@ -219,11 +266,19 @@ export class AwsClient extends InfraWalletClient {
       const getCostCommand = new GetCostAndUsageCommand(input);
       const costAndUsageResponse = await client.send(getCostCommand);
 
+      // Validate response with Zod schema
+      const validationResult = GetCostAndUsageResponseSchema.safeParse(costAndUsageResponse);
+      if (!validationResult.success) {
+        this.logger.warn(`AWS Cost and Usage response validation failed: ${validationResult.error.message}`);
+      }
+
       // get AWS account names
-      for (const accountAttributes of costAndUsageResponse.DimensionValueAttributes) {
+      for (const accountAttributes of costAndUsageResponse.DimensionValueAttributes || []) {
         const accountId = accountAttributes.Value;
-        const accountName = accountAttributes.Attributes.description;
-        this.accounts.set(accountId, accountName);
+        const accountName = accountAttributes.Attributes?.description;
+        if (accountId && accountName) {
+          this.accounts.set(accountId, accountName);
+        }
       }
 
       costAndUsageResults = costAndUsageResults.concat(costAndUsageResponse.ResultsByTime);

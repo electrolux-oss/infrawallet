@@ -3,6 +3,8 @@ import { Config } from '@backstage/config';
 import { v2 as datadogApiV2, client as datadogClient } from '@datadog/datadog-api-client';
 import { reduce } from 'lodash';
 import moment from 'moment';
+import { ZodError } from 'zod';
+import { CostByOrgResponseSchema, CostQuerySchema } from '../schemas/DatadogBilling';
 import { CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from '../service/consts';
 import { parseCost } from '../service/functions';
 import { CostQuery, Report } from '../service/types';
@@ -90,6 +92,17 @@ export class DatadogClient extends InfraWalletClient {
   }
 
   protected async fetchCosts(integrationConfig: Config, client: any, query: CostQuery): Promise<any> {
+    // Validate query parameters with Zod schema
+    try {
+      CostQuerySchema.parse(query);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        this.logger.error(`Invalid cost query parameters: ${error.message}`);
+        throw new Error(`Invalid cost query parameters: ${error.message}`);
+      }
+      throw error;
+    }
+
     const costData: datadogApiV2.CostByOrg[] = [];
     const startTime = moment(parseInt(query.startTime, 10));
     const endTime = moment(parseInt(query.endTime, 10));
@@ -103,6 +116,14 @@ export class DatadogClient extends InfraWalletClient {
         endMonth: firstDayOfLastMonth.subtract(1, 'd'),
         view: 'sub-org',
       });
+
+      // Validate response with Zod schema
+      const historicalValidationResult = CostByOrgResponseSchema.safeParse(historicalCost);
+      if (!historicalValidationResult.success) {
+        this.logger.warn(
+          `Datadog historical cost response validation failed: ${historicalValidationResult.error.message}`,
+        );
+      }
 
       if (historicalCost.data) {
         costData.push(...historicalCost.data);
@@ -122,6 +143,14 @@ export class DatadogClient extends InfraWalletClient {
         endMonth: endTime,
         view: 'sub-org',
       });
+
+      // Validate response with Zod schema
+      const estimatedValidationResult = CostByOrgResponseSchema.safeParse(estimatedCost);
+      if (!estimatedValidationResult.success) {
+        this.logger.warn(
+          `Datadog estimated cost response validation failed: ${estimatedValidationResult.error.message}`,
+        );
+      }
 
       if (estimatedCost.data) {
         costData.push(...estimatedCost.data);

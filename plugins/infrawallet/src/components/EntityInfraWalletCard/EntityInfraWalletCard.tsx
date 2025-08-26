@@ -212,7 +212,7 @@ export function getChartData(
       const total = projectReports.reduce((sum, report) => {
         return sum + (report.reports[period] ?? 0);
       }, 0);
-      dataPoint[project] = total.toFixed(NUM_DIGITS_AFTER_DECIMALPOINT);
+      dataPoint[project] = total;
     });
     return dataPoint;
   });

@@ -5,10 +5,12 @@ import { existsSync } from 'fs';
 import { reduce } from 'lodash';
 import { homedir } from 'os';
 import { join } from 'path';
+import { ZodError } from 'zod';
 import { CategoryMappingService } from '../service/CategoryMappingService';
 import { CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from '../service/consts';
 import { parseCost } from '../service/functions';
 import { CostQuery, Report } from '../service/types';
+import { GCPBillingResponseSchema, GCPBillingQueryParamsSchema, GCPBillingResponse } from '../schemas/GCPBilling';
 import { InfraWalletClient } from './InfraWalletClient';
 
 export class GCPClient extends InfraWalletClient {
@@ -153,10 +155,29 @@ export class GCPClient extends InfraWalletClient {
     throw new Error(`Max retries (${maxRetries}) exceeded for BigQuery operation`);
   }
 
-  protected async fetchCosts(subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
+  protected async fetchCosts(subAccountConfig: Config, client: any, query: CostQuery): Promise<GCPBillingResponse> {
     const projectId = subAccountConfig.getString('projectId');
     const datasetId = subAccountConfig.getString('datasetId');
     const tableId = subAccountConfig.getString('tableId');
+
+    // Validate query parameters with Zod
+    const queryParams = {
+      projectId,
+      datasetId,
+      tableId,
+      startTime: query.startTime,
+      endTime: query.endTime,
+      granularity: query.granularity.toUpperCase() as 'DAILY' | 'MONTHLY',
+    };
+
+    try {
+      GCPBillingQueryParamsSchema.parse(queryParams);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        this.logger.warn(`Query parameters validation failed: ${JSON.stringify(error.errors)}`);
+      }
+      throw new Error(`Invalid query parameters: ${error.message}`);
+    }
 
     try {
       const periodFormat = query.granularity === GRANULARITY.MONTHLY ? '%Y-%m' : '%Y-%m-%d';
@@ -182,7 +203,19 @@ export class GCPClient extends InfraWalletClient {
         query: sql,
       };
 
-      return await this.fetchDataWithRetry(client, queryOptions);
+      const rawResponse = await this.fetchDataWithRetry(client, queryOptions);
+
+      // Validate response with Zod
+      const validationResult = GCPBillingResponseSchema.safeParse(rawResponse);
+      if (!validationResult.success) {
+        this.logger.warn(`Response validation failed for GCP billing data: ${validationResult.error.message}`);
+        this.logger.debug(`Raw response sample: ${JSON.stringify(rawResponse?.slice(0, 3) ?? [])}`);
+      } else {
+        this.logger.debug('Response validation passed for GCP billing data');
+      }
+
+      this.logger.info(`Fetched ${rawResponse?.length ?? 0} GCP billing records`);
+      return rawResponse;
     } catch (err) {
       this.logger.error(`Error executing BigQuery after retries: ${err.message}`);
       throw new Error(err.message);
@@ -192,7 +225,7 @@ export class GCPClient extends InfraWalletClient {
   protected async transformCostsData(
     subAccountConfig: Config,
     _query: CostQuery,
-    costResponse: any,
+    costResponse: GCPBillingResponse,
   ): Promise<Report[]> {
     const categoryMappingService = CategoryMappingService.getInstance();
     const accountName = subAccountConfig.getString('name');

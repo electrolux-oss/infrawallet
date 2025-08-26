@@ -3,6 +3,8 @@ import { Config } from '@backstage/config';
 import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 import moment from 'moment';
+import { ZodError } from 'zod';
+import { CostsResponseSchema, EnvironmentResponseSchema, CostQuerySchema } from '../schemas/ConfluentBilling';
 import { CategoryMappingService } from '../service/CategoryMappingService';
 import {
   CLOUD_PROVIDER,
@@ -63,6 +65,13 @@ export class ConfluentClient extends InfraWalletClient {
       }
 
       const jsonResponse = await response.json();
+
+      // Validate response with Zod schema
+      const validationResult = EnvironmentResponseSchema.safeParse(jsonResponse);
+      if (!validationResult.success) {
+        this.logger.warn(`Environment response validation failed for ${envId}: ${validationResult.error.message}`);
+      }
+
       return jsonResponse.display_name;
     } catch (error) {
       this.logger.warn(`Error fetching environment name for ${envId}: ${error.message}`);
@@ -130,6 +139,17 @@ export class ConfluentClient extends InfraWalletClient {
   }
 
   protected async fetchCosts(_subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
+    // Validate query parameters with Zod schema
+    try {
+      CostQuerySchema.parse(query);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        this.logger.error(`Invalid cost query parameters: ${error.message}`);
+        throw new Error(`Invalid cost query parameters: ${error.message}`);
+      }
+      throw error;
+    }
+
     // Confluent API limits:
     // 1. Can only fetch 1 month at a time
     // 2. Can only go back exactly the number of months defined in NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS
@@ -193,6 +213,12 @@ export class ConfluentClient extends InfraWalletClient {
       this.logger.debug(`Testing Confluent API access for ${latestRange.start.format('YYYY-MM')}`);
 
       const testResponse = await this.fetchCostWithRetry(testUrl, client, 0, 2);
+
+      // Validate response with Zod schema
+      const validationResult = CostsResponseSchema.safeParse(testResponse);
+      if (!validationResult.success) {
+        this.logger.warn(`Confluent costs response validation failed: ${validationResult.error.message}`);
+      }
 
       if (testResponse.data && testResponse.data.length > 0) {
         // Process environment names for this data

@@ -3,6 +3,8 @@ import { Config } from '@backstage/config';
 import { reduce } from 'lodash';
 import moment from 'moment';
 import urllib from 'urllib';
+import { ZodError } from 'zod';
+import { InvoiceListResponseSchema, CostQuerySchema } from '../schemas/MongoAtlasBilling';
 import { CategoryMappingService } from '../service/CategoryMappingService';
 import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
 import { getBillingPeriod } from '../service/functions';
@@ -40,6 +42,17 @@ export class MongoAtlasClient extends InfraWalletClient {
   }
 
   protected async fetchCosts(subAccountConfig: Config, client: any, query: CostQuery): Promise<any> {
+    // Validate query parameters with Zod schema
+    try {
+      CostQuerySchema.parse(query);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        this.logger.error(`Invalid cost query parameters: ${error.message}`);
+        throw new Error(`Invalid cost query parameters: ${error.message}`);
+      }
+      throw error;
+    }
+
     const orgId = subAccountConfig.getString('orgId');
     const invoicesUrl = `/orgs/${orgId}/invoices?fromDate=${moment(parseInt(query.startTime, 10)).format(
       'YYYY-MM-DD',
@@ -58,6 +71,12 @@ export class MongoAtlasClient extends InfraWalletClient {
 
       if (response.status !== 200) {
         throw new Error(`Error fetching invoices: ${response.status} ${response.statusText}`);
+      }
+
+      // Validate response with Zod schema
+      const validationResult = InvoiceListResponseSchema.safeParse(response.data);
+      if (!validationResult.success) {
+        this.logger.warn(`MongoAtlas invoice list response validation failed: ${validationResult.error.message}`);
       }
 
       const invoices = response.data.results;
