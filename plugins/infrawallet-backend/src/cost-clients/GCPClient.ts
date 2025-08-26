@@ -10,6 +10,8 @@ import { CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from '../service/consts';
 import { parseCost } from '../service/functions';
 import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
+import { GCPBillingQueryResultSchema } from '../schemas/GCPBilling';
+import { ZodError } from 'zod';
 
 export class GCPClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -117,6 +119,19 @@ export class GCPClient extends InfraWalletClient {
       try {
         const [job] = await client.createQueryJob(queryOptions);
         const [rows] = await job.getQueryResults();
+
+        try {
+          GCPBillingQueryResultSchema.parse(rows);
+          this.logger.debug(`GCP billing data validation passed for ${rows.length} records`);
+        } catch (error) {
+          if (error instanceof ZodError) {
+            this.logger.warn(`GCP billing data validation failed: ${error.message}`);
+            this.logger.debug(`Sample validation errors: ${JSON.stringify(error.errors.slice(0, 3))}`);
+          } else {
+            this.logger.warn(`Unexpected validation error: ${error.message}`);
+          }
+        }
+
         return rows;
       } catch (err) {
         const errorMessage = err.message || '';

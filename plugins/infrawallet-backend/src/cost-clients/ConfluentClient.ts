@@ -10,6 +10,8 @@ import {
   NUMBER_OF_MONTHS_FETCHING_HISTORICAL_COSTS,
   GRANULARITY,
 } from '../service/consts';
+import { ConfluentEnvironmentSchema, ConfluentBillingResponseSchema } from '../schemas/ConfluentBilling';
+import { ZodError } from 'zod';
 
 export class ConfluentClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -63,6 +65,18 @@ export class ConfluentClient extends InfraWalletClient {
       }
 
       const jsonResponse = await response.json();
+
+      try {
+        ConfluentEnvironmentSchema.parse(jsonResponse);
+        this.logger.debug(`Confluent environment response validation passed`);
+      } catch (error) {
+        if (error instanceof ZodError) {
+          this.logger.warn(`Confluent environment response validation failed: ${error.message}`);
+        } else {
+          this.logger.warn(`Unexpected validation error: ${error.message}`);
+        }
+      }
+
       return jsonResponse.display_name;
     } catch (error) {
       this.logger.warn(`Error fetching environment name for ${envId}: ${error.message}`);
@@ -116,7 +130,21 @@ export class ConfluentClient extends InfraWalletClient {
         throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
 
-      return await response.json();
+      const jsonResponse = await response.json();
+
+      try {
+        ConfluentBillingResponseSchema.parse(jsonResponse);
+        this.logger.debug(`Confluent billing response validation passed`);
+      } catch (error) {
+        if (error instanceof ZodError) {
+          this.logger.warn(`Confluent billing response validation failed: ${error.message}`);
+          this.logger.debug(`Sample validation errors: ${JSON.stringify(error.errors.slice(0, 3))}`);
+        } else {
+          this.logger.warn(`Unexpected validation error: ${error.message}`);
+        }
+      }
+
+      return jsonResponse;
     } catch (error) {
       if (retryCount < maxRetries) {
         // Apply exponential backoff for general errors

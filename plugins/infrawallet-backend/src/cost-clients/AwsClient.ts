@@ -19,6 +19,8 @@ import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
 import { getBillingPeriod, parseCost, parseTags } from '../service/functions';
 import { CostQuery, Report, TagsQuery } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
+import { AWSGetCostAndUsageResponseSchema, AWSGetTagsResponseSchema } from '../schemas/AWSBilling';
+import { ZodError } from 'zod';
 
 export class AwsClient extends InfraWalletClient {
   private readonly accounts: Map<string, string> = new Map();
@@ -142,6 +144,19 @@ export class AwsClient extends InfraWalletClient {
       };
       const command = new GetTagsCommand(input);
       const response = await client.send(command);
+
+      try {
+        AWSGetTagsResponseSchema.parse(response);
+        this.logger.debug(`AWS tags response validation passed`);
+      } catch (error) {
+        if (error instanceof ZodError) {
+          this.logger.warn(`AWS tags response validation failed: ${error.message}`);
+          this.logger.debug(`Sample validation errors: ${JSON.stringify(error.errors.slice(0, 3))}`);
+        } else {
+          this.logger.warn(`Unexpected validation error: ${error.message}`);
+        }
+      }
+
       for (const tag of response.Tags) {
         if (tag) {
           tags.push(tag);
@@ -218,6 +233,18 @@ export class AwsClient extends InfraWalletClient {
 
       const getCostCommand = new GetCostAndUsageCommand(input);
       const costAndUsageResponse = await client.send(getCostCommand);
+
+      try {
+        AWSGetCostAndUsageResponseSchema.parse(costAndUsageResponse);
+        this.logger.debug(`AWS cost and usage response validation passed`);
+      } catch (error) {
+        if (error instanceof ZodError) {
+          this.logger.warn(`AWS cost and usage response validation failed: ${error.message}`);
+          this.logger.debug(`Sample validation errors: ${JSON.stringify(error.errors.slice(0, 3))}`);
+        } else {
+          this.logger.warn(`Unexpected validation error: ${error.message}`);
+        }
+      }
 
       // get AWS account names
       for (const accountAttributes of costAndUsageResponse.DimensionValueAttributes) {

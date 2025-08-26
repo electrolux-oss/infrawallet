@@ -10,6 +10,8 @@ import { CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from '../service/consts';
 import { getBillingPeriod, parseCost, parseTags } from '../service/functions';
 import { CostQuery, Report, TagsQuery } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
+import { AzureBillingResponseSchema } from '../schemas/AzureBilling';
+import { ZodError } from 'zod';
 
 export class AzureClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -45,7 +47,21 @@ export class AzureClient extends InfraWalletClient {
       });
       const response = await client.pipeline.sendRequest(client, request);
       if (response.status === 200) {
-        return JSON.parse(response.bodyAsText || '{}');
+        const parsedResponse = JSON.parse(response.bodyAsText || '{}');
+
+        try {
+          AzureBillingResponseSchema.parse(parsedResponse);
+          this.logger.debug(`Azure billing response validation passed`);
+        } catch (error) {
+          if (error instanceof ZodError) {
+            this.logger.warn(`Azure billing response validation failed: ${error.message}`);
+            this.logger.debug(`Sample validation errors: ${JSON.stringify(error.errors.slice(0, 3))}`);
+          } else {
+            this.logger.warn(`Unexpected validation error: ${error.message}`);
+          }
+        }
+
+        return parsedResponse;
       } else if (response.status === 429) {
         const retryAfter = parseInt(
           response.headers.get('x-ms-ratelimit-microsoft.costmanagement-entity-retry-after') || '60',

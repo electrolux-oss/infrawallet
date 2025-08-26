@@ -8,6 +8,8 @@ import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
 import { getBillingPeriod } from '../service/functions';
 import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
+import { MongoAtlasInvoicesResponseSchema } from '../schemas/MongoAtlasBilling';
+import { ZodError } from 'zod';
 
 export class MongoAtlasClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -58,6 +60,18 @@ export class MongoAtlasClient extends InfraWalletClient {
 
       if (response.status !== 200) {
         throw new Error(`Error fetching invoices: ${response.status} ${response.statusText}`);
+      }
+
+      try {
+        MongoAtlasInvoicesResponseSchema.parse(response.data);
+        this.logger.debug(`MongoDB Atlas invoices response validation passed`);
+      } catch (error) {
+        if (error instanceof ZodError) {
+          this.logger.warn(`MongoDB Atlas invoices response validation failed: ${error.message}`);
+          this.logger.debug(`Sample validation errors: ${JSON.stringify(error.errors.slice(0, 3))}`);
+        } else {
+          this.logger.warn(`Unexpected validation error: ${error.message}`);
+        }
       }
 
       const invoices = response.data.results;
