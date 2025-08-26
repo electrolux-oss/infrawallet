@@ -9,3 +9,4 @@ _If your organization uses InfraWallet, we'd love to have you listed! Simply sub
 | [Electrolux](https://www.electrolux.com)                 | [@kondrashevich](https://github.com/kondrashevich) |
 | [Alithya](https://www.alithya.com)                       | [@fjudith](https://github.com/fjudith)             |
 | [Aurora Innovation](https://github.com/aurorainnovation) | [@O5ten](https://github.com/O5ten)                 |
+| [PitchBook Data](https://pitchbook.com/)                 | [@stvnksslr](https://github.com/stvnksslr)         |
