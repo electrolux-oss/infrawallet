@@ -3,6 +3,7 @@ import { Config } from '@backstage/config';
 import moment from 'moment';
 import { MetricProvider } from './MetricProvider';
 import { Metric, MetricQuery } from '../service/types';
+import { cryptoRandom } from '../service/crypto';
 
 export class MockProvider extends MetricProvider {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -44,7 +45,7 @@ export class MockProvider extends MetricProvider {
     let cursor = moment(parseInt(query.startTime, 10));
     while (cursor <= moment(parseInt(query.endTime, 10))) {
       const period = cursor.format(query.granularity === 'daily' ? 'YYYY-MM-DD' : 'YYYY-MM');
-      metric.reports[period] = Math.floor(Math.random() * (maxValue - minValue) + minValue);
+      metric.reports[period] = Math.floor(cryptoRandom() * (maxValue - minValue) + minValue);
       cursor = cursor.add(1, query.granularity === 'daily' ? 'days' : 'months');
     }
 

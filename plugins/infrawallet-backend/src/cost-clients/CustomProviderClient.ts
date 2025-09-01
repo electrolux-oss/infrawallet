@@ -12,6 +12,8 @@ import {
 } from '../service/functions';
 import { ClientResponse, CloudProviderError, CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
+import { CustomCostRecordSchema } from '../schemas/CustomProviderBilling';
+import { ZodError } from 'zod';
 
 export class CustomProviderClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -36,6 +38,20 @@ export class CustomProviderClient extends InfraWalletClient {
     query: CostQuery,
     costResponse: any,
   ): Promise<Report[]> {
+    if (Array.isArray(costResponse)) {
+      try {
+        costResponse.forEach((record: any) => CustomCostRecordSchema.parse(record));
+        this.logger.debug(`Custom cost records validation passed for ${costResponse.length} records`);
+      } catch (error) {
+        if (error instanceof ZodError) {
+          this.logger.warn(`Custom cost records validation failed: ${error.message}`);
+          this.logger.debug(`Sample validation errors: ${JSON.stringify(error.errors.slice(0, 3))}`);
+        } else {
+          this.logger.warn(`Unexpected validation error: ${error.message}`);
+        }
+      }
+    }
+
     const transformedData = reduce(
       costResponse,
       (accumulator: { [key: string]: Report }, record) => {

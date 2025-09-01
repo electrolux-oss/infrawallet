@@ -7,6 +7,8 @@ import { CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from '../service/consts';
 import { parseCost } from '../service/functions';
 import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
+import { DatadogCostByOrgResponseSchema } from '../schemas/DatadogBilling';
+import { ZodError } from 'zod';
 
 export class DatadogClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -104,6 +106,18 @@ export class DatadogClient extends InfraWalletClient {
         view: 'sub-org',
       });
 
+      try {
+        DatadogCostByOrgResponseSchema.parse(historicalCost);
+        this.logger.debug(`Datadog historical cost response validation passed`);
+      } catch (error) {
+        if (error instanceof ZodError) {
+          this.logger.warn(`Datadog historical cost response validation failed: ${error.message}`);
+          this.logger.debug(`Sample validation errors: ${JSON.stringify(error.errors.slice(0, 3))}`);
+        } else {
+          this.logger.warn(`Unexpected validation error: ${error.message}`);
+        }
+      }
+
       if (historicalCost.data) {
         costData.push(...historicalCost.data);
       }
@@ -122,6 +136,18 @@ export class DatadogClient extends InfraWalletClient {
         endMonth: endTime,
         view: 'sub-org',
       });
+
+      try {
+        DatadogCostByOrgResponseSchema.parse(estimatedCost);
+        this.logger.debug(`Datadog estimated cost response validation passed`);
+      } catch (error) {
+        if (error instanceof ZodError) {
+          this.logger.warn(`Datadog estimated cost response validation failed: ${error.message}`);
+          this.logger.debug(`Sample validation errors: ${JSON.stringify(error.errors.slice(0, 3))}`);
+        } else {
+          this.logger.warn(`Unexpected validation error: ${error.message}`);
+        }
+      }
 
       if (estimatedCost.data) {
         costData.push(...estimatedCost.data);
