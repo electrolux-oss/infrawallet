@@ -212,7 +212,7 @@ export function getChartData(
       const total = projectReports.reduce((sum, report) => {
         return sum + (report.reports[period] ?? 0);
       }, 0);
-      dataPoint[project] = total.toFixed(NUM_DIGITS_AFTER_DECIMALPOINT);
+      dataPoint[project] = total;
     });
     return dataPoint;
   });
@@ -309,8 +309,8 @@ const TotalCostTab = ({
         <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="period" />
-          <YAxis />
-          <Tooltip />
+          <YAxis tickFormatter={(value: number) => `$${value.toFixed(0)}`} />
+          <Tooltip formatter={(value: number) => `$${value.toFixed(NUM_DIGITS_AFTER_DECIMALPOINT)}`} />
           <Legend />
           {projects.map((project, index) => (
             <Line

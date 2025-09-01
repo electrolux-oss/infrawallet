@@ -5,6 +5,8 @@ import { CLOUD_PROVIDER, PROVIDER_TYPE } from '../service/consts';
 import { getBillingPeriod, parseCost } from '../service/functions';
 import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
+import { GitHubBillingResponseSchema } from '../schemas/GitHubBilling';
+import { ZodError } from 'zod';
 
 export class GitHubClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -41,6 +43,19 @@ export class GitHubClient extends InfraWalletClient {
       }
 
       const data = await response.json();
+
+      try {
+        GitHubBillingResponseSchema.parse(data);
+        this.logger.debug(`GitHub billing response validation passed`);
+      } catch (error) {
+        if (error instanceof ZodError) {
+          this.logger.warn(`GitHub billing response validation failed: ${error.message}`);
+          this.logger.debug(`Sample validation errors: ${JSON.stringify(error.errors.slice(0, 3))}`);
+        } else {
+          this.logger.warn(`Unexpected validation error: ${error.message}`);
+        }
+      }
+
       if (Array.isArray(data.usageItems)) {
         allUsageItems = allUsageItems.concat(data.usageItems);
       }
