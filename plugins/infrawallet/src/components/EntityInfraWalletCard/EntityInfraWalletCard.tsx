@@ -309,8 +309,8 @@ const TotalCostTab = ({
         <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" />
           <XAxis dataKey="period" />
-          <YAxis />
-          <Tooltip />
+          <YAxis tickFormatter={(value: number) => `$${value.toFixed(0)}`} />
+          <Tooltip formatter={(value: number) => `$${value.toFixed(NUM_DIGITS_AFTER_DECIMALPOINT)}`} />
           <Legend />
           {projects.map((project, index) => (
             <Line
