@@ -74,15 +74,15 @@ export const InstancesResponseSchema = z.object({
 });
 
 export const ChartValueSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-  type: z.string(),
-  value: z.number(),
+  id: z.string().optional(),
+  name: z.string().optional(),
+  type: z.string().optional(),
+  value: z.number().optional(),
 });
 
 export const ChartItemSchema = z.object({
   timestamp: z.number().int(),
-  values: z.array(ChartValueSchema),
+  values: z.array(ChartValueSchema).optional().default([]),
 });
 
 export const ChartsResponseSchema = z.object({

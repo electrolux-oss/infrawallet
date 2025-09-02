@@ -45,10 +45,20 @@ export class MockClient extends InfraWalletClient {
         endDate.add(1, 'day');
       }
 
+      // Initialize tracking variables
+      let processedRecords = 0;
+      const filteredOutZeroAmount = 0;
+      const filteredOutMissingFields = 0;
+      const filteredOutInvalidDate = 0;
+      const filteredOutTimeRange = 0;
+      const uniqueKeys = new Set<string>();
+      const totalRecords = jsonData.length;
+
       const processedData = await Promise.all(
         jsonData.map(async item => {
           item.providerType = PROVIDER_TYPE.INTEGRATION;
           item.reports = {};
+          uniqueKeys.add(item.id);
 
           let tempDate = moment(startDate);
           if (item.provider === 'GCP') {
@@ -73,12 +83,23 @@ export class MockClient extends InfraWalletClient {
               item.reports[dateString] = this.getRandomValue(0.4, 33.3);
             }
 
+            processedRecords++;
             tempDate.add(1, step); // Step based on granularity
           }
 
           return item;
         }),
       );
+
+      this.logTransformationSummary({
+        processed: processedRecords,
+        uniqueReports: uniqueKeys.size,
+        zeroAmount: filteredOutZeroAmount,
+        missingFields: filteredOutMissingFields,
+        invalidDate: filteredOutInvalidDate,
+        timeRange: filteredOutTimeRange,
+        totalRecords,
+      });
 
       return processedData;
     } catch (err) {

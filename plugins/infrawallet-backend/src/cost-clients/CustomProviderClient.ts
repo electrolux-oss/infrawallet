@@ -52,9 +52,40 @@ export class CustomProviderClient extends InfraWalletClient {
       }
     }
 
+    // Initialize tracking variables
+    let processedRecords = 0;
+    let filteredOutZeroAmount = 0;
+    let filteredOutMissingFields = 0;
+    const filteredOutInvalidDate = 0;
+    const filteredOutTimeRange = 0;
+    const uniqueKeys = new Set<string>();
+    const totalRecords = Array.isArray(costResponse) ? costResponse.length : 0;
+
     const transformedData = reduce(
       costResponse,
       (accumulator: { [key: string]: Report }, record) => {
+        // Check for missing fields
+        if (
+          !record.provider ||
+          !record.account ||
+          !record.service ||
+          !record.category ||
+          record.cost === undefined ||
+          record.cost === null ||
+          !record.usage_month
+        ) {
+          filteredOutMissingFields++;
+          return accumulator;
+        }
+
+        const cost = parseFloat(record.cost);
+
+        // Check for zero amount
+        if (cost === 0) {
+          filteredOutZeroAmount++;
+          return accumulator;
+        }
+
         let periodFormat = 'YYYY-MM';
         if (query.granularity === GRANULARITY.DAILY) {
           periodFormat = 'YYYY-MM-DD';
@@ -73,6 +104,7 @@ export class CustomProviderClient extends InfraWalletClient {
         }
 
         if (!accumulator[keyName]) {
+          uniqueKeys.add(keyName);
           accumulator[keyName] = {
             id: keyName,
             account: record.account,
@@ -88,10 +120,10 @@ export class CustomProviderClient extends InfraWalletClient {
         // we merge these tags, but the tag with same key will be overriden
         accumulator[keyName] = { ...accumulator[keyName], ...record.tags };
 
-        const cost = parseFloat(record.cost);
         if (query.granularity === GRANULARITY.MONTHLY) {
           const period = moment(record.usage_month.toString(), 'YYYYMM').format(periodFormat);
           accumulator[keyName].reports[period] = cost;
+          processedRecords++;
         } else {
           if (record.amortization_mode === 'average') {
             // calculate the average daily cost
@@ -100,12 +132,15 @@ export class CustomProviderClient extends InfraWalletClient {
             periods.forEach(period => {
               accumulator[keyName].reports[period] = averageCost;
             });
+            processedRecords += periods.length;
           } else if (record.amortization_mode === 'start_day') {
             const period = moment(record.usage_month.toString(), 'YYYYMM').startOf('month').format(periodFormat);
             accumulator[keyName].reports[period] = cost;
+            processedRecords++;
           } else {
             const period = moment(record.usage_month.toString(), 'YYYYMM').endOf('month').format(periodFormat);
             accumulator[keyName].reports[period] = cost;
+            processedRecords++;
           }
         }
 
@@ -113,6 +148,16 @@ export class CustomProviderClient extends InfraWalletClient {
       },
       {},
     );
+
+    this.logTransformationSummary({
+      processed: processedRecords,
+      uniqueReports: uniqueKeys.size,
+      zeroAmount: filteredOutZeroAmount,
+      missingFields: filteredOutMissingFields,
+      invalidDate: filteredOutInvalidDate,
+      timeRange: filteredOutTimeRange,
+      totalRecords,
+    });
 
     return Object.values(transformedData);
   }
