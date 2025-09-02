@@ -69,16 +69,45 @@ export class GitHubClient extends InfraWalletClient {
     query: CostQuery,
     costResponse: any,
   ): Promise<Report[]> {
+    // Initialize tracking variables
+    let processedRecords = 0;
+    let filteredOutZeroAmount = 0;
+    let filteredOutMissingFields = 0;
+    const filteredOutInvalidDate = 0;
+    const filteredOutTimeRange = 0;
+    const uniqueKeys = new Set<string>();
+    const totalRecords = costResponse?.length || 0;
+
     const transformedData = reduce(
       costResponse,
       (accumulator: { [key: string]: Report }, usageItem) => {
+        // Check for missing fields
+        if (
+          !usageItem.date ||
+          !usageItem.organizationName ||
+          !usageItem.sku ||
+          usageItem.netAmount === undefined ||
+          usageItem.netAmount === null
+        ) {
+          filteredOutMissingFields++;
+          return accumulator;
+        }
+
+        const amount = parseCost(usageItem.netAmount);
+
+        // Check for zero amount
+        if (amount === 0) {
+          filteredOutZeroAmount++;
+          return accumulator;
+        }
+
         const billingPeriod = getBillingPeriod(query.granularity, usageItem.date, 'YYYY-MM-DDTHH:mm:ssZ');
         const account = usageItem.organizationName;
         const sku = usageItem.sku;
-        const cost = usageItem.netAmount;
         const keyName = `${this.provider}/${account}/${sku}`;
 
         if (!accumulator[keyName]) {
+          uniqueKeys.add(keyName);
           accumulator[keyName] = {
             id: keyName,
             account: `${this.provider}/${account}`,
@@ -90,12 +119,23 @@ export class GitHubClient extends InfraWalletClient {
           };
         }
 
-        accumulator[keyName].reports[billingPeriod] = parseCost(cost);
+        accumulator[keyName].reports[billingPeriod] = amount;
+        processedRecords++;
 
         return accumulator;
       },
       {},
     );
+
+    this.logTransformationSummary({
+      processed: processedRecords,
+      uniqueReports: uniqueKeys.size,
+      zeroAmount: filteredOutZeroAmount,
+      missingFields: filteredOutMissingFields,
+      invalidDate: filteredOutInvalidDate,
+      timeRange: filteredOutTimeRange,
+      totalRecords,
+    });
 
     return Object.values(transformedData);
   }

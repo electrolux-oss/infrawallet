@@ -10,7 +10,7 @@ import { CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from '../service/consts';
 import { parseCost } from '../service/functions';
 import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
-import { GCPBillingQueryResultSchema } from '../schemas/GCPBilling';
+import { GCPCustomQueryResultSchema } from '../schemas/GCPBilling';
 import { ZodError } from 'zod';
 
 export class GCPClient extends InfraWalletClient {
@@ -121,7 +121,7 @@ export class GCPClient extends InfraWalletClient {
         const [rows] = await job.getQueryResults();
 
         try {
-          GCPBillingQueryResultSchema.parse(rows);
+          GCPCustomQueryResultSchema.parse(rows);
           this.logger.debug(`GCP billing data validation passed for ${rows.length} records`);
         } catch (error) {
           if (error instanceof ZodError) {
@@ -217,13 +217,38 @@ export class GCPClient extends InfraWalletClient {
       const [k, v] = tag.split(':');
       tagKeyValues[k.trim()] = v.trim();
     });
+
+    // Initialize tracking variables
+    let processedRecords = 0;
+    let filteredOutZeroAmount = 0;
+    let filteredOutMissingFields = 0;
+    const filteredOutInvalidDate = 0;
+    const filteredOutTimeRange = 0;
+    const uniqueKeys = new Set<string>();
+    const totalRecords = costResponse?.length || 0;
+
     const transformedData = reduce(
       costResponse,
       (acc: { [key: string]: Report }, row) => {
+        // Check for missing fields
+        if (!row.period || !row.project || !row.service || row.total_cost === undefined || row.total_cost === null) {
+          filteredOutMissingFields++;
+          return acc;
+        }
+
+        const amount = parseCost(row.total_cost);
+
+        // Check for zero amount
+        if (amount === 0) {
+          filteredOutZeroAmount++;
+          return acc;
+        }
+
         const period = row.period;
         const keyName = `${accountName}_${row.project}_${row.service}`;
 
         if (!acc[keyName]) {
+          uniqueKeys.add(keyName);
           acc[keyName] = {
             id: keyName,
             account: `${this.provider}/${accountName}`,
@@ -237,11 +262,22 @@ export class GCPClient extends InfraWalletClient {
           };
         }
 
-        acc[keyName].reports[period] = parseCost(row.total_cost);
+        acc[keyName].reports[period] = amount;
+        processedRecords++;
         return acc;
       },
       {},
     );
+
+    this.logTransformationSummary({
+      processed: processedRecords,
+      uniqueReports: uniqueKeys.size,
+      zeroAmount: filteredOutZeroAmount,
+      missingFields: filteredOutMissingFields,
+      invalidDate: filteredOutInvalidDate,
+      timeRange: filteredOutTimeRange,
+      totalRecords,
+    });
 
     return Object.values(transformedData);
   }
