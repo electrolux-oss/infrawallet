@@ -101,9 +101,9 @@ const iconConfigs: Record<string, IconConfig> = {
     color: '#F46800',
   },
   elasticcloud: {
-    icon: 'SiElastic',
+    icon: 'SiElasticcloud',
     library: IconLibrary.SimpleIcons,
-    color: '#ffffffff',
+    color: '#005571',
   },
   confluent: {
     icon: 'SiApachekafka',

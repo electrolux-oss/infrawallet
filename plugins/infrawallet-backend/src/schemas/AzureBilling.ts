@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const AzureGranularitySchema = z.enum(['Daily', 'Monthly', 'None']);
+export const AzureGranularitySchema = z.enum(['Daily', 'Monthly']);
 export const AzureQueryTypeSchema = z.enum(['ActualCost', 'AmortizedCost', 'Usage']);
 
 export const AzureTimeframeSchema = z.enum([
@@ -29,8 +29,8 @@ export const AzureDatasetSchema = z.object({
   aggregation: z
     .record(
       z.object({
-        name: z.string(),
-        function: z.string(),
+        name: z.enum(['PreTaxCost', 'CostUSD', 'UsageQuantity']),
+        function: z.enum(['Sum', 'Average']),
       }),
     )
     .optional(),
@@ -48,17 +48,17 @@ export const AzureDatasetSchema = z.object({
       and: z.array(z.any()).optional(),
       or: z.array(z.any()).optional(),
       not: z.any().optional(),
-      dimension: z
+      dimensions: z
         .object({
           name: z.string(),
-          operator: z.string(),
+          operator: z.enum(['In']),
           values: z.array(z.string()),
         })
         .optional(),
-      tag: z
+      tags: z
         .object({
           name: z.string(),
-          operator: z.string(),
+          operator: z.enum(['In']),
           values: z.array(z.string()),
         })
         .optional(),
@@ -95,6 +95,15 @@ export const AzureBillingResponseSchema = z.object({
   properties: AzureBillingResponsePropertiesSchema,
 });
 
+export const AzureCommonColumnsSchema = z.object({
+  PreTaxCost: z.number().optional(),
+  ResourceGroup: z.string().optional(),
+  Currency: z.string().optional(),
+  UsageDate: z.number().optional(),
+  ServiceName: z.string().optional(),
+  BillingMonth: z.string().optional(),
+});
+
 export const AzureBillingErrorSchema = z.object({
   error: z.object({
     code: z.string(),
@@ -129,4 +138,5 @@ export type AzureQueryDefinition = z.infer<typeof AzureQueryDefinitionSchema>;
 export type AzureColumnInfo = z.infer<typeof AzureColumnInfoSchema>;
 export type AzureBillingResponseProperties = z.infer<typeof AzureBillingResponsePropertiesSchema>;
 export type AzureBillingResponse = z.infer<typeof AzureBillingResponseSchema>;
+export type AzureCommonColumns = z.infer<typeof AzureCommonColumnsSchema>;
 export type AzureBillingError = z.infer<typeof AzureBillingErrorSchema>;

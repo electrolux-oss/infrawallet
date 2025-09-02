@@ -315,7 +315,7 @@ export class ElasticCloudClient extends InfraWalletClient {
 
     for (const value of timePoint.values) {
       // Skip if value is null/undefined or missing required fields
-      if (!value || !value.id) continue;
+      if (!value?.id) continue;
 
       const instanceKey = `instance-${value.id}`;
       if (reports.has(instanceKey)) {
@@ -329,7 +329,7 @@ export class ElasticCloudClient extends InfraWalletClient {
   }
 
   private matchValueWithItemReports(value: any, period: string, reports: Map<string, Report>): void {
-    if (!value || !value.name) return;
+    if (!value?.name) return;
 
     for (const [key, report] of reports.entries()) {
       if (
