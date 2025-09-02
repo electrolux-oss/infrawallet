@@ -28,7 +28,7 @@ export async function fetchAndSaveCosts(options: RouterOptions) {
             try {
               await client.saveCostReportsToDatabase(defaultWallet, granularity);
             } catch (e) {
-              logger.error(e);
+              logger.error(`Error in ${provider} cost client:`, e);
             }
           })();
           promises.push(saveCostReportsToDatabasePromise);

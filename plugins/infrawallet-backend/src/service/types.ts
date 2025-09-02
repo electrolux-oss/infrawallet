@@ -124,7 +124,17 @@ export type Wallet = {
 };
 
 export type Filter = {
-  type: string; // 'include' or 'exclude'
+  type: string;
   attribute: string;
   pattern: string;
+};
+
+export type TransformationSummary = {
+  processed: number;
+  uniqueReports: number;
+  zeroAmount: number;
+  missingFields: number;
+  invalidDate: number;
+  timeRange: number;
+  totalRecords: number;
 };
