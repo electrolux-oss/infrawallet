@@ -100,6 +100,16 @@ const iconConfigs: Record<string, IconConfig> = {
     library: IconLibrary.SimpleIcons,
     color: '#F46800',
   },
+  elasticcloud: {
+    icon: 'SiElastic',
+    library: IconLibrary.SimpleIcons,
+    color: '#ffffffff',
+  },
+  confluent: {
+    icon: 'SiApachekafka',
+    library: IconLibrary.SimpleIcons,
+    color: '#ffffffff',
+  },
 };
 
 export const ProviderIcon = memo(({ provider, size = 24 }: ProviderIconProps) => {
