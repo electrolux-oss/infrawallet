@@ -106,7 +106,7 @@ const iconConfigs: Record<string, IconConfig> = {
     color: '#005571',
   },
   confluent: {
-    icon: 'SiApachekafka',
+    icon: '',
     library: IconLibrary.SimpleIcons,
     color: '#ffffffff',
   },
