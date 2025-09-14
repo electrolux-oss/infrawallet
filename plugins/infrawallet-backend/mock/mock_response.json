@@ -1968,6 +1968,258 @@
     "environment": "dev"
   },
   {
+    "id": "elastic-cloud-deployment-1_Elasticsearch",
+    "account": "ElasticCloud/elastic-org-mock",
+    "service": "ElasticCloud/Elasticsearch",
+    "category": "Analytics",
+    "provider": "ElasticCloud",
+    "project": "elastic-deployment-1",
+    "environment": "prod"
+  },
+  {
+    "id": "elastic-cloud-deployment-1_Kibana",
+    "account": "ElasticCloud/elastic-org-mock",
+    "service": "ElasticCloud/Kibana",
+    "category": "Analytics",
+    "provider": "ElasticCloud",
+    "project": "elastic-deployment-1",
+    "environment": "prod"
+  },
+  {
+    "id": "elastic-cloud-deployment-1_APM",
+    "account": "ElasticCloud/elastic-org-mock",
+    "service": "ElasticCloud/APM",
+    "category": "Operations",
+    "provider": "ElasticCloud",
+    "project": "elastic-deployment-1",
+    "environment": "prod"
+  },
+  {
+    "id": "elastic-cloud-deployment-1_Enterprise Search",
+    "account": "ElasticCloud/elastic-org-mock",
+    "service": "ElasticCloud/Enterprise Search",
+    "category": "Analytics",
+    "provider": "ElasticCloud",
+    "project": "elastic-deployment-1",
+    "environment": "prod"
+  },
+  {
+    "id": "elastic-cloud-deployment-2_Elasticsearch",
+    "account": "ElasticCloud/elastic-org-mock",
+    "service": "ElasticCloud/Elasticsearch",
+    "category": "Analytics",
+    "provider": "ElasticCloud",
+    "project": "elastic-deployment-2",
+    "environment": "staging"
+  },
+  {
+    "id": "elastic-cloud-deployment-2_Kibana",
+    "account": "ElasticCloud/elastic-org-mock",
+    "service": "ElasticCloud/Kibana",
+    "category": "Analytics",
+    "provider": "ElasticCloud",
+    "project": "elastic-deployment-2",
+    "environment": "staging"
+  },
+  {
+    "id": "elastic-cloud-deployment-2_Machine Learning",
+    "account": "ElasticCloud/elastic-org-mock",
+    "service": "ElasticCloud/Machine Learning",
+    "category": "Artificial Intelligence",
+    "provider": "ElasticCloud",
+    "project": "elastic-deployment-2",
+    "environment": "staging"
+  },
+  {
+    "id": "datadog-org-mock_Infrastructure Hosts",
+    "account": "Datadog/datadog-org-mock",
+    "service": "Datadog/Infrastructure Hosts",
+    "category": "Operations",
+    "provider": "Datadog",
+    "project": "datadog-monitoring",
+    "environment": "prod"
+  },
+  {
+    "id": "datadog-org-mock_APM Hosts",
+    "account": "Datadog/datadog-org-mock",
+    "service": "Datadog/APM Hosts",
+    "category": "Operations",
+    "provider": "Datadog",
+    "project": "datadog-monitoring",
+    "environment": "prod"
+  },
+  {
+    "id": "datadog-org-mock_Logs Indexed",
+    "account": "Datadog/datadog-org-mock",
+    "service": "Datadog/Logs Indexed",
+    "category": "Operations",
+    "provider": "Datadog",
+    "project": "datadog-monitoring",
+    "environment": "prod"
+  },
+  {
+    "id": "datadog-org-mock_Custom Metrics",
+    "account": "Datadog/datadog-org-mock",
+    "service": "Datadog/Custom Metrics",
+    "category": "Operations",
+    "provider": "Datadog",
+    "project": "datadog-monitoring",
+    "environment": "prod"
+  },
+  {
+    "id": "datadog-org-mock_Synthetics",
+    "account": "Datadog/datadog-org-mock",
+    "service": "Datadog/Synthetics",
+    "category": "Operations",
+    "provider": "Datadog",
+    "project": "datadog-monitoring",
+    "environment": "prod"
+  },
+  {
+    "id": "datadog-org-mock_Real User Monitoring",
+    "account": "Datadog/datadog-org-mock",
+    "service": "Datadog/Real User Monitoring",
+    "category": "Operations",
+    "provider": "Datadog",
+    "project": "datadog-monitoring",
+    "environment": "prod"
+  },
+  {
+    "id": "datadog-org-mock_Security Monitoring",
+    "account": "Datadog/datadog-org-mock",
+    "service": "Datadog/Security Monitoring",
+    "category": "Security, Identity, & Compliance",
+    "provider": "Datadog",
+    "project": "datadog-monitoring",
+    "environment": "prod"
+  },
+  {
+    "id": "github-org-mock_Actions",
+    "account": "GitHub/github-org-mock",
+    "service": "GitHub/Actions",
+    "category": "Developer Tools",
+    "provider": "GitHub",
+    "project": "github-project-1",
+    "repository": "infrawallet"
+  },
+  {
+    "id": "github-org-mock_Packages",
+    "account": "GitHub/github-org-mock",
+    "service": "GitHub/Packages",
+    "category": "Developer Tools",
+    "provider": "GitHub",
+    "project": "github-project-1",
+    "repository": "infrawallet"
+  },
+  {
+    "id": "github-org-mock_Codespaces",
+    "account": "GitHub/github-org-mock",
+    "service": "GitHub/Codespaces",
+    "category": "Developer Tools",
+    "provider": "GitHub",
+    "project": "github-project-1",
+    "repository": "infrawallet"
+  },
+  {
+    "id": "github-org-mock_Storage",
+    "account": "GitHub/github-org-mock",
+    "service": "GitHub/Storage",
+    "category": "Storage",
+    "provider": "GitHub",
+    "project": "github-project-1",
+    "repository": "infrawallet"
+  },
+  {
+    "id": "github-org-mock_Actions_backend",
+    "account": "GitHub/github-org-mock",
+    "service": "GitHub/Actions",
+    "category": "Developer Tools",
+    "provider": "GitHub",
+    "project": "github-project-2",
+    "repository": "backend-service"
+  },
+  {
+    "id": "github-org-mock_Copilot",
+    "account": "GitHub/github-org-mock",
+    "service": "GitHub/Copilot",
+    "category": "Artificial Intelligence",
+    "provider": "GitHub",
+    "project": "github-project-2",
+    "repository": "backend-service"
+  },
+  {
+    "id": "grafana-cloud-mock_Metrics",
+    "account": "Grafana/grafana-org-mock",
+    "service": "Grafana/Metrics",
+    "category": "Operations",
+    "provider": "Grafana",
+    "project": "grafana-stack-1",
+    "environment": "prod"
+  },
+  {
+    "id": "grafana-cloud-mock_Logs",
+    "account": "Grafana/grafana-org-mock",
+    "service": "Grafana/Logs",
+    "category": "Operations",
+    "provider": "Grafana",
+    "project": "grafana-stack-1",
+    "environment": "prod"
+  },
+  {
+    "id": "grafana-cloud-mock_Traces",
+    "account": "Grafana/grafana-org-mock",
+    "service": "Grafana/Traces",
+    "category": "Operations",
+    "provider": "Grafana",
+    "project": "grafana-stack-1",
+    "environment": "prod"
+  },
+  {
+    "id": "grafana-cloud-mock_Profiles",
+    "account": "Grafana/grafana-org-mock",
+    "service": "Grafana/Profiles",
+    "category": "Operations",
+    "provider": "Grafana",
+    "project": "grafana-stack-1",
+    "environment": "prod"
+  },
+  {
+    "id": "grafana-cloud-mock_Synthetic Monitoring",
+    "account": "Grafana/grafana-org-mock",
+    "service": "Grafana/Synthetic Monitoring",
+    "category": "Operations",
+    "provider": "Grafana",
+    "project": "grafana-stack-1",
+    "environment": "prod"
+  },
+  {
+    "id": "grafana-cloud-mock_Frontend Observability",
+    "account": "Grafana/grafana-org-mock",
+    "service": "Grafana/Frontend Observability",
+    "category": "Operations",
+    "provider": "Grafana",
+    "project": "grafana-stack-1",
+    "environment": "prod"
+  },
+  {
+    "id": "grafana-cloud-mock_Incident",
+    "account": "Grafana/grafana-org-mock",
+    "service": "Grafana/Incident",
+    "category": "Operations",
+    "provider": "Grafana",
+    "project": "grafana-stack-1",
+    "environment": "prod"
+  },
+  {
+    "id": "grafana-cloud-mock_OnCall",
+    "account": "Grafana/grafana-org-mock",
+    "service": "Grafana/OnCall",
+    "category": "Operations",
+    "provider": "Grafana",
+    "project": "grafana-stack-1",
+    "environment": "prod"
+  },
+  {
     "id": "confluent-org-mock->Integration->cluster-1",
     "account": "Confluent/confluent-org-mock",
     "service": "Confluent/Kafka Base",

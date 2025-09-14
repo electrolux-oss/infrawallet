@@ -1,6 +1,6 @@
-import { CacheService } from '@backstage/backend-plugin-api';
+import { CacheService, LoggerService } from '@backstage/backend-plugin-api';
 import { CACHE_CATEGORY, CLOUD_PROVIDER, DEFAULT_COSTS_CACHE_TTL, DEFAULT_TAGS_CACHE_TTL, GRANULARITY } from './consts';
-import { CostQuery, Metric, MetricQuery, Report, Tag, TagsQuery } from './types';
+import { CostQuery, Metric, MetricQuery, Report, Tag, TagsQuery, TransformationSummary } from './types';
 import moment from 'moment';
 
 // In URL, tags are defined in this format:
@@ -295,4 +295,18 @@ export function usageDateToPeriodString(usageDate: number): string {
     return `${usageDateStr.slice(0, 4)}-${usageDateStr.slice(4, 6)}-${usageDateStr.slice(6, 8)}`;
   }
   throw new Error('Invalid usageDate format');
+}
+
+/**
+ * Logs a standardized transformation summary for cost client data processing.
+ * This provides consistent logging across all cost providers.
+ */
+export function logTransformationSummary(
+  logger: LoggerService,
+  provider: string,
+  summary: TransformationSummary,
+): void {
+  logger.info(
+    `${provider} transformation summary: processed=${summary.processed}, uniqueReports=${summary.uniqueReports}, zeroAmount=${summary.zeroAmount}, missingFields=${summary.missingFields}, invalidDate=${summary.invalidDate}, timeRange=${summary.timeRange}, totalRecords=${summary.totalRecords}`,
+  );
 }
