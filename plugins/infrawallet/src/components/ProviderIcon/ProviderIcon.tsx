@@ -105,11 +105,6 @@ const iconConfigs: Record<string, IconConfig> = {
     library: IconLibrary.SimpleIcons,
     color: '#005571',
   },
-  confluent: {
-    icon: '',
-    library: IconLibrary.SimpleIcons,
-    color: '#ffffffff',
-  },
 };
 
 export const ProviderIcon = memo(({ provider, size = 24 }: ProviderIconProps) => {
