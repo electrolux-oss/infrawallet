@@ -1,21 +1,36 @@
 import { z } from 'zod';
 
 export const GCPBillingRowSchema = z.object({
-  service: z.object({
-    id: z.string(),
-    description: z.string(),
-  }),
-  sku: z.object({
-    id: z.string(),
-    description: z.string(),
-  }),
+  service: z
+    .union([
+      z.object({
+        id: z.string(),
+        description: z.string(),
+      }),
+      z.string(),
+    ])
+    .optional(),
+  sku: z
+    .union([
+      z.object({
+        id: z.string(),
+        description: z.string(),
+      }),
+      z.string(),
+    ])
+    .optional(),
   usage_start_time: z.string().optional(),
   usage_end_time: z.string().optional(),
-  project: z.object({
-    id: z.string(),
-    name: z.string().optional(),
-    labels: z.record(z.string()).optional(),
-  }),
+  project: z
+    .union([
+      z.object({
+        id: z.string(),
+        name: z.string().optional(),
+        labels: z.record(z.string()).optional(),
+      }),
+      z.string(),
+    ])
+    .optional(),
   labels: z.record(z.string()).optional(),
   system_labels: z.record(z.string()).optional(),
   location: z
@@ -27,8 +42,8 @@ export const GCPBillingRowSchema = z.object({
     })
     .optional(),
   export_time: z.string().optional(),
-  cost: z.number(),
-  currency: z.string(),
+  cost: z.number().optional(),
+  currency: z.string().optional(),
   currency_conversion_rate: z.number().optional(),
   usage: z
     .object({
@@ -49,9 +64,11 @@ export const GCPBillingRowSchema = z.object({
       }),
     )
     .optional(),
-  invoice: z.object({
-    month: z.string(),
-  }),
+  invoice: z
+    .object({
+      month: z.string(),
+    })
+    .optional(),
   cost_type: z.string().optional(),
   adjustment_info: z
     .object({
@@ -63,7 +80,34 @@ export const GCPBillingRowSchema = z.object({
     .optional(),
 });
 
+// Schema for custom GCP query results (simplified structure)
+export const GCPCustomQueryRowSchema = z.object({
+  project: z.string(),
+  service: z.string(),
+  period: z.string(),
+  total_cost: z.union([
+    z.number(),
+    z.object({}).transform((obj: any) => {
+      // Handle BigQuery numeric objects by converting to number
+      if (typeof obj === 'object' && obj !== null) {
+        // BigQuery sometimes returns numbers as objects with a value property or string representation
+        if (typeof obj.value === 'number') return obj.value;
+        if (typeof obj.value === 'string') return parseFloat(obj.value);
+        if (typeof obj === 'string') return parseFloat(obj);
+        // Try to convert the object to string then number as fallback
+        const stringValue = String(obj);
+        const numValue = parseFloat(stringValue);
+        return isNaN(numValue) ? 0 : numValue;
+      }
+      return 0;
+    }),
+  ]),
+});
+
 export const GCPBillingQueryResultSchema = z.array(GCPBillingRowSchema);
+export const GCPCustomQueryResultSchema = z.array(GCPCustomQueryRowSchema);
 
 export type GCPBillingRow = z.infer<typeof GCPBillingRowSchema>;
+export type GCPCustomQueryRow = z.infer<typeof GCPCustomQueryRowSchema>;
 export type GCPBillingQueryResult = z.infer<typeof GCPBillingQueryResultSchema>;
+export type GCPCustomQueryResult = z.infer<typeof GCPCustomQueryResultSchema>;

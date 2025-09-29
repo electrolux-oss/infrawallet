@@ -378,16 +378,46 @@ export class ConfluentClient extends InfraWalletClient {
       return [];
     }
 
+    this.logger.debug(`Starting transformation of ${costResponse.data.length} Confluent cost records`);
+
+    // Log first few records structure for debugging
+    if (costResponse.data.length > 0) {
+      const sampleRecord = costResponse.data[0];
+      this.logger.debug(`Sample Confluent record structure: ${JSON.stringify(Object.keys(sampleRecord))}`);
+      this.logger.debug(
+        `Sample record - start_date: ${sampleRecord.start_date}, line_type: ${sampleRecord.line_type}, price: ${sampleRecord.price}, amount: ${sampleRecord.amount}, original_amount: ${sampleRecord.original_amount}, discount_amount: ${sampleRecord.discount_amount}, product: ${sampleRecord.product}, network_access_type: ${sampleRecord.network_access_type}`,
+      );
+    }
+
+    let filteredOutZeroAmount = 0;
+    let filteredOutMissingFields = 0;
+    let filteredOutInvalidDate = 0;
+    let filteredOutTimeRange = 0;
+    let processedRecords = 0;
+    const uniqueKeys = new Set<string>();
+    const uniqueServices = new Set<string>();
+    const uniqueResources = new Set<string>();
+
     const transformedData = costResponse.data.reduce((accumulator: { [key: string]: Report }, line: any) => {
-      const amount = parseFloat(line.amount) || 0;
+      // Use amount field first (final amount after discounts), then fall back to price field
+      const amount = parseFloat(line.amount) || parseFloat(line.price) || 0;
 
       if (amount === 0) {
+        filteredOutZeroAmount++;
+        return accumulator;
+      }
+
+      // Skip records with missing critical fields
+      if (!line.start_date || !line.line_type || (!line.amount && !line.price)) {
+        filteredOutMissingFields++;
         return accumulator;
       }
 
       const parsedStartDate = moment(line.start_date);
 
       if (!parsedStartDate.isValid()) {
+        filteredOutInvalidDate++;
+        this.logger.debug(`Invalid start_date: ${line.start_date}`);
         return accumulator;
       }
 
@@ -398,9 +428,18 @@ export class ConfluentClient extends InfraWalletClient {
         billingPeriod = parsedStartDate.format('YYYY-MM-DD');
       }
 
-      const serviceName = this.capitalizeWords(line.line_type);
+      // Create a more descriptive service name by combining product and line_type
+      const baseServiceName = this.capitalizeWords(line.line_type);
+      const productName = line.product ? this.capitalizeWords(line.product) : null;
+      const serviceName =
+        productName && productName !== baseServiceName ? `${productName} ${baseServiceName}` : baseServiceName;
+
       const resourceName = line.resource?.display_name || 'Unknown';
       const envDisplayName = line.envDisplayName || 'Unknown';
+      const networkAccessType = line.network_access_type;
+
+      uniqueServices.add(serviceName);
+      uniqueResources.add(resourceName);
 
       const keyName = `${accountName}->${categoryMappingService.getCategoryByServiceName(
         this.provider,
@@ -408,6 +447,7 @@ export class ConfluentClient extends InfraWalletClient {
       )}->${resourceName}`;
 
       if (!accumulator[keyName]) {
+        uniqueKeys.add(keyName);
         accumulator[keyName] = {
           id: keyName,
           account: `${this.provider}/${accountName}`,
@@ -418,16 +458,38 @@ export class ConfluentClient extends InfraWalletClient {
           reports: {},
           ...{ project: envDisplayName },
           ...{ cluster: resourceName },
+          ...(networkAccessType && { networkAccessType }),
           ...tagKeyValues,
         };
       }
 
       if (!moment(billingPeriod).isBefore(moment(parseInt(query.startTime, 10)))) {
         accumulator[keyName].reports[billingPeriod] = (accumulator[keyName].reports[billingPeriod] || 0) + amount;
+        processedRecords++;
+      } else {
+        filteredOutTimeRange++;
       }
 
       return accumulator;
     }, {});
+
+    this.logTransformationSummary({
+      processed: processedRecords,
+      uniqueReports: uniqueKeys.size,
+      zeroAmount: filteredOutZeroAmount,
+      missingFields: filteredOutMissingFields,
+      invalidDate: filteredOutInvalidDate,
+      timeRange: filteredOutTimeRange,
+      totalRecords: costResponse.data.length,
+    });
+
+    // Log a few unique keys to understand the grouping
+    const keyArray = Array.from(uniqueKeys);
+    if (keyArray.length > 0) {
+      this.logger.info(`Unique services found: ${Array.from(uniqueServices).slice(0, 10).join(', ')}`);
+      this.logger.info(`Unique resources found: ${Array.from(uniqueResources).slice(0, 10).join(', ')}`);
+      this.logger.debug(`Sample unique keys: ${keyArray.slice(0, 5).join(', ')}`);
+    }
 
     return Object.values(transformedData);
   }

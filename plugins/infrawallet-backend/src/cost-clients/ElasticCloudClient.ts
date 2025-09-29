@@ -177,9 +177,32 @@ export class ElasticCloudClient extends InfraWalletClient {
     const accountName = integrationConfig.getString('name');
     const tagKeyValues = this.extractConfigTags(integrationConfig);
 
+    // Initialize tracking variables - calculate totalRecords from different parts of costResponse
+    let totalRecords = 0;
+
+    if (costResponse?.instanceCosts?.instances?.length) {
+      totalRecords += costResponse.instanceCosts.instances.length;
+    }
+    if (costResponse?.itemCosts?.products?.length) {
+      totalRecords += costResponse.itemCosts.products.length;
+    }
+    if (costResponse?.charts?.data?.length) {
+      totalRecords += costResponse.charts.data.length;
+    }
+
     try {
       const reports = new Map();
       const periodFormat = this.getPeriodFormat(query);
+      const uniqueKeys = new Set<string>();
+
+      // Track metrics during processing
+      const metrics = {
+        processed: 0,
+        zeroAmount: 0,
+        missingFields: 0,
+        invalidDate: 0,
+        timeRange: 0,
+      };
 
       this.processInstanceCosts(costResponse, reports, accountName, integrationConfig, tagKeyValues);
       this.processChartData(costResponse, reports, periodFormat);
@@ -187,11 +210,21 @@ export class ElasticCloudClient extends InfraWalletClient {
 
       const filteredReports = this.prepareReportsForOutput(reports, periodFormat);
 
-      this.logger.info(
-        `Returning ${filteredReports.length} reports with ${
-          Object.keys(filteredReports.reduce((acc, r) => ({ ...acc, ...r.reports }), {})).length
-        } periods`,
-      );
+      // Estimate processed records based on successful reports
+      metrics.processed = filteredReports.reduce((sum, report) => sum + Object.keys(report.reports).length, 0);
+
+      // Count unique keys from final reports
+      filteredReports.forEach(report => uniqueKeys.add(report.id));
+
+      this.logTransformationSummary({
+        processed: metrics.processed,
+        uniqueReports: uniqueKeys.size,
+        zeroAmount: metrics.zeroAmount,
+        missingFields: metrics.missingFields,
+        invalidDate: metrics.invalidDate,
+        timeRange: metrics.timeRange,
+        totalRecords,
+      });
 
       return filteredReports;
     } catch (error) {
@@ -281,11 +314,14 @@ export class ElasticCloudClient extends InfraWalletClient {
     }
 
     for (const value of timePoint.values) {
+      // Skip if value is null/undefined or missing required fields
       if (!value?.id) continue;
 
       const instanceKey = `instance-${value.id}`;
       if (reports.has(instanceKey)) {
-        reports.get(instanceKey)!.reports[period] = value.value ?? 0;
+        const rawValue = value.value ?? 0;
+        this.logger.debug(`Chart value for ${instanceKey} period ${period}: raw=${rawValue}`);
+        reports.get(instanceKey)!.reports[period] = rawValue; // Using raw value for now
       }
 
       this.matchValueWithItemReports(value, period, reports);
@@ -293,7 +329,7 @@ export class ElasticCloudClient extends InfraWalletClient {
   }
 
   private matchValueWithItemReports(value: any, period: string, reports: Map<string, Report>): void {
-    if (!value.name) return;
+    if (!value?.name) return;
 
     for (const [key, report] of reports.entries()) {
       if (
@@ -301,7 +337,9 @@ export class ElasticCloudClient extends InfraWalletClient {
         ((report.service && value.name.includes(report.service)) ||
           (report.productType && value.name.includes(report.productType)))
       ) {
-        report.reports[period] = value.value ?? 0;
+        const rawValue = value.value ?? 0;
+        this.logger.debug(`Item value for ${key} period ${period}: raw=${rawValue}`);
+        report.reports[period] = rawValue; // Using raw value for now
       }
     }
   }
@@ -332,7 +370,9 @@ export class ElasticCloudClient extends InfraWalletClient {
   }
 
   private distributeItemCost(report: Report, lineItem: any, query: CostQuery, periodFormat: string): number {
-    const totalCost = (lineItem.total_ecu ?? 0) / 100; // Convert ECU to dollars
+    const rawTotalEcu = lineItem.total_ecu ?? 0;
+    const totalCost = rawTotalEcu / 100; // Keep original conversion for line items
+    this.logger.debug(`Distribute item cost for ${report.id}: raw_ecu=${rawTotalEcu}, converted_dollars=${totalCost}`);
     if (totalCost <= 0) return 0;
 
     const startMonth = moment(parseInt(query.startTime, 10));

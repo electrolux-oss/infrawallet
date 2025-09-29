@@ -16,6 +16,7 @@ import {
   getReportsFromCache,
   getTagKeysFromCache,
   getTagValuesFromCache,
+  logTransformationSummary,
   setReportsToCache,
   setTagKeysToCache,
   setTagValuesToCache,
@@ -31,6 +32,7 @@ import {
   Tag,
   TagsQuery,
   TagsResponse,
+  TransformationSummary,
   Wallet,
 } from '../service/types';
 
@@ -122,6 +124,10 @@ export abstract class InfraWalletClient {
     query: CostQuery,
     costResponse: any,
   ): Promise<Report[]>;
+
+  protected logTransformationSummary(summary: TransformationSummary): void {
+    logTransformationSummary(this.logger, this.provider, summary);
+  }
 
   // Get aggregated unique tag keys across all accounts of this cloud provider
   async getTagKeys(query: TagsQuery): Promise<TagsResponse> {
