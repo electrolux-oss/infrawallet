@@ -10,11 +10,11 @@ import { MonthRange } from '../components/types';
  */
 const serializeFilters = (filters: Filters): string => {
   const parts: string[] = [];
-  Object.keys(filters).forEach(key => {
+  for (const key of Object.keys(filters)) {
     if (filters[key] && filters[key].length > 0) {
       parts.push(`${key}:${filters[key].join(',')}`);
     }
-  });
+  }
   return parts.join(';');
 };
 
@@ -27,12 +27,12 @@ const deserializeFilters = (filtersString: string): Filters => {
   if (!filtersString) return filters;
 
   const parts = filtersString.split(';');
-  parts.forEach(part => {
+  for (const part of parts) {
     const [key, values] = part.split(':');
     if (key && values) {
       filters[key] = values.split(',');
     }
-  });
+  }
   return filters;
 };
 
