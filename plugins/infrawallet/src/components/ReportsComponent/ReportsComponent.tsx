@@ -19,7 +19,7 @@ import {
   mergeCostReports,
 } from '../../api/functions';
 import { CloudProviderError, Filters, Metric, Report, Tag } from '../../api/types';
-import { useInfraWalletSearchParams } from '../../hooks/useInfraWalletSearchParams';
+import { useInfraWalletLuceneParams } from '../../hooks/useInfraWalletLuceneParams';
 import { Budgets } from '../Budgets';
 import { ColumnsChartComponent } from '../ColumnsChartComponent';
 import { CostReportsTableComponent } from '../CostReportsTableComponent';
@@ -100,7 +100,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
     endMonth: endOfMonth(new Date()),
   };
 
-  const { getInitialState, updateUrlState, isInitialMount } = useInfraWalletSearchParams({
+  const { getInitialState, updateUrlState, isInitialMount } = useInfraWalletLuceneParams({
     defaultFilters: {},
     defaultTags: [],
     defaultMonthRange,
@@ -274,6 +274,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
                       filters={filters}
                       monthRange={monthRange}
                       filtersSetter={setFilters}
+                      selectedTags={selectedTags}
                       selectedTagsSetter={setSelectedTags}
                       providerErrorsSetter={setCloudProviderErrors}
                     />
