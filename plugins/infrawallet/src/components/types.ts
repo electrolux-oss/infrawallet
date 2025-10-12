@@ -1,4 +1,4 @@
-import { Report, Filters } from '../api/types';
+import { Report, Filters, Tag } from '../api/types';
 
 export type TrendBarComponentProps = {
   categories: any[];
@@ -25,6 +25,7 @@ export type FiltersComponentProps = {
   filters: Filters;
   monthRange: MonthRange;
   filtersSetter: any;
+  selectedTags?: Tag[];
   selectedTagsSetter: any;
   providerErrorsSetter: any;
 };
