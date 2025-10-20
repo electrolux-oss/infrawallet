@@ -83,10 +83,10 @@ const astToFiltersAndTags = (ast: any): { filters: Filters; tags: Tag[] } => {
  */
 const quoteLuceneValue = (value: string): string => {
   // Check if value contains special Lucene characters that require quoting
-  const specialChars = /[\/\(\)\[\]\{\}\s:]/;
+  const specialChars = new RegExp(String.raw`[/()\[\]{}\s:]`);
   if (specialChars.test(value)) {
     // Escape any quotes in the value and wrap in quotes
-    return `"${value.replace(/"/g, '\\"')}"`;
+    return `"${value.replaceAll('"', '\\"')}"`;
   }
   return value;
 };
@@ -132,8 +132,9 @@ const parseLuceneQuery = (query: string): { filters: Filters; tags: Tag[] } => {
   try {
     const ast = lucene.parse(query);
     return astToFiltersAndTags(ast);
-  } catch (error) {
-    // Invalid Lucene query, fall back to defaults
+  } catch {
+    // Intentionally catch and ignore parse errors - invalid Lucene queries
+    // should gracefully fall back to empty state rather than break the UI
     return { filters: {}, tags: [] };
   }
 };
@@ -205,6 +206,12 @@ export const useInfraWalletLuceneParams = (options: UseInfraWalletLuceneParamsOp
       }
     }
 
+    // Ensure monthRange is never undefined - provide a default
+    if (!monthRange) {
+      const currentMonth = startOfMonth(new Date());
+      monthRange = { startMonth: currentMonth, endMonth: currentMonth };
+    }
+
     // Granularity
     const granularityParam = searchParams.get('granularity');
     const granularity = granularityParam || options.defaultGranularity || 'monthly';
@@ -215,7 +222,7 @@ export const useInfraWalletLuceneParams = (options: UseInfraWalletLuceneParamsOp
     return {
       filters: finalFilters,
       selectedTags,
-      monthRange: monthRange!,
+      monthRange,
       granularity,
       aggregatedBy,
     };
@@ -237,8 +244,8 @@ export const useInfraWalletLuceneParams = (options: UseInfraWalletLuceneParamsOp
             const decodedCurrentQuery = decodeURIComponent(currentQuery);
             const { filters: currentFilters, tags: currentTags } = parseLuceneQuery(decodedCurrentQuery);
 
-            const finalFilters = state.filters !== undefined ? state.filters : currentFilters;
-            const finalTags = state.selectedTags !== undefined ? state.selectedTags : currentTags;
+            const finalFilters = state.filters ?? currentFilters;
+            const finalTags = state.selectedTags ?? currentTags;
 
             const luceneQuery = filtersAndTagsToLucene(finalFilters, finalTags);
             if (luceneQuery) {
