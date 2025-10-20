@@ -6,6 +6,48 @@ import { Filters, Tag } from '../api/types';
 import { MonthRange } from '../components/types';
 
 /**
+ * Parse tag value into Tag object
+ * Supports two formats:
+ * 1. provider.key=value (preferred)
+ * 2. provider:key:value (fallback)
+ */
+const parseTag = (tagValue: string): Tag | null => {
+  // Try provider.key=value format first
+  if (tagValue.includes('.') && tagValue.includes('=')) {
+    const [providerKey, value] = tagValue.split('=');
+    const [provider, key] = providerKey.split('.');
+    if (provider && key && value) {
+      return { provider, key, value };
+    }
+  }
+
+  // Fallback to provider:key:value format
+  if (tagValue.includes(':')) {
+    const tagParts = tagValue.split(':');
+    if (tagParts.length >= 3) {
+      const provider = tagParts[0];
+      const key = tagParts[1];
+      const value = tagParts.slice(2).join(':'); // In case value contains colons
+      return { provider, key, value };
+    }
+  }
+
+  return null;
+};
+
+/**
+ * Add a filter value to the filters object, avoiding duplicates
+ */
+const addFilterValue = (filters: Filters, field: string, value: string): void => {
+  if (!filters[field]) {
+    filters[field] = [];
+  }
+  if (!filters[field].includes(value)) {
+    filters[field].push(value);
+  }
+};
+
+/**
  * Convert Lucene AST to Filters and Tags
  */
 const astToFiltersAndTags = (ast: any): { filters: Filters; tags: Tag[] } => {
@@ -15,36 +57,15 @@ const astToFiltersAndTags = (ast: any): { filters: Filters; tags: Tag[] } => {
   const traverseAST = (node: any): void => {
     if (!node) return;
 
+    // Process field:value pairs
     if (node.field && node.term) {
-      // Handle field:value pairs
       if (node.field === 'tag') {
-        // Parse tag format: tag:provider.key=value (using . and = to avoid colon conflicts)
-        // Or tag:"provider:key:value" format
-        const tagValue = node.term;
-        if (tagValue.includes('.') && tagValue.includes('=')) {
-          const [providerKey, value] = tagValue.split('=');
-          const [provider, key] = providerKey.split('.');
-          if (provider && key && value) {
-            tags.push({ provider, key, value });
-          }
-        } else if (tagValue.includes(':')) {
-          // Fallback: try to parse provider:key:value format
-          const tagParts = tagValue.split(':');
-          if (tagParts.length >= 3) {
-            const provider = tagParts[0];
-            const key = tagParts[1];
-            const value = tagParts.slice(2).join(':'); // In case value contains colons
-            tags.push({ provider, key, value });
-          }
+        const tag = parseTag(node.term);
+        if (tag) {
+          tags.push(tag);
         }
       } else {
-        // Regular filter
-        if (!filters[node.field]) {
-          filters[node.field] = [];
-        }
-        if (!filters[node.field].includes(node.term)) {
-          filters[node.field].push(node.term);
-        }
+        addFilterValue(filters, node.field, node.term);
       }
     }
 
