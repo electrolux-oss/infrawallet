@@ -83,10 +83,10 @@ const astToFiltersAndTags = (ast: any): { filters: Filters; tags: Tag[] } => {
  */
 const quoteLuceneValue = (value: string): string => {
   // Check if value contains special Lucene characters that require quoting
-  const specialChars = new RegExp(String.raw`[/()\[\]{}\s:]`);
+  const specialChars = /[/()\[\]{}\s:]/;
   if (specialChars.test(value)) {
     // Escape any quotes in the value and wrap in quotes
-    return `"${value.replaceAll('"', '\\"')}"`;
+    return `"${value.replaceAll('"', String.raw`\"`)}"`;
   }
   return value;
 };
