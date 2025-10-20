@@ -11,6 +11,24 @@ jest.mock('react-router-dom', () => ({
   useSearchParams: () => [mockSearchParams, mockSetSearchParams],
 }));
 
+/**
+ * Helper function to reduce duplication in updateUrlState tests
+ * Calls updateUrlState with the given state and returns the resulting URLSearchParams
+ */
+const getUpdatedSearchParams = (
+  result: any,
+  state: any,
+  baseParams: URLSearchParams = new URLSearchParams(),
+  callIndex: number = 0,
+): URLSearchParams => {
+  act(() => {
+    result.current.updateUrlState(state);
+  });
+
+  const updateFn = mockSetSearchParams.mock.calls[callIndex][0];
+  return updateFn(baseParams);
+};
+
 describe('useInfraWalletLuceneParams', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -223,32 +241,20 @@ describe('useInfraWalletLuceneParams', () => {
     it('should update filters in URL as Lucene query', () => {
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
-      act(() => {
-        result.current.updateUrlState({
-          filters: { provider: ['aws'] },
-        });
+      const newParams = getUpdatedSearchParams(result, {
+        filters: { provider: ['aws'] },
       });
 
       expect(mockSetSearchParams).toHaveBeenCalledWith(expect.any(Function), { replace: true });
-
-      // Get the function passed to setSearchParams and call it with empty params
-      const updateFn = mockSetSearchParams.mock.calls[0][0];
-      const newParams = updateFn(new URLSearchParams());
-
       expect(decodeURIComponent(newParams.get('q') || '')).toBe('provider:aws');
     });
 
     it('should update multiple filters with OR syntax', () => {
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
-      act(() => {
-        result.current.updateUrlState({
-          filters: { provider: ['aws', 'azure'] },
-        });
+      const newParams = getUpdatedSearchParams(result, {
+        filters: { provider: ['aws', 'azure'] },
       });
-
-      const updateFn = mockSetSearchParams.mock.calls[0][0];
-      const newParams = updateFn(new URLSearchParams());
 
       expect(decodeURIComponent(newParams.get('q') || '')).toBe('(provider:aws OR provider:azure)');
     });
@@ -256,14 +262,9 @@ describe('useInfraWalletLuceneParams', () => {
     it('should update tags in URL as Lucene query', () => {
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
-      act(() => {
-        result.current.updateUrlState({
-          selectedTags: [{ provider: 'aws', key: 'env', value: 'prod' }],
-        });
+      const newParams = getUpdatedSearchParams(result, {
+        selectedTags: [{ provider: 'aws', key: 'env', value: 'prod' }],
       });
-
-      const updateFn = mockSetSearchParams.mock.calls[0][0];
-      const newParams = updateFn(new URLSearchParams());
 
       expect(decodeURIComponent(newParams.get('q') || '')).toBe('tag:aws.env=prod');
     });
@@ -271,15 +272,10 @@ describe('useInfraWalletLuceneParams', () => {
     it('should update both filters and tags in Lucene query', () => {
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
-      act(() => {
-        result.current.updateUrlState({
-          filters: { provider: ['aws'], service: ['ec2'] },
-          selectedTags: [{ provider: 'aws', key: 'env', value: 'prod' }],
-        });
+      const newParams = getUpdatedSearchParams(result, {
+        filters: { provider: ['aws'], service: ['ec2'] },
+        selectedTags: [{ provider: 'aws', key: 'env', value: 'prod' }],
       });
-
-      const updateFn = mockSetSearchParams.mock.calls[0][0];
-      const newParams = updateFn(new URLSearchParams());
 
       expect(decodeURIComponent(newParams.get('q') || '')).toBe('provider:aws AND service:ec2 AND tag:aws.env=prod');
     });
@@ -287,17 +283,12 @@ describe('useInfraWalletLuceneParams', () => {
     it('should update month range in URL', () => {
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
-      act(() => {
-        result.current.updateUrlState({
-          monthRange: {
-            startMonth: new Date(2024, 0, 1),
-            endMonth: new Date(2024, 5, 1),
-          },
-        });
+      const newParams = getUpdatedSearchParams(result, {
+        monthRange: {
+          startMonth: new Date(2024, 0, 1),
+          endMonth: new Date(2024, 5, 1),
+        },
       });
-
-      const updateFn = mockSetSearchParams.mock.calls[0][0];
-      const newParams = updateFn(new URLSearchParams());
 
       expect(newParams.get('from')).toBe('2024-01');
       expect(newParams.get('to')).toBe('2024-06');
@@ -306,14 +297,9 @@ describe('useInfraWalletLuceneParams', () => {
     it('should update granularity in URL', () => {
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
-      act(() => {
-        result.current.updateUrlState({
-          granularity: 'daily',
-        });
+      const newParams = getUpdatedSearchParams(result, {
+        granularity: 'daily',
       });
-
-      const updateFn = mockSetSearchParams.mock.calls[0][0];
-      const newParams = updateFn(new URLSearchParams());
 
       expect(newParams.get('granularity')).toBe('daily');
     });
@@ -321,14 +307,9 @@ describe('useInfraWalletLuceneParams', () => {
     it('should update aggregatedBy as groupBy in URL', () => {
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
-      act(() => {
-        result.current.updateUrlState({
-          aggregatedBy: 'service',
-        });
+      const newParams = getUpdatedSearchParams(result, {
+        aggregatedBy: 'service',
       });
-
-      const updateFn = mockSetSearchParams.mock.calls[0][0];
-      const newParams = updateFn(new URLSearchParams());
 
       expect(newParams.get('groupBy')).toBe('service');
     });
@@ -340,14 +321,13 @@ describe('useInfraWalletLuceneParams', () => {
 
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
-      act(() => {
-        result.current.updateUrlState({
+      const newParams = getUpdatedSearchParams(
+        result,
+        {
           filters: { provider: ['aws'], service: ['ec2'] },
-        });
-      });
-
-      const updateFn = mockSetSearchParams.mock.calls[0][0];
-      const newParams = updateFn(mockSearchParams);
+        },
+        mockSearchParams,
+      );
 
       expect(newParams.get('from')).toBe('2024-01');
       expect(newParams.get('to')).toBe('2024-06');
@@ -359,14 +339,13 @@ describe('useInfraWalletLuceneParams', () => {
 
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
-      act(() => {
-        result.current.updateUrlState({
+      const newParams = getUpdatedSearchParams(
+        result,
+        {
           selectedTags: [{ provider: 'aws', key: 'env', value: 'prod' }],
-        });
-      });
-
-      const updateFn = mockSetSearchParams.mock.calls[0][0];
-      const newParams = updateFn(mockSearchParams);
+        },
+        mockSearchParams,
+      );
 
       expect(decodeURIComponent(newParams.get('q') || '')).toBe('provider:aws AND tag:aws.env=prod');
     });
@@ -376,15 +355,14 @@ describe('useInfraWalletLuceneParams', () => {
 
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
-      act(() => {
-        result.current.updateUrlState({
+      const newParams = getUpdatedSearchParams(
+        result,
+        {
           filters: {},
           selectedTags: [],
-        });
-      });
-
-      const updateFn = mockSetSearchParams.mock.calls[0][0];
-      const newParams = updateFn(mockSearchParams);
+        },
+        mockSearchParams,
+      );
 
       expect(newParams.has('q')).toBe(false);
     });
@@ -392,10 +370,8 @@ describe('useInfraWalletLuceneParams', () => {
     it('should use replace mode to avoid excessive history entries', () => {
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
-      act(() => {
-        result.current.updateUrlState({
-          filters: { provider: ['aws'] },
-        });
+      getUpdatedSearchParams(result, {
+        filters: { provider: ['aws'] },
       });
 
       expect(mockSetSearchParams).toHaveBeenCalledWith(expect.any(Function), { replace: true });
@@ -404,21 +380,16 @@ describe('useInfraWalletLuceneParams', () => {
     it('should handle multiple simultaneous updates', () => {
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
-      act(() => {
-        result.current.updateUrlState({
-          filters: { provider: ['aws'] },
-          selectedTags: [{ provider: 'aws', key: 'env', value: 'prod' }],
-          monthRange: {
-            startMonth: new Date(2024, 0, 1),
-            endMonth: new Date(2024, 5, 1),
-          },
-          granularity: 'daily',
-          aggregatedBy: 'service',
-        });
+      const newParams = getUpdatedSearchParams(result, {
+        filters: { provider: ['aws'] },
+        selectedTags: [{ provider: 'aws', key: 'env', value: 'prod' }],
+        monthRange: {
+          startMonth: new Date(2024, 0, 1),
+          endMonth: new Date(2024, 5, 1),
+        },
+        granularity: 'daily',
+        aggregatedBy: 'service',
       });
-
-      const updateFn = mockSetSearchParams.mock.calls[0][0];
-      const newParams = updateFn(new URLSearchParams());
 
       expect(decodeURIComponent(newParams.get('q') || '')).toBe('provider:aws AND tag:aws.env=prod');
       expect(newParams.get('from')).toBe('2024-01');
@@ -519,14 +490,9 @@ describe('useInfraWalletLuceneParams', () => {
     it('should URL encode special characters in query', () => {
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
-      act(() => {
-        result.current.updateUrlState({
-          selectedTags: [{ provider: 'aws', key: 'Environment', value: 'Prod & Test' }],
-        });
+      const newParams = getUpdatedSearchParams(result, {
+        selectedTags: [{ provider: 'aws', key: 'Environment', value: 'Prod & Test' }],
       });
-
-      const updateFn = mockSetSearchParams.mock.calls[0][0];
-      const newParams = updateFn(new URLSearchParams());
 
       // The value should be URL encoded
       expect(newParams.get('q')).toContain('%');
@@ -535,16 +501,11 @@ describe('useInfraWalletLuceneParams', () => {
     it('should quote account values with special characters (slashes and parentheses)', () => {
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
-      act(() => {
-        result.current.updateUrlState({
-          filters: {
-            account: ['AWS/aws-dev-mock (012345678902)', 'AWS/aws-prod-mock (012345678903)'],
-          },
-        });
+      const newParams = getUpdatedSearchParams(result, {
+        filters: {
+          account: ['AWS/aws-dev-mock (012345678902)', 'AWS/aws-prod-mock (012345678903)'],
+        },
       });
-
-      const updateFn = mockSetSearchParams.mock.calls[0][0];
-      const newParams = updateFn(new URLSearchParams());
 
       // The account values should be quoted due to special characters
       expect(decodeURIComponent(newParams.get('q') || '')).toBe(
@@ -585,14 +546,13 @@ describe('useInfraWalletLuceneParams', () => {
       expect(initialState.granularity).toBe('monthly');
 
       // Update with new filters
-      act(() => {
-        result.current.updateUrlState({
+      const newParams = getUpdatedSearchParams(
+        result,
+        {
           filters: { provider: ['aws', 'azure'], service: ['ec2'] },
-        });
-      });
-
-      const updateFn = mockSetSearchParams.mock.calls[0][0];
-      const newParams = updateFn(mockSearchParams);
+        },
+        mockSearchParams,
+      );
 
       // Verify the update includes both old and new params
       expect(decodeURIComponent(newParams.get('q') || '')).toBe('(provider:aws OR provider:azure) AND service:ec2');
@@ -606,25 +566,25 @@ describe('useInfraWalletLuceneParams', () => {
       const { result } = renderHook(() => useInfraWalletLuceneParams());
 
       // First update: add a service filter
-      act(() => {
-        result.current.updateUrlState({
+      let newParams = getUpdatedSearchParams(
+        result,
+        {
           filters: { provider: ['aws'], service: ['ec2'] },
-        });
-      });
-
-      let updateFn = mockSetSearchParams.mock.calls[0][0];
-      let newParams = updateFn(mockSearchParams);
+        },
+        mockSearchParams,
+        0,
+      );
       expect(decodeURIComponent(newParams.get('q') || '')).toBe('provider:aws AND service:ec2');
 
       // Second update: add tags while keeping filters
-      act(() => {
-        result.current.updateUrlState({
+      newParams = getUpdatedSearchParams(
+        result,
+        {
           selectedTags: [{ provider: 'aws', key: 'env', value: 'prod' }],
-        });
-      });
-
-      updateFn = mockSetSearchParams.mock.calls[1][0];
-      newParams = updateFn(mockSearchParams);
+        },
+        mockSearchParams,
+        1,
+      );
       expect(decodeURIComponent(newParams.get('q') || '')).toContain('tag:aws.env=prod');
     });
   });
