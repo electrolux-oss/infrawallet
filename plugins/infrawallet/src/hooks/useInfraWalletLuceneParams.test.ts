@@ -29,13 +29,30 @@ const getUpdatedSearchParams = (
   return updateFn(baseParams);
 };
 
+/**
+ * Helper function to render hook with options and return initial state
+ * Reduces duplication in tests that just need to get initial state
+ */
+const getInitialState = (options?: any) => {
+  const { result } = renderHook(() => useInfraWalletLuceneParams(options));
+  return result.current.getInitialState();
+};
+
+/**
+ * Helper function to render hook and return the result
+ * For tests that need access to the full hook result
+ */
+const renderHookAndGetResult = (options?: any) => {
+  return renderHook(() => useInfraWalletLuceneParams(options));
+};
+
 describe('useInfraWalletLuceneParams', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Clear search params
-    Array.from(mockSearchParams.keys()).forEach(key => {
+    for (const key of Array.from(mockSearchParams.keys())) {
       mockSearchParams.delete(key);
-    });
+    }
   });
 
   describe('getInitialState', () => {
@@ -69,9 +86,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should parse Lucene query from URL with single filter', () => {
       mockSearchParams.set('q', encodeURIComponent('provider:aws'));
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.filters).toEqual({ provider: ['aws'] });
       expect(state.selectedTags).toEqual([]);
@@ -80,9 +95,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should parse Lucene query with multiple filters using AND', () => {
       mockSearchParams.set('q', encodeURIComponent('provider:aws AND service:ec2'));
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.filters).toEqual({
         provider: ['aws'],
@@ -93,9 +106,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should parse Lucene query with OR operators into array', () => {
       mockSearchParams.set('q', encodeURIComponent('provider:aws OR provider:azure'));
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.filters).toEqual({
         provider: ['aws', 'azure'],
@@ -105,9 +116,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should parse tags in provider.key=value format', () => {
       mockSearchParams.set('q', encodeURIComponent('tag:aws.Environment=Production'));
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.selectedTags).toEqual([{ provider: 'aws', key: 'Environment', value: 'Production' }]);
     });
@@ -116,9 +125,7 @@ describe('useInfraWalletLuceneParams', () => {
       // Lucene requires quotes for values containing colons
       mockSearchParams.set('q', encodeURIComponent('tag:"azure:Team:DevOps"'));
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.selectedTags).toEqual([{ provider: 'azure', key: 'Team', value: 'DevOps' }]);
     });
@@ -126,9 +133,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should parse complex query with filters and tags', () => {
       mockSearchParams.set('q', encodeURIComponent('provider:aws AND service:ec2 AND tag:aws.env=prod'));
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.filters).toEqual({
         provider: ['aws'],
@@ -141,9 +146,7 @@ describe('useInfraWalletLuceneParams', () => {
       mockSearchParams.set('from', '2024-01');
       mockSearchParams.set('to', '2024-06');
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.monthRange.startMonth).toEqual(new Date(2024, 0, 1));
       expect(state.monthRange.endMonth).toEqual(new Date(2024, 5, 1));
@@ -152,9 +155,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should parse granularity from URL parameter', () => {
       mockSearchParams.set('granularity', 'daily');
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.granularity).toBe('daily');
     });
@@ -162,9 +163,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should parse aggregatedBy from groupBy URL parameter', () => {
       mockSearchParams.set('groupBy', 'service');
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.aggregatedBy).toBe('service');
     });
@@ -172,9 +171,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should handle invalid Lucene query gracefully', () => {
       mockSearchParams.set('q', 'invalid:::query::');
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.filters).toEqual({});
       expect(state.selectedTags).toEqual([]);
@@ -187,9 +184,7 @@ describe('useInfraWalletLuceneParams', () => {
         endMonth: startOfMonth(new Date(2024, 5, 1)),
       };
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams({ defaultMonthRange }));
-
-      const state = result.current.getInitialState();
+      const state = getInitialState({ defaultMonthRange });
 
       expect(state.monthRange).toEqual(defaultMonthRange);
     });
@@ -203,9 +198,7 @@ describe('useInfraWalletLuceneParams', () => {
         endMonth: startOfMonth(new Date(2024, 5, 1)),
       };
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams({ defaultMonthRange }));
-
-      const state = result.current.getInitialState();
+      const state = getInitialState({ defaultMonthRange });
 
       // Should use URL params instead of defaults
       expect(state.monthRange.startMonth).toEqual(new Date(2023, 2, 1));
@@ -213,25 +206,19 @@ describe('useInfraWalletLuceneParams', () => {
     });
 
     it('should use defaults when granularity is not in URL', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams({ defaultGranularity: 'weekly' }));
-
-      const state = result.current.getInitialState();
+      const state = getInitialState({ defaultGranularity: 'weekly' });
 
       expect(state.granularity).toBe('weekly');
     });
 
     it('should default granularity to monthly when no default provided', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.granularity).toBe('monthly');
     });
 
     it('should default aggregatedBy to none when no default provided', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.aggregatedBy).toBe('none');
     });
@@ -239,7 +226,7 @@ describe('useInfraWalletLuceneParams', () => {
 
   describe('updateUrlState', () => {
     it('should update filters in URL as Lucene query', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       const newParams = getUpdatedSearchParams(result, {
         filters: { provider: ['aws'] },
@@ -250,7 +237,7 @@ describe('useInfraWalletLuceneParams', () => {
     });
 
     it('should update multiple filters with OR syntax', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       const newParams = getUpdatedSearchParams(result, {
         filters: { provider: ['aws', 'azure'] },
@@ -260,7 +247,7 @@ describe('useInfraWalletLuceneParams', () => {
     });
 
     it('should update tags in URL as Lucene query', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       const newParams = getUpdatedSearchParams(result, {
         selectedTags: [{ provider: 'aws', key: 'env', value: 'prod' }],
@@ -270,7 +257,7 @@ describe('useInfraWalletLuceneParams', () => {
     });
 
     it('should update both filters and tags in Lucene query', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       const newParams = getUpdatedSearchParams(result, {
         filters: { provider: ['aws'], service: ['ec2'] },
@@ -281,7 +268,7 @@ describe('useInfraWalletLuceneParams', () => {
     });
 
     it('should update month range in URL', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       const newParams = getUpdatedSearchParams(result, {
         monthRange: {
@@ -295,7 +282,7 @@ describe('useInfraWalletLuceneParams', () => {
     });
 
     it('should update granularity in URL', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       const newParams = getUpdatedSearchParams(result, {
         granularity: 'daily',
@@ -305,7 +292,7 @@ describe('useInfraWalletLuceneParams', () => {
     });
 
     it('should update aggregatedBy as groupBy in URL', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       const newParams = getUpdatedSearchParams(result, {
         aggregatedBy: 'service',
@@ -319,7 +306,7 @@ describe('useInfraWalletLuceneParams', () => {
       mockSearchParams.set('from', '2024-01');
       mockSearchParams.set('to', '2024-06');
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       const newParams = getUpdatedSearchParams(
         result,
@@ -337,7 +324,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should merge tags with existing filters in URL', () => {
       mockSearchParams.set('q', encodeURIComponent('provider:aws'));
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       const newParams = getUpdatedSearchParams(
         result,
@@ -353,7 +340,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should delete query param when filters and tags are empty', () => {
       mockSearchParams.set('q', encodeURIComponent('provider:aws'));
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       const newParams = getUpdatedSearchParams(
         result,
@@ -368,7 +355,7 @@ describe('useInfraWalletLuceneParams', () => {
     });
 
     it('should use replace mode to avoid excessive history entries', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       getUpdatedSearchParams(result, {
         filters: { provider: ['aws'] },
@@ -378,7 +365,7 @@ describe('useInfraWalletLuceneParams', () => {
     });
 
     it('should handle multiple simultaneous updates', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       const newParams = getUpdatedSearchParams(result, {
         filters: { provider: ['aws'] },
@@ -401,13 +388,13 @@ describe('useInfraWalletLuceneParams', () => {
 
   describe('isInitialMount', () => {
     it('should be true on initial mount', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       expect(result.current.isInitialMount).toBe(true);
     });
 
     it('should be false after first render', () => {
-      const { result, rerender } = renderHook(() => useInfraWalletLuceneParams());
+      const { result, rerender } = renderHookAndGetResult();
 
       expect(result.current.isInitialMount).toBe(true);
 
@@ -421,9 +408,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should handle empty query string', () => {
       mockSearchParams.set('q', '');
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.filters).toEqual({});
       expect(state.selectedTags).toEqual([]);
@@ -432,9 +417,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should handle whitespace-only query string', () => {
       mockSearchParams.set('q', '   ');
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.filters).toEqual({});
       expect(state.selectedTags).toEqual([]);
@@ -443,9 +426,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should handle malformed tag format gracefully', () => {
       mockSearchParams.set('q', encodeURIComponent('tag:invalidformat'));
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.selectedTags).toEqual([]);
     });
@@ -454,9 +435,7 @@ describe('useInfraWalletLuceneParams', () => {
       // Lucene requires quotes for values with special characters like colons
       mockSearchParams.set('q', encodeURIComponent('tag:"aws:key:value:with:colons"'));
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.selectedTags).toEqual([{ provider: 'aws', key: 'key', value: 'value:with:colons' }]);
     });
@@ -464,9 +443,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should handle multiple tags', () => {
       mockSearchParams.set('q', encodeURIComponent('tag:aws.env=prod AND tag:azure.team=devops'));
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.selectedTags).toEqual([
         { provider: 'aws', key: 'env', value: 'prod' },
@@ -477,9 +454,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should handle complex nested query with parentheses', () => {
       mockSearchParams.set('q', encodeURIComponent('(provider:aws OR provider:azure) AND service:ec2'));
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.filters).toEqual({
         provider: ['aws', 'azure'],
@@ -488,7 +463,7 @@ describe('useInfraWalletLuceneParams', () => {
     });
 
     it('should URL encode special characters in query', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       const newParams = getUpdatedSearchParams(result, {
         selectedTags: [{ provider: 'aws', key: 'Environment', value: 'Prod & Test' }],
@@ -499,7 +474,7 @@ describe('useInfraWalletLuceneParams', () => {
     });
 
     it('should quote account values with special characters (slashes and parentheses)', () => {
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       const newParams = getUpdatedSearchParams(result, {
         filters: {
@@ -519,9 +494,7 @@ describe('useInfraWalletLuceneParams', () => {
         encodeURIComponent('(account:"AWS/aws-dev-mock (012345678902)" OR account:"AWS/aws-prod-mock (012345678903)")'),
       );
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
-
-      const state = result.current.getInitialState();
+      const state = getInitialState();
 
       expect(state.filters).toEqual({
         account: ['AWS/aws-dev-mock (012345678902)', 'AWS/aws-prod-mock (012345678903)'],
@@ -538,7 +511,7 @@ describe('useInfraWalletLuceneParams', () => {
       mockSearchParams.set('granularity', 'monthly');
       mockSearchParams.set('groupBy', 'none');
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       // Verify initial state is read correctly
       const initialState = result.current.getInitialState();
@@ -563,7 +536,7 @@ describe('useInfraWalletLuceneParams', () => {
     it('should handle switching from filters to tags', () => {
       mockSearchParams.set('q', encodeURIComponent('provider:aws'));
 
-      const { result } = renderHook(() => useInfraWalletLuceneParams());
+      const { result } = renderHookAndGetResult();
 
       // First update: add a service filter
       let newParams = getUpdatedSearchParams(
