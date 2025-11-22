@@ -39,6 +39,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
   filters,
   monthRange,
   filtersSetter,
+  selectedTags: selectedTagsProp,
   selectedTagsSetter,
   providerErrorsSetter,
 }) => {
@@ -62,14 +63,15 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
   const [resetTagValues, setResetTagValues] = useState(false);
   const loadingTagValues = openTagValue && tagValues === undefined;
 
-  // user selected tags
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  // user selected tags - initialize from prop (URL-derived tags)
+  const [selectedTags, setSelectedTags] = useState<Tag[]>(selectedTagsProp || []);
 
   const infraWalletApi = useApi(infraWalletApiRef);
   const alertApi = useApi(alertApiRef);
 
   const handleFiltersChange = (key: string, newValue: string[]): void => {
-    filtersSetter({ ...filters, [key]: newValue });
+    const updatedFilters = { ...filters, [key]: newValue };
+    filtersSetter(updatedFilters);
   };
 
   const handleTagProviderChange = (provider: string | null) => {
@@ -84,6 +86,12 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
     if (provider) {
       setTagProvider(provider);
       setOpenTagKey(true);
+
+      // Automatically add provider filter when Tag Provider is selected
+      const currentProviderFilters = filters.provider || [];
+      if (!currentProviderFilters.includes(provider)) {
+        handleFiltersChange('provider', [...currentProviderFilters, provider]);
+      }
     }
   };
 
@@ -177,9 +185,10 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
             <Autocomplete
               multiple
               id={`checkboxes-${key}`}
-              options={keyValues[key]}
-              value={filters[key] || []}
+              options={keyValues[key] || []}
+              value={(filters[key] || []).filter(v => (keyValues[key] || []).includes(v))}
               onChange={(_event, value: string[], _reason) => handleFiltersChange(key, value)}
+              isOptionEqualToValue={(option, value) => option === value}
               disableCloseOnSelect
               renderOption={(props, option, { selected }) => {
                 let provider = undefined;

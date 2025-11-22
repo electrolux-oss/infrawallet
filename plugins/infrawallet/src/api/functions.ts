@@ -48,8 +48,45 @@ export const filterCostReports = (reports: Report[], filters: Filters): Report[]
   const filteredReports = reports.filter(report => {
     let match = true;
     Object.keys(filters).forEach(key => {
-      if (filters[key].length > 0 && !filters[key].includes(report[key] as string)) {
-        match = false;
+      if (filters[key].length > 0) {
+        const reportValue = report[key] as string | undefined;
+
+        // If the report doesn't have this field at all, it doesn't match
+        if (reportValue === undefined) {
+          match = false;
+          return;
+        }
+
+        // Check if the report value matches any of the filter values
+        const valueMatches = filters[key].some(filterValue => {
+          // For exact matches
+          if (reportValue === filterValue) {
+            return true;
+          }
+
+          // For account field: match with or without account ID suffix
+          // e.g., "AWS/aws-staging-mock" should match "AWS/aws-staging-mock (012345678901)"
+          if (key === 'account') {
+            // Extract the base account name (everything before the parentheses)
+            const baseAccountName = reportValue.split(' (')[0];
+            const filterAccountName = filterValue.split(' (')[0];
+            if (baseAccountName === filterAccountName) {
+              return true;
+            }
+          }
+
+          // For service field: handle provider prefix matching
+          // e.g., "AWS/Lambda" in filter should match "AWS/Lambda" in report
+          if (key === 'service' && reportValue.includes('/') && filterValue.includes('/')) {
+            return reportValue === filterValue;
+          }
+
+          return false;
+        });
+
+        if (!valueMatches) {
+          match = false;
+        }
       }
     });
     return match;

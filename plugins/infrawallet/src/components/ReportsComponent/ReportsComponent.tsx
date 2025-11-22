@@ -19,6 +19,7 @@ import {
   mergeCostReports,
 } from '../../api/functions';
 import { CloudProviderError, Filters, Metric, Report, Tag } from '../../api/types';
+import { useInfraWalletLuceneParams } from '../../hooks/useInfraWalletLuceneParams';
 import { Budgets } from '../Budgets';
 import { ColumnsChartComponent } from '../ColumnsChartComponent';
 import { CostReportsTableComponent } from '../CostReportsTableComponent';
@@ -93,23 +94,37 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
 
   const MERGE_THRESHOLD = 8;
 
+  // Initialize URL search params hook with defaults
+  const defaultMonthRange: MonthRange = {
+    startMonth: startOfMonth(addMonths(new Date(), defaultShowLastXMonths * -1 + 1)),
+    endMonth: endOfMonth(new Date()),
+  };
+
+  const { getInitialState, updateUrlState, isInitialMount } = useInfraWalletLuceneParams({
+    defaultFilters: {},
+    defaultTags: [],
+    defaultMonthRange,
+    defaultGranularity: 'monthly',
+    defaultAggregatedBy: defaultGroupBy,
+  });
+
+  // Get initial state from URL or defaults
+  const initialState = getInitialState();
+
   const [selectedView, setSelectedView] = useState<string>('Overview');
 
-  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
+  const [selectedTags, setSelectedTags] = useState<Tag[]>(initialState.selectedTags);
   const [reports, setReports] = useState<Report[] | undefined>(undefined);
   const [metrics, setMetrics] = useState<Metric[]>([]);
-  const [filters, setFilters] = useState<Filters>({});
+  const [filters, setFilters] = useState<Filters>(initialState.filters);
   const [cloudProviderErrors, setCloudProviderErrors] = useState<CloudProviderError[]>([]);
   const [reportsAggregated, setReportsAggregated] = useState<Report[] | undefined>(undefined);
   const [reportsAggregatedAndMerged, setReportsAggregatedAndMerged] = useState<Report[] | undefined>(undefined);
   const [reportTags, setReportTags] = useState<string[]>([]);
-  const [granularity, setGranularity] = useState<string>('monthly');
-  const [aggregatedBy, setAggregatedBy] = useState<string>(defaultGroupBy);
+  const [granularity, setGranularity] = useState<string>(initialState.granularity);
+  const [aggregatedBy, setAggregatedBy] = useState<string>(initialState.aggregatedBy);
   const [groups] = useState<string>('');
-  const [monthRange, setMonthRange] = useState<MonthRange>({
-    startMonth: startOfMonth(addMonths(new Date(), defaultShowLastXMonths * -1 + 1)),
-    endMonth: endOfMonth(new Date()),
-  });
+  const [monthRange, setMonthRange] = useState<MonthRange>(initialState.monthRange);
   const [periods, setPeriods] = useState<string[]>([]);
   const [highlightedItem, setHighlightedItem] = useState<string | undefined>(undefined);
 
@@ -188,6 +203,37 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
     }
   }, [params]);
 
+  // Sync state changes to URL (skip initial mount to avoid overwriting URL params)
+  useEffect(() => {
+    if (!isInitialMount) {
+      updateUrlState({ filters });
+    }
+  }, [filters, updateUrlState, isInitialMount]);
+
+  useEffect(() => {
+    if (!isInitialMount) {
+      updateUrlState({ selectedTags });
+    }
+  }, [selectedTags, updateUrlState, isInitialMount]);
+
+  useEffect(() => {
+    if (!isInitialMount) {
+      updateUrlState({ monthRange });
+    }
+  }, [monthRange, updateUrlState, isInitialMount]);
+
+  useEffect(() => {
+    if (!isInitialMount) {
+      updateUrlState({ granularity });
+    }
+  }, [granularity, updateUrlState, isInitialMount]);
+
+  useEffect(() => {
+    if (!isInitialMount) {
+      updateUrlState({ aggregatedBy });
+    }
+  }, [aggregatedBy, updateUrlState, isInitialMount]);
+
   return (
     <Page themeId="tool">
       <Header title={title ?? 'InfraWallet'} subtitle={subTitle ?? ''} />
@@ -228,6 +274,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
                       filters={filters}
                       monthRange={monthRange}
                       filtersSetter={setFilters}
+                      selectedTags={selectedTags}
                       selectedTagsSetter={setSelectedTags}
                       providerErrorsSetter={setCloudProviderErrors}
                     />
