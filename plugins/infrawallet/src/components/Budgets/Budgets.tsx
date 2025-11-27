@@ -201,8 +201,94 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
   }
 
   let budgetAmount = annualBudget?.amount || 0;
+
+  let chartSeries: any[];
+  let yAxis: any[];
+
   if (view === BUDGET_VIEW.MONTHLY) {
     budgetAmount = budgetAmount / 12;
+
+    const lastIndex = nonAccumulatedCosts.length - 1;
+    const lastActualCost = lastIndex >= 0 ? nonAccumulatedCosts[lastIndex] : 0;
+    const projectedCurrentMonthCost = budgetAnalytics.projectedCurrentMonthCost;
+    const projectedDelta = projectedCurrentMonthCost - lastActualCost;
+    const monthlyMax = max([...nonAccumulatedCosts, budgetAmount]) || 0;
+
+    chartSeries = [
+      {
+        id: 'actual-spend',
+        yAxisKey: 'spendAxis',
+        data: nonAccumulatedCosts,
+        type: 'bar',
+        stack: 'combined',
+        label: 'Actual Spend',
+        color: colorList[0],
+        valueFormatter: (value: number | null) => formatCurrency(value || 0),
+      }
+    ];
+
+    if (lastIndex >= 0 && projectedDelta > 0) {
+      const deltaData = nonAccumulatedCosts.map((_, i) => (i === lastIndex ? projectedDelta : 0));
+
+      chartSeries.push({
+        id: 'projected-delta',
+        yAxisKey: 'deltaAxis',
+        data: deltaData,
+        type: 'bar',
+        stack: 'combined',
+        label: 'Projected Delta',
+        color: projectedCurrentMonthCost > budgetAmount ? theme.palette.error.main : '#4caf50',
+        valueFormatter: (value: number | null) => {
+          if (value === 0) return null;
+          return formatCurrency(value || 0);
+        },
+      });
+    }
+
+    yAxis = [
+      {
+        id: 'spendAxis',
+        min: 0,
+        max: monthlyMax,
+        valueFormatter: (value: number | null) => formatCurrency(value || 0),
+        colorMap: {
+          type: 'piecewise',
+          thresholds: [budgetAmount > 0 ? budgetAmount : Number.MAX_SAFE_INTEGER],
+          colors: [colorList[0], theme.palette.error.main],
+        },
+      },
+      {
+        id: 'deltaAxis',
+        min: 0,
+        max: monthlyMax,
+      },
+    ];
+
+  } else {
+    chartSeries = [
+      {
+        id: 'yearAxis',
+        yAxisKey: 'spendAxis',
+        data: accumulatedCosts,
+        type: 'line',
+        showMark: false,
+        valueFormatter: (value: number | null) => formatCurrency(value || 0),
+      },
+    ];
+
+    yAxis = [
+      {
+        id: 'spendAxis',
+        min: 0,
+        max: max([...accumulatedCosts, budgetAmount, budgetAnalytics.confidenceRange.high]),
+        valueFormatter: (value: number | null) => formatCurrency(value || 0),
+        colorMap: {
+          type: 'piecewise',
+          thresholds: [budgetAmount > 0 ? budgetAmount : Number.MAX_SAFE_INTEGER],
+          colors: [colorList[0], theme.palette.error.main],
+        },
+      },
+    ];
   }
 
   return (
@@ -305,16 +391,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
       <ChartContainer
         width={width + 20}
         height={height}
-        series={[
-          {
-            data: view === BUDGET_VIEW.ANNUAL ? accumulatedCosts : nonAccumulatedCosts,
-            type: view === BUDGET_VIEW.ANNUAL ? 'line' : 'bar',
-            valueFormatter: (value: number | null) => {
-              return formatCurrency(value || 0);
-            },
-            showMark: false,
-          },
-        ]}
+        series={chartSeries}
         xAxis={[
           {
             data: Object.entries(monthList)
@@ -323,23 +400,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
             scaleType: 'band',
           },
         ]}
-        yAxis={[
-          {
-            min: 0,
-            max:
-              view === BUDGET_VIEW.ANNUAL
-                ? max([...accumulatedCosts, budgetAmount, budgetAnalytics.confidenceRange.high])
-                : max([...nonAccumulatedCosts, budgetAmount]),
-            valueFormatter: value => {
-              return formatCurrency(value || 0);
-            },
-            colorMap: {
-              type: 'piecewise',
-              thresholds: [budgetAmount > 0 ? budgetAmount : Number.MAX_SAFE_INTEGER],
-              colors: [colorList[0], theme.palette.error.main],
-            },
-          },
-        ]}
+        yAxis={yAxis}
       >
         <ChartsGrid horizontal />
         <ChartsAxisHighlight x={view === BUDGET_VIEW.ANNUAL ? 'line' : 'band'} />
