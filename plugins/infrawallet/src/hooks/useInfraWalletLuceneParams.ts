@@ -93,6 +93,20 @@ const quoteLuceneValue = (value: string): string => {
 };
 
 /**
+ * Quote a tag for Lucene query if a key contains special characters
+ */
+const quoteTag = (provider: string, key: string, value: string): string => {
+  const specialChars = /[/()[\]{}\s:]/;
+  const tag = `${provider}.${key}=${value}`;
+
+  // If tag has special character in the key, it needs to be quoted. E.g. tag:"AWS.key:environment=staging"
+  if (specialChars.test(key)) {
+    return `tag:"${tag}"`;
+  }
+  return `tag:${tag}`;
+};
+
+/**
  * Convert Filters and Tags to Lucene query string
  */
 const filtersAndTagsToLucene = (filters: Filters, tags: Tag[]): string => {
@@ -115,7 +129,7 @@ const filtersAndTagsToLucene = (filters: Filters, tags: Tag[]): string => {
   for (const tag of tags) {
     if (tag.provider && tag.key && tag.value) {
       // Use the new format: tag:provider.key=value
-      queryParts.push(`tag:${tag.provider}.${tag.key}=${tag.value}`);
+      queryParts.push(quoteTag(tag.provider, tag.key, tag.value));
     }
   }
 
