@@ -256,6 +256,17 @@ describe('useInfraWalletLuceneParams', () => {
       expect(decodeURIComponent(newParams.get('q') || '')).toBe('tag:aws.env=prod');
     });
 
+    it('should update tags with key that contains special character in URL as Lucene query', () => {
+      const { result } = renderHookAndGetResult();
+
+      const updatedSearchParams = getUpdatedSearchParams(result, {
+        selectedTags: [{ provider: 'azure', key: 'org:env', value: 'prod' }],
+      });
+      const decoded = decodeURIComponent(updatedSearchParams.get('q') || '');
+
+      expect(decoded).toBe('tag:"azure.org:env=prod"');
+    });
+
     it('should update both filters and tags in Lucene query', () => {
       const { result } = renderHookAndGetResult();
 
