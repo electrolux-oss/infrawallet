@@ -21,7 +21,7 @@ import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import {
   BarPlot,
-  ChartContainer,
+  ResponsiveChartContainer,
   ChartsAxisHighlight,
   ChartsGrid,
   ChartsReferenceLine,
@@ -119,6 +119,8 @@ interface BudgetChartProps {
   provider: string;
   monthlyCosts: Record<string, number>;
   view: string;
+  budgets: Budget[];
+  setBudgets: React.Dispatch<React.SetStateAction<Budget[]>>;
 }
 
 function getSpendingVelocityColor(velocity: number) {
@@ -140,41 +142,38 @@ function getRecommendationColor(type: string) {
 }
 
 function BudgetChart(props: Readonly<BudgetChartProps>) {
-  const { width, height } = useDrawingArea();
+  const { height } = useDrawingArea();
   const theme = useTheme();
-  const { provider, monthlyCosts, view } = props;
-
-  const [annualBudget, setAnnualBudget] = useState<Budget | undefined>(undefined);
-  const [openManageBudget, setOpenManageBudget] = useState(false);
-  const [refreshTrigger, setRefreshTrigger] = useState(false);
-
+  const { provider, monthlyCosts, view, budgets, setBudgets } = props;
   const infraWalletApi = useApi(infraWalletApiRef);
 
-  const budgetAnalytics: BudgetAnalytics = calculateBudgetAnalytics(monthlyCosts, annualBudget?.amount || 0);
+  const annualBudget = budgets.find(b => b.provider.toLowerCase() === provider.toLowerCase());
+  const annualBudgetAmount = annualBudget?.amount || 0;
 
-  useEffect(() => {
-    const fetchBudget = async () => {
-      const response = await infraWalletApi.getBudget('default', provider);
-      const updatedBudget = response.data?.find(a => a.provider.toLowerCase() === provider.toLowerCase());
-      setAnnualBudget(updatedBudget);
-    };
+  const [openManageBudget, setOpenManageBudget] = useState(false);
 
-    fetchBudget();
-  }, [refreshTrigger, provider, infraWalletApi]);
+  const budgetAnalytics: BudgetAnalytics = calculateBudgetAnalytics(monthlyCosts, annualBudgetAmount);
 
   const updateBudget = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
-    const name = annualBudget?.name || `${provider} annual budget`;
-    const amount = formData.get('amount');
-    const newAnnualBudget: Budget = {
+    const amount = Number(formData.get('amount') || 0);
+    const updated: Budget = {
       id: annualBudget?.id,
       provider: provider,
-      name: name,
-      amount: amount ? Number(amount) : 0,
+      name: annualBudget?.name || `${provider} annual budget`,
+      amount: amount,
     };
-    await infraWalletApi.updateBudget('default', newAnnualBudget);
-    setRefreshTrigger(prev => !prev);
+    await infraWalletApi.updateBudget('default', updated);
+    setBudgets(prev => {
+      const index = prev.findIndex(b => b.provider.toLowerCase() === provider.toLowerCase());
+      if (index >= 0) {
+        const copy = [...prev];
+        copy[index] = { ...copy[index], ...updated };
+        return copy;
+      }
+      return [...prev, updated];
+    });
     setOpenManageBudget(false);
   };
 
@@ -200,9 +199,94 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
     }
   }
 
-  let budgetAmount = annualBudget?.amount || 0;
+  let budgetAmount = annualBudgetAmount;
+
+  let chartSeries: any[];
+  let yAxis: any[];
+
   if (view === BUDGET_VIEW.MONTHLY) {
     budgetAmount = budgetAmount / 12;
+
+    const lastIndex = nonAccumulatedCosts.length - 1;
+    const lastActualCost = lastIndex >= 0 ? nonAccumulatedCosts[lastIndex] : 0;
+    const projectedCurrentMonthCost = budgetAnalytics.projectedCurrentMonthCost;
+    const projectedDelta = projectedCurrentMonthCost - lastActualCost;
+    const monthlyMax = max([...nonAccumulatedCosts, budgetAmount]) || 0;
+
+    chartSeries = [
+      {
+        id: 'actual-spend',
+        yAxisKey: 'spendAxis',
+        data: nonAccumulatedCosts,
+        type: 'bar',
+        stack: 'combined',
+        label: 'Actual Spend',
+        color: colorList[0],
+        valueFormatter: (value: number | null) => formatCurrency(value || 0),
+      },
+    ];
+
+    if (lastIndex >= 0 && projectedDelta > 0) {
+      const deltaData = nonAccumulatedCosts.map((_, i) => (i === lastIndex ? projectedDelta : 0));
+
+      chartSeries.push({
+        id: 'projected-delta',
+        yAxisKey: 'deltaAxis',
+        data: deltaData,
+        type: 'bar',
+        stack: 'combined',
+        label: 'Projected Delta',
+        color: theme.palette.warning.main,
+        valueFormatter: (value: number | null) => {
+          if (value === 0) return null;
+          return formatCurrency(value || 0);
+        },
+      });
+    }
+
+    yAxis = [
+      {
+        id: 'spendAxis',
+        min: 0,
+        max: monthlyMax,
+        valueFormatter: (value: number | null) => formatCurrency(value || 0),
+        colorMap: {
+          type: 'piecewise',
+          thresholds: [budgetAmount > 0 ? budgetAmount : Number.MAX_SAFE_INTEGER],
+          colors: [colorList[0], theme.palette.error.main],
+        },
+      },
+      {
+        id: 'deltaAxis',
+        min: 0,
+        max: monthlyMax,
+      },
+    ];
+  } else {
+    chartSeries = [
+      {
+        id: 'yearAxis',
+        yAxisKey: 'spendAxis',
+        data: accumulatedCosts,
+        type: 'line',
+        showMark: false,
+        valueFormatter: (value: number | null) => formatCurrency(value || 0),
+      },
+    ];
+
+    yAxis = [
+      {
+        id: 'spendAxis',
+        min: 0,
+        max: max([...accumulatedCosts, budgetAmount, budgetAnalytics.confidenceRange.high]),
+        valueFormatter: (value: number | null) => formatCurrency(value || 0),
+        colorMap: {
+          type: 'piecewise',
+          thresholds: [budgetAmount > 0 ? budgetAmount : Number.MAX_SAFE_INTEGER],
+          colors: [colorList[0], theme.palette.error.main],
+        },
+      },
+    ];
   }
 
   return (
@@ -215,7 +299,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
             {provider}
           </Typography>
         </Box>
-        {annualBudget?.amount && (
+        {annualBudgetAmount > 0 && (
           <BudgetHealthIndicator
             status={budgetAnalytics.budgetHealthStatus}
             utilizationPercent={budgetAnalytics.budgetUtilizationPercent}
@@ -224,7 +308,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
       </Box>
 
       {/* Budget Metrics Cards */}
-      {annualBudget?.amount && (
+      {annualBudgetAmount > 0 && (
         <Grid container spacing={1} sx={{ mb: 2 }}>
           <Grid item xs={6}>
             <Card variant="outlined" sx={{ textAlign: 'center' }}>
@@ -236,7 +320,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
                   {formatCurrency(budgetAnalytics.yearToDateSpent)}
                 </Typography>
                 <Typography variant="caption" color="textSecondary">
-                  of {formatCurrency(annualBudget.amount)}
+                  of {formatCurrency(annualBudgetAmount)}
                 </Typography>
               </CardContent>
             </Card>
@@ -250,14 +334,14 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
                 <Typography
                   variant="body2"
                   fontWeight="bold"
-                  color={budgetAnalytics.projectedAnnualSpending > (annualBudget?.amount || 0) ? 'error' : 'inherit'}
+                  color={budgetAnalytics.projectedAnnualSpending > annualBudgetAmount ? 'error' : 'inherit'}
                 >
                   {formatCurrency(budgetAnalytics.projectedAnnualSpending)}
                 </Typography>
                 <Typography variant="caption" color="textSecondary">
-                  {budgetAnalytics.projectedAnnualSpending > (annualBudget?.amount || 0)
-                    ? `+${formatCurrency(budgetAnalytics.projectedAnnualSpending - annualBudget.amount)} over`
-                    : `${formatCurrency(annualBudget.amount - budgetAnalytics.projectedAnnualSpending)} under`}
+                  {budgetAnalytics.projectedAnnualSpending > annualBudgetAmount
+                    ? `+${formatCurrency(budgetAnalytics.projectedAnnualSpending - annualBudgetAmount)} over`
+                    : `${formatCurrency(annualBudgetAmount - budgetAnalytics.projectedAnnualSpending)} under`}
                 </Typography>
               </CardContent>
             </Card>
@@ -302,19 +386,9 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
         </Grid>
       )}
 
-      <ChartContainer
-        width={width + 20}
+      <ResponsiveChartContainer
         height={height}
-        series={[
-          {
-            data: view === BUDGET_VIEW.ANNUAL ? accumulatedCosts : nonAccumulatedCosts,
-            type: view === BUDGET_VIEW.ANNUAL ? 'line' : 'bar',
-            valueFormatter: (value: number | null) => {
-              return formatCurrency(value || 0);
-            },
-            showMark: false,
-          },
-        ]}
+        series={chartSeries}
         xAxis={[
           {
             data: Object.entries(monthList)
@@ -323,23 +397,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
             scaleType: 'band',
           },
         ]}
-        yAxis={[
-          {
-            min: 0,
-            max:
-              view === BUDGET_VIEW.ANNUAL
-                ? max([...accumulatedCosts, budgetAmount, budgetAnalytics.confidenceRange.high])
-                : max([...nonAccumulatedCosts, budgetAmount]),
-            valueFormatter: value => {
-              return formatCurrency(value || 0);
-            },
-            colorMap: {
-              type: 'piecewise',
-              thresholds: [budgetAmount > 0 ? budgetAmount : Number.MAX_SAFE_INTEGER],
-              colors: [colorList[0], theme.palette.error.main],
-            },
-          },
-        ]}
+        yAxis={yAxis}
       >
         <ChartsGrid horizontal />
         <ChartsAxisHighlight x={view === BUDGET_VIEW.ANNUAL ? 'line' : 'band'} />
@@ -360,7 +418,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
           labelStyle={{ fill: theme.palette.error.main, fontSize: '0.9em' }}
         />
         {/* Add projection line for annual view */}
-        {view === BUDGET_VIEW.ANNUAL && annualBudget?.amount && (
+        {view === BUDGET_VIEW.ANNUAL && annualBudgetAmount > 0 && (
           <>
             <ChartsReferenceLine
               y={budgetAnalytics.projectedAnnualSpending}
@@ -405,7 +463,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
         <ChartsXAxis />
         <ChartsYAxis />
         <ChartsTooltip />
-      </ChartContainer>
+      </ResponsiveChartContainer>
 
       <Box sx={{ textAlign: 'center' }}>
         <Button onClick={() => setOpenManageBudget(true)}>Manage budget</Button>
@@ -424,7 +482,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
                     name="amount"
                     type="number"
                     startAdornment={<InputAdornment position="start">$</InputAdornment>}
-                    defaultValue={annualBudget?.amount}
+                    defaultValue={annualBudgetAmount}
                   />
                 </FormControl>
               </Box>
@@ -444,24 +502,10 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
 
 interface BudgetInsightsProps {
   reports: Report[];
+  budgets: Budget[];
 }
 
-function BudgetInsights({ reports }: BudgetInsightsProps) {
-  const [budgets, setBudgets] = useState<Budget[]>([]);
-  const infraWalletApi = useApi(infraWalletApiRef);
-
-  useEffect(() => {
-    const fetchBudgets = async () => {
-      try {
-        const response = await infraWalletApi.getBudgets('default');
-        setBudgets(response.data || []);
-      } catch (error) {
-        // Failed to fetch budgets - silent error handling
-      }
-    };
-    fetchBudgets();
-  }, [infraWalletApi]);
-
+function BudgetInsights({ reports, budgets }: BudgetInsightsProps) {
   const insights = reports
     .map(report => {
       const budget = budgets.find(b => b.provider.toLowerCase() === report.id.toLowerCase());
@@ -585,6 +629,7 @@ function BudgetInsights({ reports }: BudgetInsightsProps) {
 export const Budgets: FC<BudgetsProps> = ({ providerErrorsSetter }) => {
   const [reportsAggregatedAndMerged, setReportsAggregatedAndMerged] = useState<Report[] | undefined>(undefined);
   const [budgetView, setBudgetView] = useState(BUDGET_VIEW.ANNUAL);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
 
   const infraWalletApi = useApi(infraWalletApiRef);
   const alertApi = useApi(alertApiRef);
@@ -609,6 +654,18 @@ export const Budgets: FC<BudgetsProps> = ({ providerErrorsSetter }) => {
     fetchCosts();
   }, [fetchCosts]);
 
+  useEffect(() => {
+    const fetchBudgets = async () => {
+      try {
+        const response = await infraWalletApi.getBudgets('default');
+        setBudgets(response.data || []);
+      } catch (error) {
+        // Failed to fetch budgets - silent error handling
+      }
+    };
+    fetchBudgets();
+  }, [infraWalletApi]);
+
   return (
     <Grid container spacing={3}>
       <Grid item xs={12}>
@@ -630,13 +687,19 @@ export const Budgets: FC<BudgetsProps> = ({ providerErrorsSetter }) => {
       {/* Budget Insights Panel */}
       {reportsAggregatedAndMerged && (
         <Grid item xs={12}>
-          <BudgetInsights reports={reportsAggregatedAndMerged} />
+          <BudgetInsights reports={reportsAggregatedAndMerged} budgets={budgets} />
         </Grid>
       )}
       {reportsAggregatedAndMerged !== undefined ? (
         reportsAggregatedAndMerged.map(report => (
           <Grid item key={`${report.id}-grid`} xs={4}>
-            <BudgetChart provider={report.id} monthlyCosts={report.reports} view={budgetView} />
+            <BudgetChart
+              provider={report.id}
+              monthlyCosts={report.reports}
+              view={budgetView}
+              budgets={budgets}
+              setBudgets={setBudgets}
+            />
           </Grid>
         ))
       ) : (

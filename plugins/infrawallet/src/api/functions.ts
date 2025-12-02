@@ -253,6 +253,7 @@ export interface BudgetAnalytics {
   yearToDateSpent: number;
   monthlyRunRate: number;
   projectedAnnualSpending: number;
+  projectedCurrentMonthCost: number;
   budgetHealthStatus: 'healthy' | 'warning' | 'critical';
   budgetUtilizationPercent: number;
   targetMonthlySpending: number;
@@ -275,6 +276,7 @@ export const calculateBudgetAnalytics = (
   const daysInCurrentMonth = moment().daysInMonth();
 
   let yearToDateSpent = 0;
+  let projectedCurrentMonthCost = 0;
   const monthlySpending: number[] = [];
 
   for (let month = 1; month <= currentMonth; month++) {
@@ -285,7 +287,7 @@ export const calculateBudgetAnalytics = (
       yearToDateSpent += monthCost;
       monthlySpending.push(monthCost);
     } else if (month === currentMonth) {
-      const projectedCurrentMonthCost = (monthCost / daysIntoCurrentMonth) * daysInCurrentMonth;
+      projectedCurrentMonthCost = (monthCost / daysIntoCurrentMonth) * daysInCurrentMonth;
       yearToDateSpent += monthCost;
       monthlySpending.push(projectedCurrentMonthCost);
     }
@@ -335,6 +337,7 @@ export const calculateBudgetAnalytics = (
     yearToDateSpent,
     monthlyRunRate,
     projectedAnnualSpending,
+    projectedCurrentMonthCost,
     budgetHealthStatus,
     budgetUtilizationPercent,
     targetMonthlySpending,
