@@ -231,7 +231,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
                 <TextField {...params} variant="standard" label={key.charAt(0).toUpperCase() + key.slice(1)} />
               )}
             />
-            </FormControl>
+          </FormControl>
         ))}
         <FormControl style={{ marginTop: 10 }}>
           <Button variant="contained" color="primary" onClick={() => filtersSetter({})}>

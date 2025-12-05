@@ -1,12 +1,12 @@
 import { styled } from '@mui/material/styles';
 import { default as React } from 'react';
 
-const LogoFullSvg = styled('svg')(({ theme }) => ({
+const LogoFullSvg = styled('svg')(() => ({
   width: 'auto',
   height: 30,
 }));
 
-const LogoFullPath = styled('path')(({ theme }) => ({
+const LogoFullPath = styled('path')(() => ({
   fill: '#7df3e1',
 }));
 

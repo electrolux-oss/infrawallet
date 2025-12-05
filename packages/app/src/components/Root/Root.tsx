@@ -15,7 +15,7 @@ import { PropsWithChildren, default as React } from 'react';
 import LogoFull from './LogoFull';
 import LogoIcon from './LogoIcon';
 
-const SidebarLogoRoot = styled('div')(({ theme }) => ({
+const SidebarLogoRoot = styled('div')(() => ({
   width: sidebarConfig.drawerWidthClosed,
   height: 3 * sidebarConfig.logoHeight,
   display: 'flex',
@@ -24,7 +24,7 @@ const SidebarLogoRoot = styled('div')(({ theme }) => ({
   marginBottom: -14,
 }));
 
-const SidebarLogoLink = styled(Link)(({ theme }) => ({
+const SidebarLogoLink = styled(Link)(() => ({
   width: sidebarConfig.drawerWidthClosed,
   marginLeft: 24,
 }));
