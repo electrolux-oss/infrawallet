@@ -9,37 +9,35 @@ import {
   useSidebarOpenState,
 } from '@backstage/core-components';
 import { InfraWalletIcon } from '@electrolux-oss/plugin-infrawallet';
-import { makeStyles } from '@material-ui/core';
-import BuildIcon from '@material-ui/icons/Build';
+import { styled } from '@mui/material/styles';
+import BuildIcon from '@mui/icons-material/Build';
 import { PropsWithChildren, default as React } from 'react';
 import LogoFull from './LogoFull';
 import LogoIcon from './LogoIcon';
 
-const useSidebarLogoStyles = makeStyles({
-  root: {
-    width: sidebarConfig.drawerWidthClosed,
-    height: 3 * sidebarConfig.logoHeight,
-    display: 'flex',
-    flexFlow: 'row nowrap',
-    alignItems: 'center',
-    marginBottom: -14,
-  },
-  link: {
-    width: sidebarConfig.drawerWidthClosed,
-    marginLeft: 24,
-  },
-});
+const SidebarLogoRoot = styled('div')(() => ({
+  width: sidebarConfig.drawerWidthClosed,
+  height: 3 * sidebarConfig.logoHeight,
+  display: 'flex',
+  flexFlow: 'row nowrap',
+  alignItems: 'center',
+  marginBottom: -14,
+}));
+
+const SidebarLogoLink = styled(Link)(() => ({
+  width: sidebarConfig.drawerWidthClosed,
+  marginLeft: 24,
+}));
 
 const SidebarLogo = () => {
-  const classes = useSidebarLogoStyles();
   const { isOpen } = useSidebarOpenState();
 
   return (
-    <div className={classes.root}>
-      <Link to="/" underline="none" className={classes.link} aria-label="Home">
+    <SidebarLogoRoot>
+      <SidebarLogoLink to="/" underline="none" aria-label="Home">
         {isOpen ? <LogoFull /> : <LogoIcon />}
-      </Link>
-    </div>
+      </SidebarLogoLink>
+    </SidebarLogoRoot>
   );
 };
 

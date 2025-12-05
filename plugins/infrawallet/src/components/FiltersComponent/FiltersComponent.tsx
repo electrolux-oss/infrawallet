@@ -8,12 +8,11 @@ import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
-import Grid from '@mui/material/Grid';
+import Grid from '@mui/material/Grid2';
 import TextField from '@mui/material/TextField';
-import Tooltip from '@mui/material/Tooltip';
+import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import { Theme, useTheme } from '@mui/material/styles';
-import { withStyles } from '@mui/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import { FC, default as React, useEffect, useState } from 'react';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { extractAccountInfo, extractProvider, getReportKeyAndValues, tagExists } from '../../api/functions';
@@ -24,15 +23,17 @@ import { FiltersComponentProps } from '../types';
 const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkedIcon = <CheckBoxIcon fontSize="small" />;
 
-const HtmlTooltip = withStyles((theme: Theme) => ({
-  tooltip: {
+const HtmlTooltip = styled(({ className, ...props }: TooltipProps) => (
+  <Tooltip {...props} classes={{ popper: className }} />
+))(({ theme }) => ({
+  [`& .${tooltipClasses.tooltip}`]: {
     backgroundColor: '#f5f5f9',
     color: 'rgba(0, 0, 0, 0.87)',
     maxWidth: 400,
     fontSize: typeof theme.typography?.pxToRem === 'function' ? theme.typography.pxToRem(14) : '14px',
     border: '1px solid #dadde9',
   },
-}))(Tooltip);
+}));
 
 export const FiltersComponent: FC<FiltersComponentProps> = ({
   reports,
@@ -176,7 +177,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
 
   return (
     <Grid container>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         {Object.keys(keyValues).map(key => (
           <FormControl
             key={`form-${key}`}
@@ -238,10 +239,10 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
           </Button>
         </FormControl>
       </Grid>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <Divider />
       </Grid>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         <FormControl sx={{ marginLeft: theme.spacing(1), marginRight: theme.spacing(3), minWidth: 300 }}>
           <Autocomplete
             id="tag-providers"
@@ -346,7 +347,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
           </HtmlTooltip>
         </FormControl>
       </Grid>
-      <Grid item xs={12}>
+      <Grid size={{ xs: 12 }}>
         {selectedTags.map(tag => (
           <Chip
             size="small"
