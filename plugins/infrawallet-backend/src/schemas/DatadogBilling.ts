@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const DatadogChargeTypeSchema = z.enum(['usage', 'commitment', 'total']);
+export const DatadogChargeTypeSchema = z.enum(['usage', 'commitment', 'total', 'on_demand', 'committed']);
 export const DatadogViewSchema = z.enum(['sub-org', 'parent-org']);
 export const DatadogCostByOrgTypeSchema = z.enum(['cost_by_org']);
 
