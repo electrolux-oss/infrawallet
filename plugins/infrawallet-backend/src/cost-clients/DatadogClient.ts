@@ -100,26 +100,39 @@ export class DatadogClient extends InfraWalletClient {
     // check if costs prior to 2 months ago are in query, if yes, use historical_cost API
     // https://docs.datadoghq.com/api/latest/usage-metering/#get-historical-cost-across-your-account
     if (startTime.isBefore(firstDayOfLastMonth)) {
-      const historicalCost: datadogApiV2.CostByOrgResponse = await client.getHistoricalCostByOrg({
-        startMonth: startTime,
-        endMonth: firstDayOfLastMonth.subtract(1, 'd'),
-        view: 'sub-org',
-      });
+      const historicalEndTime = moment.min(endTime, firstDayOfLastMonth.clone().subtract(1, 'd'));
+      const maxMonthRange = 2;
+      let chunkStart = startTime.clone();
 
-      try {
-        DatadogCostByOrgResponseSchema.parse(historicalCost);
-        this.logger.debug(`Datadog historical cost response validation passed`);
-      } catch (error) {
-        if (error instanceof ZodError) {
-          this.logger.warn(`Datadog historical cost response validation failed: ${error.message}`);
-          this.logger.debug(`Sample validation errors: ${JSON.stringify(error.errors.slice(0, 3))}`);
-        } else {
-          this.logger.warn(`Unexpected validation error: ${error.message}`);
+      while (chunkStart.isBefore(historicalEndTime)) {
+        const chunkEnd = moment.min(
+          chunkStart.clone().add(maxMonthRange, 'months').subtract(1, 'day'),
+          historicalEndTime.clone(),
+        );
+
+        const historicalCost: datadogApiV2.CostByOrgResponse = await client.getHistoricalCostByOrg({
+          startMonth: chunkStart,
+          endMonth: chunkEnd,
+          view: 'sub-org',
+        });
+
+        try {
+          DatadogCostByOrgResponseSchema.parse(historicalCost);
+          this.logger.debug(`Datadog historical cost response validation passed`);
+        } catch (error) {
+          if (error instanceof ZodError) {
+            this.logger.warn(`Datadog historical cost response validation failed: ${error.message}`);
+            this.logger.debug(`Sample validation errors: ${JSON.stringify(error.errors.slice(0, 3))}`);
+          } else {
+            this.logger.warn(`Unexpected validation error: ${error.message}`);
+          }
         }
-      }
 
-      if (historicalCost.data) {
-        costData.push(...historicalCost.data);
+        if (historicalCost.data) {
+          costData.push(...historicalCost.data);
+        }
+
+        chunkStart = chunkEnd.clone().add(1, 'day').startOf('month');
       }
     }
 
