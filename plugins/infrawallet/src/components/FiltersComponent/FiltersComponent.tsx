@@ -8,7 +8,7 @@ import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 import Tooltip, { TooltipProps, tooltipClasses } from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
@@ -177,7 +177,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
 
   return (
     <Grid container>
-      <Grid size={{ xs: 12 }}>
+      <Grid item xs={12}>
         {Object.keys(keyValues).map(key => (
           <FormControl
             key={`form-${key}`}
@@ -239,10 +239,10 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
           </Button>
         </FormControl>
       </Grid>
-      <Grid size={{ xs: 12 }}>
+      <Grid item xs={12}>
         <Divider />
       </Grid>
-      <Grid size={{ xs: 12 }}>
+      <Grid item xs={12}>
         <FormControl sx={{ marginLeft: theme.spacing(1), marginRight: theme.spacing(3), minWidth: 300 }}>
           <Autocomplete
             id="tag-providers"
@@ -347,7 +347,7 @@ export const FiltersComponent: FC<FiltersComponentProps> = ({
           </HtmlTooltip>
         </FormControl>
       </Grid>
-      <Grid size={{ xs: 12 }}>
+      <Grid item xs={12}>
         {selectedTags.map(tag => (
           <Chip
             size="small"
