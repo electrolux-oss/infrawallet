@@ -93,26 +93,30 @@ export class DatadogClient extends InfraWalletClient {
 
   protected async fetchCosts(integrationConfig: Config, client: any, query: CostQuery): Promise<any> {
     const costData: datadogApiV2.CostByOrg[] = [];
-    const startTime = moment(parseInt(query.startTime, 10));
-    const endTime = moment(parseInt(query.endTime, 10));
-    const firstDayOfLastMonth = moment().subtract(1, 'M').startOf('M');
+    // Strict UTC to prevent month boundary drift
+    const startTime = moment.utc(parseInt(query.startTime, 10)).startOf('month');
+    const endTime = moment.utc(parseInt(query.endTime, 10)).startOf('month');
+    const historicalCutoff = moment.utc().startOf('month').subtract(2, 'months');
 
     // check if costs prior to 2 months ago are in query, if yes, use historical_cost API
     // https://docs.datadoghq.com/api/latest/usage-metering/#get-historical-cost-across-your-account
-    if (startTime.isBefore(firstDayOfLastMonth)) {
-      const historicalEndTime = moment.min(endTime, firstDayOfLastMonth.clone().subtract(1, 'd'));
-      const maxMonthRange = 2;
+    if (startTime.isBefore(historicalCutoff)) {
+      const historicalEndTime = moment.min(endTime, historicalCutoff.clone().subtract(1, 'month'));
+      // Datadog API quirk: To get data FOR a specific end month, the API request must include the NEXT month.
+      const maxMonthRange = 3;
       let chunkStart = startTime.clone();
 
-      while (chunkStart.isBefore(historicalEndTime)) {
-        const chunkEnd = moment.min(
-          chunkStart.clone().add(maxMonthRange, 'months').subtract(1, 'day'),
-          historicalEndTime.clone(),
-        );
+      while (chunkStart.isSameOrBefore(historicalEndTime)) {
+        let chunkEnd = chunkStart.clone().add(maxMonthRange - 1, 'months');
+        if (chunkEnd.isAfter(historicalEndTime)) {
+          chunkEnd = historicalEndTime.clone();
+        }
+
+        const apiEndMonth = chunkEnd.clone().add(1, 'month');
 
         const historicalCost: datadogApiV2.CostByOrgResponse = await client.getHistoricalCostByOrg({
           startMonth: chunkStart,
-          endMonth: chunkEnd,
+          endMonth: apiEndMonth,
           view: 'sub-org',
         });
 
@@ -132,21 +136,19 @@ export class DatadogClient extends InfraWalletClient {
           costData.push(...historicalCost.data);
         }
 
-        chunkStart = chunkEnd.clone().add(1, 'day').startOf('month');
+        chunkStart = chunkStart.clone().add(maxMonthRange, 'months');
       }
     }
 
     // check if current/last month costs are in query, if yes, use estimated_cost API
     // https://docs.datadoghq.com/api/latest/usage-metering/#get-estimated-cost-across-your-account
-    if (endTime.isSameOrAfter(firstDayOfLastMonth)) {
-      let estimatedCostStartTime = startTime;
-      if (startTime.isBefore(firstDayOfLastMonth)) {
-        estimatedCostStartTime = firstDayOfLastMonth;
-      }
+    if (endTime.isSameOrAfter(historicalCutoff)) {
+      const estimatedStartTime = moment.max(startTime, historicalCutoff);
+      const apiEndTime = endTime.clone().add(1, 'month');
 
       const estimatedCost: datadogApiV2.CostByOrgResponse = await client.getEstimatedCostByOrg({
-        startMonth: estimatedCostStartTime,
-        endMonth: endTime,
+        startMonth: estimatedStartTime,
+        endMonth: apiEndTime,
         view: 'sub-org',
       });
 
@@ -172,13 +174,15 @@ export class DatadogClient extends InfraWalletClient {
     if (query.granularity === GRANULARITY.MONTHLY) {
       costData.forEach(costByOrg => {
         const orgName = costByOrg.attributes?.orgName as string;
-        if (!this.evaluateIntegrationFilters(orgName, integrationConfig)) {
+        const date = costByOrg.attributes?.date;
+
+        if (!this.evaluateIntegrationFilters(orgName, integrationConfig) || !date) {
           return;
         }
 
         costs.push({
           orgName: orgName,
-          date: costByOrg.attributes?.date,
+          date: date,
           // only keep cost breakdown
           charges: costByOrg.attributes?.charges?.filter(charge => charge.chargeType !== 'total'),
         });
@@ -187,11 +191,15 @@ export class DatadogClient extends InfraWalletClient {
       // Datadog doesn't provide daily costs based on usage, so we allocate monthly costs evenly by day
       costData.forEach(costByOrg => {
         const orgName = costByOrg.attributes?.orgName as string;
-        if (!this.evaluateIntegrationFilters(orgName, integrationConfig)) {
+        const date = costByOrg.attributes?.date;
+
+        if (!this.evaluateIntegrationFilters(orgName, integrationConfig) || !date) {
           return;
         }
 
-        const daysInMonth = moment(costByOrg.attributes?.date).daysInMonth();
+        const utcDate = moment.utc(date);
+        const daysInMonth = utcDate.daysInMonth();
+
         costByOrg.attributes?.charges?.forEach(charge => {
           if (charge.chargeType === 'total') {
             // only keep cost breakdown
@@ -201,7 +209,7 @@ export class DatadogClient extends InfraWalletClient {
           for (let i = 0; i < daysInMonth; i++) {
             const dailyCost = {
               orgName: orgName,
-              date: moment(costByOrg.attributes?.date).add(i, 'd'),
+              date: utcDate.clone().add(i, 'd'),
               charges: [
                 {
                   productName: charge.productName,
@@ -253,7 +261,7 @@ export class DatadogClient extends InfraWalletClient {
           periodFormat = 'YYYY-MM-DD';
         }
 
-        const dateObj = moment(costByOrg.date);
+        const dateObj = moment.utc(costByOrg.date);
         if (!dateObj.isValid()) {
           filteredOutInvalidDate++;
           return accumulator;
