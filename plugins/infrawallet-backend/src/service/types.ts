@@ -73,6 +73,7 @@ export type CloudProviderError = {
 
 export type ClientResponse = {
   reports: Report[];
+  forecasts?: Record<string, number>;
   errors: CloudProviderError[];
 };
 
