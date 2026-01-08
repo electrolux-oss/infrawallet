@@ -118,6 +118,9 @@ export abstract class InfraWalletClient {
   }
 
   protected abstract fetchCosts(integrationConfig: Config, client: any, query: CostQuery): Promise<any>;
+  protected async fetchForecast(_integrationConfig: Config): Promise<number | null> {
+    return null;
+  }
 
   protected abstract transformCostsData(
     integrationConfig: Config,
@@ -271,7 +274,13 @@ export abstract class InfraWalletClient {
     }
 
     const results: Report[] = [];
+    const forecasts: Record<string, number> = {};
     const errors: CloudProviderError[] = [];
+
+    const now = new Date();
+    const isCurrentMonthIncluded =
+      query.granularity === GRANULARITY.MONTHLY &&
+      parseInt(query.endTime, 10) >= new Date(now.getFullYear(), now.getMonth(), 1).getTime();
 
     // if autoloadCostData enabled, for a query without any tags or groups, we get the results from the plugin database
     // skip Mock provider for autoloading data
@@ -315,6 +324,12 @@ export abstract class InfraWalletClient {
             transformedReports.forEach((value: any) => {
               results.push(value);
             });
+            if (isCurrentMonthIncluded) {
+              const integrationForecast = await this.fetchForecast(integrationConfig);
+              if (integrationForecast !== null) {
+                forecasts[this.provider] = integrationForecast;
+              }
+            }
           } catch (e) {
             this.logger.error(e);
             errors.push({
@@ -331,6 +346,7 @@ export abstract class InfraWalletClient {
 
     return {
       reports: results,
+      forecasts: forecasts,
       errors: errors,
     };
   }

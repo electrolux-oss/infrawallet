@@ -269,16 +269,15 @@ export interface BudgetAnalytics {
 export const calculateBudgetAnalytics = (
   monthlyCosts: Record<string, number>,
   annualBudget: number,
+  forecast?: number,
 ): BudgetAnalytics => {
   const currentMonth = moment().month() + 1;
   const currentYear = moment().year();
   const daysIntoCurrentMonth = moment().date();
   const daysInCurrentMonth = moment().daysInMonth();
-
   let yearToDateSpent = 0;
   let projectedCurrentMonthCost = 0;
   const monthlySpending: number[] = [];
-
   for (let month = 1; month <= currentMonth; month++) {
     const monthKey = `${currentYear}-${month.toString().padStart(2, '0')}`;
     const monthCost = monthlyCosts[monthKey] || 0;
@@ -287,7 +286,7 @@ export const calculateBudgetAnalytics = (
       yearToDateSpent += monthCost;
       monthlySpending.push(monthCost);
     } else if (month === currentMonth) {
-      projectedCurrentMonthCost = (monthCost / daysIntoCurrentMonth) * daysInCurrentMonth;
+      projectedCurrentMonthCost = forecast ?? (monthCost / daysIntoCurrentMonth) * daysInCurrentMonth;
       yearToDateSpent += monthCost;
       monthlySpending.push(projectedCurrentMonthCost);
     }

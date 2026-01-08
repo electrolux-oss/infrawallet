@@ -227,6 +227,31 @@ export class DatadogClient extends InfraWalletClient {
     return costs;
   }
 
+  async fetchForecast(integrationConfig: Config): Promise<number> {
+    const client = await this.initCloudClient(integrationConfig);
+    let totalProjectedCost = 0;
+
+    const response: datadogApiV2.ProjectedCostResponse = await client.getProjectedCost({
+      view: 'sub-org',
+    });
+
+    if (!response.data) {
+      return totalProjectedCost;
+    }
+
+    response.data.forEach(item => {
+      const attributes = item.attributes;
+      const orgName = attributes?.orgName;
+      const projectedTotal = attributes?.projectedTotalCost;
+
+      if (orgName && projectedTotal !== undefined && this.evaluateIntegrationFilters(orgName, integrationConfig)) {
+        totalProjectedCost += projectedTotal;
+      }
+    });
+
+    return totalProjectedCost;
+  }
+
   protected async transformCostsData(subAccountConfig: Config, query: CostQuery, costResponse: any): Promise<Report[]> {
     const tags = subAccountConfig.getOptionalStringArray('tags');
     const tagKeyValues: { [key: string]: string } = {};

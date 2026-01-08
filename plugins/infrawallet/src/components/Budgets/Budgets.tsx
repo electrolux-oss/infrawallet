@@ -120,6 +120,7 @@ interface BudgetChartProps {
   monthlyCosts: Record<string, number>;
   view: string;
   budgets: Budget[];
+  forecast?: number;
   setBudgets: React.Dispatch<React.SetStateAction<Budget[]>>;
 }
 
@@ -144,7 +145,7 @@ function getRecommendationColor(type: string) {
 function BudgetChart(props: Readonly<BudgetChartProps>) {
   const { height } = useDrawingArea();
   const theme = useTheme();
-  const { provider, monthlyCosts, view, budgets, setBudgets } = props;
+  const { provider, monthlyCosts, view, budgets, setBudgets, forecast } = props;
   const infraWalletApi = useApi(infraWalletApiRef);
 
   const annualBudget = budgets.find(b => b.provider.toLowerCase() === provider.toLowerCase());
@@ -152,7 +153,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
 
   const [openManageBudget, setOpenManageBudget] = useState(false);
 
-  const budgetAnalytics: BudgetAnalytics = calculateBudgetAnalytics(monthlyCosts, annualBudgetAmount);
+  const budgetAnalytics: BudgetAnalytics = calculateBudgetAnalytics(monthlyCosts, annualBudgetAmount, forecast);
 
   const updateBudget = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -211,7 +212,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
     const lastActualCost = lastIndex >= 0 ? nonAccumulatedCosts[lastIndex] : 0;
     const projectedCurrentMonthCost = budgetAnalytics.projectedCurrentMonthCost;
     const projectedDelta = projectedCurrentMonthCost - lastActualCost;
-    const monthlyMax = max([...nonAccumulatedCosts, budgetAmount]) || 0;
+    const monthlyMax = max([...nonAccumulatedCosts, budgetAmount, projectedCurrentMonthCost]) || 0;
 
     chartSeries = [
       {
@@ -630,7 +631,7 @@ export const Budgets: FC<BudgetsProps> = ({ providerErrorsSetter }) => {
   const [reportsAggregatedAndMerged, setReportsAggregatedAndMerged] = useState<Report[] | undefined>(undefined);
   const [budgetView, setBudgetView] = useState(BUDGET_VIEW.ANNUAL);
   const [budgets, setBudgets] = useState<Budget[]>([]);
-
+  const [forecasts, setForecasts] = useState<Record<string, number>>({});
   const infraWalletApi = useApi(infraWalletApiRef);
   const alertApi = useApi(alertApiRef);
 
@@ -642,6 +643,7 @@ export const Budgets: FC<BudgetsProps> = ({ providerErrorsSetter }) => {
           const aggregatedReports = aggregateCostReports(reportsResponse.data, 'provider');
           const aggregatedAndMergedReports = mergeCostReports(aggregatedReports);
           setReportsAggregatedAndMerged(aggregatedAndMergedReports);
+          setForecasts(reportsResponse.forecasts || {});
         }
         if (reportsResponse.status === 207 && reportsResponse.errors) {
           providerErrorsSetter(reportsResponse.errors);
@@ -699,6 +701,7 @@ export const Budgets: FC<BudgetsProps> = ({ providerErrorsSetter }) => {
               view={budgetView}
               budgets={budgets}
               setBudgets={setBudgets}
+              forecast={forecasts[report.id]}
             />
           </Grid>
         ))
