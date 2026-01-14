@@ -35,7 +35,7 @@ import {
 } from '@mui/x-charts';
 import { max } from 'lodash';
 import moment from 'moment';
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import {
   aggregateCostReports,
   formatCurrency,

@@ -266,11 +266,102 @@ export abstract class InfraWalletClient {
     };
   }
 
+  // Helper method to check if database autoload should be used
+  private shouldUseAutoloadFromDatabase(query: CostQuery, autoloadCostData: boolean): boolean {
+    return (
+      query.tags === '()' && 
+      query.groups === '' && 
+      autoloadCostData && 
+      this.provider !== CLOUD_PROVIDER.MOCK
+    );
+  }
+
+  // Helper method to handle cached data retrieval
+  private async handleCachedData(
+    integrationConfig: Config,
+    integrationName: string,
+    query: CostQuery,
+    isCurrentMonthIncluded: boolean,
+    results: Report[],
+    forecasts: Record<string, number>
+  ): Promise<boolean> {
+    const cachedCosts = await getReportsFromCache(this.cache, this.provider, integrationName, query);
+    if (!cachedCosts) {
+      return false;
+    }
+
+    this.logger.debug(`${this.provider}/${integrationName} costs from cache`);
+    cachedCosts.forEach(cost => results.push(cost));
+
+    if (isCurrentMonthIncluded) {
+      const cachedForecast = await getForecastFromCache(this.cache, this.provider, integrationName, query);
+      if (cachedForecast !== undefined) {
+        this.logger.debug(`${this.provider}/${integrationName} forecast from cache: ${cachedForecast}`);
+        forecasts[this.provider] = cachedForecast;
+      }
+    }
+    return true;
+  }
+
+  // Helper method to process fresh data from API
+  private async processFreshData(
+    integrationConfig: Config,
+    integrationName: string,
+    query: CostQuery,
+    isCurrentMonthIncluded: boolean,
+    results: Report[],
+    forecasts: Record<string, number>
+  ): Promise<void> {
+    const client = await this.initCloudClient(integrationConfig);
+    const costResponse = await this.fetchCosts(integrationConfig, client, query);
+    const transformedReports = await this.transformCostsData(integrationConfig, query, costResponse);
+
+    // Cache the results
+    await setReportsToCache(
+      this.cache,
+      transformedReports,
+      this.provider,
+      integrationName,
+      query,
+      getDefaultCacheTTL(CACHE_CATEGORY.COSTS, this.provider),
+    );
+
+    transformedReports.forEach((value: any) => results.push(value));
+
+    if (isCurrentMonthIncluded) {
+      await this.handleForecastData(integrationConfig, integrationName, query, forecasts);
+    }
+  }
+
+  // Helper method to handle forecast data processing
+  private async handleForecastData(
+    integrationConfig: Config,
+    integrationName: string,
+    query: CostQuery,
+    forecasts: Record<string, number>
+  ): Promise<void> {
+    const integrationForecast = await this.fetchForecast(integrationConfig);
+    if (integrationForecast !== null) {
+      forecasts[this.provider] = integrationForecast;
+
+      await setForecastToCache(
+        this.cache,
+        integrationForecast,
+        this.provider,
+        integrationName,
+        query,
+        getDefaultCacheTTL(CACHE_CATEGORY.COSTS, this.provider),
+      );
+      this.logger.debug(`${this.provider}/${integrationName} forecast cached: ${integrationForecast}`);
+    }
+  }
+
   async getCostReports(query: CostQuery): Promise<ClientResponse> {
     const autoloadCostData = this.config.getOptionalBoolean('backend.infraWallet.autoload.enabled') ?? false;
     const integrationConfigs = this.config.getOptionalConfigArray(
       `backend.infraWallet.integrations.${this.provider.toLowerCase()}`,
     );
+    
     if (!integrationConfigs) {
       return { reports: [], errors: [] };
     }
@@ -284,75 +375,41 @@ export abstract class InfraWalletClient {
       query.granularity === GRANULARITY.MONTHLY &&
       parseInt(query.endTime, 10) >= new Date(now.getFullYear(), now.getMonth(), 1).getTime();
 
-    // if autoloadCostData enabled, for a query without any tags or groups, we get the results from the plugin database
-    // skip Mock provider for autoloading data
-    if (query.tags === '()' && query.groups === '' && autoloadCostData && this.provider !== CLOUD_PROVIDER.MOCK) {
+    // Use autoload from database if conditions are met
+    if (this.shouldUseAutoloadFromDatabase(query, autoloadCostData)) {
       const reportsFromDatabase = await this.getCostReportsFromDatabase(query);
-      reportsFromDatabase.forEach(report => {
-        results.push(report);
-      });
+      reportsFromDatabase.forEach(report => results.push(report));
     } else {
       const promises = [];
+      
       for (const integrationConfig of integrationConfigs) {
         const integrationName = integrationConfig.getString('name');
 
-        // first check if there is any cached costs and forecasts
-        const cachedCosts = await getReportsFromCache(this.cache, this.provider, integrationName, query);
-        if (cachedCosts) {
-          this.logger.debug(`${this.provider}/${integrationName} costs from cache`);
-          cachedCosts.forEach(cost => {
-            results.push(cost);
-          });
+        // Check for cached data first
+        const foundCachedData = await this.handleCachedData(
+          integrationConfig,
+          integrationName,
+          query,
+          isCurrentMonthIncluded,
+          results,
+          forecasts
+        );
 
-          // Also check for cached forecast if current month is included
-          if (isCurrentMonthIncluded) {
-            const cachedForecast = await getForecastFromCache(this.cache, this.provider, integrationName, query);
-            if (cachedForecast !== undefined) {
-              this.logger.debug(`${this.provider}/${integrationName} forecast from cache: ${cachedForecast}`);
-              forecasts[this.provider] = cachedForecast;
-            }
-          }
+        if (foundCachedData) {
           continue;
         }
 
+        // Process fresh data from API
         const promise = (async () => {
           try {
-            const client = await this.initCloudClient(integrationConfig);
-            const costResponse = await this.fetchCosts(integrationConfig, client, query);
-
-            const transformedReports = await this.transformCostsData(integrationConfig, query, costResponse);
-
-            // cache the results
-            await setReportsToCache(
-              this.cache,
-              transformedReports,
-              this.provider,
+            await this.processFreshData(
+              integrationConfig,
               integrationName,
               query,
-              getDefaultCacheTTL(CACHE_CATEGORY.COSTS, this.provider),
+              isCurrentMonthIncluded,
+              results,
+              forecasts
             );
-
-            transformedReports.forEach((value: any) => {
-              results.push(value);
-            });
-            
-            if (isCurrentMonthIncluded) {
-              const integrationForecast = await this.fetchForecast(integrationConfig);
-              if (integrationForecast !== null) {
-                forecasts[this.provider] = integrationForecast;
-                
-                // Cache the forecast data with the same TTL as costs
-                await setForecastToCache(
-                  this.cache,
-                  integrationForecast,
-                  this.provider,
-                  integrationName,
-                  query,
-                  getDefaultCacheTTL(CACHE_CATEGORY.COSTS, this.provider),
-                );
-                this.logger.debug(`${this.provider}/${integrationName} forecast cached: ${integrationForecast}`);
-              }
-            }
           } catch (e) {
             this.logger.error(e);
             errors.push({

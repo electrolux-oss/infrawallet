@@ -16,7 +16,7 @@ import {
   MarkPlot,
   ResponsiveChartContainer,
 } from '@mui/x-charts';
-import { FC, default as React, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import { formatCurrency, calculateBudgetAnalytics } from '../../api/functions';
 import { colorList } from '../constants';
 import { ColumnsChartComponentProps } from '../types';
@@ -39,109 +39,148 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
   const [showMetrics, setShowMetrics] = useState<boolean>(false);
   const [maxCostsYaxis, setMaxCostsYaxis] = useState<number | undefined>(undefined);
 
+  // Helper: Calculate cost sums across all series
+  const calculateCostSums = useCallback((costsData: any[]) => {
+    const sums = [];
+    for (const s of costsData) {
+      for (let i = 0; i < s.data.length; i++) {
+        if (sums[i] === undefined) {
+          sums[i] = 0;
+        }
+        sums[i] += s.data[i];
+      }
+    }
+    return sums;
+  }, []);
+
+  // Helper: Create base costs series
+  const createBaseCostsSeries = useCallback((costsData: any[]) => {
+    return costsData.map(s => ({
+      id: s.name,
+      data: s.data,
+      type: 'bar' as const,
+      label: `${s.name} Actual Spend`,
+      yAxisId: 'costsAxis',
+      valueFormatter: (value: number) => formatCurrency(value ? value : 0),
+      highlightScope: { highlight: 'series', fade: 'global' } as const,
+      stack: 'stack1',
+      stackOrder: 'descending' as const,
+    }));
+  }, []);
+
+  // Helper: Build monthly costs lookup
+  const buildMonthlyCosts = useCallback((seriesData: number[]) => {
+    const monthlyCosts: Record<string, number> = {};
+    periods.forEach((period, index) => {
+      monthlyCosts[period] = seriesData[index] || 0;
+    });
+    return monthlyCosts;
+  }, [periods]);
+
+  // Helper: Create single projected series
+  const createProjectedSeries = useCallback((series: any, budget: any, forecast: any) => {
+    const effectiveBudget = budget?.amount ? budget : { amount: 100000, provider: series.name };
+    if (!effectiveBudget?.amount) return null;
+
+    const monthlyCosts = buildMonthlyCosts(series.data);
+    const analytics = calculateBudgetAnalytics(monthlyCosts, effectiveBudget.amount, forecast);
+    
+    const lastIndex = series.data.length - 1;
+    const lastActualCost = lastIndex >= 0 ? series.data[lastIndex] : 0;
+    const projectedDelta = analytics.projectedCurrentMonthCost - lastActualCost;
+    
+    if (lastIndex < 0 || projectedDelta <= 0) return null;
+
+    const deltaData = series.data.map((_: any, i: number) => (i === lastIndex ? projectedDelta : 0));
+    
+    return {
+      id: `${series.name}-projected`,
+      data: deltaData,
+      type: 'bar' as const,
+      label: `${series.name} Projected Delta`,
+      yAxisId: 'costsAxis',
+      color: theme.palette.warning.main,
+      valueFormatter: (value: number) => {
+        if (value === 0) return null;
+        return `${formatCurrency(projectedDelta)}`;
+      },
+      highlightScope: { highlight: 'series', fade: 'global' } as const,
+      stack: 'stack1',
+      stackOrder: 'descending' as const,
+    };
+  }, [buildMonthlyCosts, theme.palette.warning.main]);
+
+  // Helper: Create all projected delta series
+  const createProjectedDeltaSeries = useCallback((costsData: any[]) => {
+    if (granularity !== 'monthly') return [];
+
+    const projectedSeries: any[] = [];
+    for (const s of costsData) {
+      const budget = budgets?.find(b => b.provider.toLowerCase() === s.name.toLowerCase());
+      const forecast = forecasts?.[s.name];
+      const projectedData = createProjectedSeries(s, budget, forecast);
+      
+      if (projectedData) {
+        projectedSeries.push(projectedData);
+      }
+    }
+    return projectedSeries;
+  }, [granularity, budgets, forecasts, createProjectedSeries]);
+
+  // Helper: Calculate maximum Y-axis value
+  const calculateMaxYAxis = useCallback((baseSums: number[], projectedSeries: any[]) => {
+    const allSums = [...baseSums];
+    for (const deltaSeries of projectedSeries) {
+      for (let i = 0; i < deltaSeries.data.length; i++) {
+        if (deltaSeries.data[i] > 0) {
+          allSums[i] = (allSums[i] || 0) + deltaSeries.data[i];
+        }
+      }
+    }
+    return Math.max(...allSums);
+  }, []);
+
+  // Helper: Create metrics series
+  const createMetricsSeriesData = useCallback(() => {
+    if (!metrics || !showMetrics) return undefined;
+    
+    return metrics.map(s => ({
+      data: s.data,
+      type: 'line' as const,
+      label: s.name,
+      curve: 'natural' as const,
+      yAxisId: 'metricsAxis',
+      highlightScope: { highlight: 'series', fade: 'global' } as const,
+      showMark: granularity === 'monthly',
+    }));
+  }, [metrics, showMetrics, granularity]);
+
   const initChartCallback = useCallback(async () => {
     setCostsSeries(undefined);
     setMetricsSeries(undefined);
 
     if (costs) {
-      const sums = [];
-      for (const s of costs) {
-        for (let i = 0; i < s.data.length; i++) {
-          if (sums[i] === undefined) {
-            sums[i] = 0;
-          }
-          sums[i] += s.data[i];
-        }
-      }
-
-      const baseCostsSeries = costs.map(s => {
-        return {
-          id: s.name,
-          data: s.data,
-          type: 'bar',
-          label: `${s.name} Actual Spend`,
-          yAxisId: 'costsAxis',
-          valueFormatter: (value: number) => {
-            return formatCurrency(value ? value : 0);
-          },
-          highlightScope: { highlight: 'series', fade: 'global' },
-          stack: 'stack1',
-          stackOrder: 'descending',
-        };
-      });
-
-      const projectedDeltaSeries = [];
+      const sums = calculateCostSums(costs);
+      const baseCostsSeries = createBaseCostsSeries(costs);
+      const projectedDeltaSeries = createProjectedDeltaSeries(costs);
+      const maxYValue = calculateMaxYAxis(sums, projectedDeltaSeries);
       
-      if (granularity === 'monthly' && costs) {
-        for (const s of costs) {
-          const budget = budgets?.find(b => b.provider.toLowerCase() === s.name.toLowerCase());
-          const forecast = forecasts?.[s.name];
-          const effectiveBudget = budget?.amount ? budget : { amount: 100000, provider: s.name };
-          if (effectiveBudget?.amount) {
-            const monthlyCosts: Record<string, number> = {};
-            periods.forEach((period, index) => {
-              monthlyCosts[period] = s.data[index] || 0;
-            });
-            
-            const analytics = calculateBudgetAnalytics(monthlyCosts, effectiveBudget.amount, forecast);
-            
-            const lastIndex = s.data.length - 1;
-            const lastActualCost = lastIndex >= 0 ? s.data[lastIndex] : 0;
-            const projectedCurrentMonthCost = analytics.projectedCurrentMonthCost;
-            const projectedDelta = projectedCurrentMonthCost -lastActualCost;
-            
-            if (lastIndex >= 0 && projectedDelta > 0) {
-              const deltaData = s.data.map((_, i) => (i === lastIndex ? projectedDelta : 0));
-              
-              projectedDeltaSeries.push({
-                id: `${s.name}-projected`,
-                data: deltaData,
-                type: 'bar',
-                label: `${s.name} Projected Delta`,
-                yAxisId: 'costsAxis',
-                color: theme.palette.warning.main,
-                valueFormatter: (value: number) => {
-                  if (value === 0) return null;
-                  return `${formatCurrency(projectedDelta)}`;
-                },
-                highlightScope: { highlight: 'series', fade: 'global' },
-                stack: 'stack1',
-                stackOrder: 'descending',
-              });
-            }
-          }
-        }
-      }
-
-      const allSums = [...sums];
-      for (const deltaSeries of projectedDeltaSeries) {
-        for (let i = 0; i < deltaSeries.data.length; i++) {
-          if (deltaSeries.data[i] > 0) {
-            allSums[i] = (allSums[i] || 0) + deltaSeries.data[i];
-          }
-        }
-      }
-      setMaxCostsYaxis(Math.max(...allSums));
-
+      setMaxCostsYaxis(maxYValue);
       setCostsSeries([...baseCostsSeries, ...projectedDeltaSeries]);
     }
 
-    if (metrics && showMetrics) {
-      setMetricsSeries(
-        metrics.map(s => {
-          return {
-            data: s.data,
-            type: 'line',
-            label: s.name,
-            curve: 'natural',
-            yAxisId: 'metricsAxis',
-            highlightScope: { highlight: 'series', fade: 'global' },
-            showMark: granularity === 'monthly',
-          };
-        }),
-      );
+    const metricsData = createMetricsSeriesData();
+    if (metricsData) {
+      setMetricsSeries(metricsData);
     }
-  }, [costs, metrics, showMetrics, granularity, periods, theme]);
+  }, [
+    costs,
+    calculateCostSums,
+    createBaseCostsSeries,
+    createProjectedDeltaSeries,
+    calculateMaxYAxis,
+    createMetricsSeriesData,
+  ]);
 
   useEffect(() => {
     initChartCallback();

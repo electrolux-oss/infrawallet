@@ -17,7 +17,6 @@ import {
   getAllReportTags,
   getPeriodStrings,
   mergeCostReports,
-  calculateBudgetAnalytics,
 } from '../../api/functions';
 import { CloudProviderError, Filters, Metric, Report, Tag, Budget } from '../../api/types';
 import { useInfraWalletLuceneParams } from '../../hooks/useInfraWalletLuceneParams';
@@ -189,10 +188,16 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
         const response = await infraWalletApi.getBudgets(params.name ?? 'default');
         setBudgets(response.data || []);
       } catch (error) {
+        console.error('Failed to fetch budgets:', error);
+        setBudgets([]); // Set empty array as fallback
+        alertApi.post({ 
+          message: 'Failed to load budget data', 
+          severity: 'warning' 
+        });
       }
     };
     fetchBudgets();
-  }, [infraWalletApi, params.name]);
+  }, [infraWalletApi, params.name, alertApi]);
 
   // provide a way for users to access these tabs, if they are configfured to be hidden
   useEffect(() => {
