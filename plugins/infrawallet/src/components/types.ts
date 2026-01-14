@@ -43,6 +43,9 @@ export type ColumnsChartComponentProps = {
   periods: any[];
   costs: Array<{ name: string; data: any[] }> | undefined;
   metrics?: Array<{ name: string; group?: string; data: any[] }>;
+  budgets?: any[];
+  forecasts?: Record<string, number>;
+  monthRange?: MonthRange;
   height?: number;
   highlightedItem: string | undefined;
   highlightedItemSetter: any;

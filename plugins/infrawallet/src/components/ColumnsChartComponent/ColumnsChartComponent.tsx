@@ -2,6 +2,7 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
 import Switch from '@mui/material/Switch';
+import { useTheme } from '@mui/material/styles';
 import {
   BarPlot,
   ChartsGrid,
@@ -16,7 +17,7 @@ import {
   ResponsiveChartContainer,
 } from '@mui/x-charts';
 import { FC, default as React, useCallback, useEffect, useState } from 'react';
-import { formatCurrency } from '../../api/functions';
+import { formatCurrency, calculateBudgetAnalytics } from '../../api/functions';
 import { colorList } from '../constants';
 import { ColumnsChartComponentProps } from '../types';
 
@@ -26,10 +27,13 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
   periods,
   costs,
   metrics,
+  budgets,
+  forecasts,
   height,
   highlightedItem,
   highlightedItemSetter,
 }) => {
+  const theme = useTheme();
   const [costsSeries, setCostsSeries] = useState<any[] | undefined>(undefined);
   const [metricsSeries, setMetricsSeries] = useState<any[] | undefined>(undefined);
   const [showMetrics, setShowMetrics] = useState<boolean>(false);
@@ -49,25 +53,77 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
           sums[i] += s.data[i];
         }
       }
-      setMaxCostsYaxis(Math.max(...sums));
 
-      setCostsSeries(
-        costs.map(s => {
-          return {
-            id: s.name,
-            data: s.data,
-            type: 'bar',
-            label: s.name,
-            yAxisId: 'costsAxis',
-            valueFormatter: (value: number) => {
-              return formatCurrency(value ? value : 0);
-            },
-            highlightScope: { highlight: 'series', fade: 'global' },
-            stack: 'total',
-            stackOrder: 'descending',
-          };
-        }),
-      );
+      const baseCostsSeries = costs.map(s => {
+        return {
+          id: s.name,
+          data: s.data,
+          type: 'bar',
+          label: `${s.name} Actual Spend`,
+          yAxisId: 'costsAxis',
+          valueFormatter: (value: number) => {
+            return formatCurrency(value ? value : 0);
+          },
+          highlightScope: { highlight: 'series', fade: 'global' },
+          stack: 'stack1',
+          stackOrder: 'descending',
+        };
+      });
+
+      const projectedDeltaSeries = [];
+      
+      if (granularity === 'monthly' && costs) {
+        for (const s of costs) {
+          const budget = budgets?.find(b => b.provider.toLowerCase() === s.name.toLowerCase());
+          const forecast = forecasts?.[s.name];
+          const effectiveBudget = budget?.amount ? budget : { amount: 100000, provider: s.name };
+          if (effectiveBudget?.amount) {
+            const monthlyCosts: Record<string, number> = {};
+            periods.forEach((period, index) => {
+              monthlyCosts[period] = s.data[index] || 0;
+            });
+            
+            const analytics = calculateBudgetAnalytics(monthlyCosts, effectiveBudget.amount, forecast);
+            
+            const lastIndex = s.data.length - 1;
+            const lastActualCost = lastIndex >= 0 ? s.data[lastIndex] : 0;
+            const projectedCurrentMonthCost = analytics.projectedCurrentMonthCost;
+            const projectedDelta = projectedCurrentMonthCost -lastActualCost;
+            
+            if (lastIndex >= 0 && projectedDelta > 0) {
+              const deltaData = s.data.map((_, i) => (i === lastIndex ? projectedDelta : 0));
+              
+              projectedDeltaSeries.push({
+                id: `${s.name}-projected`,
+                data: deltaData,
+                type: 'bar',
+                label: `${s.name} Projected Delta`,
+                yAxisId: 'costsAxis',
+                color: theme.palette.warning.main,
+                valueFormatter: (value: number) => {
+                  if (value === 0) return null;
+                  return `${formatCurrency(projectedDelta)}`;
+                },
+                highlightScope: { highlight: 'series', fade: 'global' },
+                stack: 'stack1',
+                stackOrder: 'descending',
+              });
+            }
+          }
+        }
+      }
+
+      const allSums = [...sums];
+      for (const deltaSeries of projectedDeltaSeries) {
+        for (let i = 0; i < deltaSeries.data.length; i++) {
+          if (deltaSeries.data[i] > 0) {
+            allSums[i] = (allSums[i] || 0) + deltaSeries.data[i];
+          }
+        }
+      }
+      setMaxCostsYaxis(Math.max(...allSums));
+
+      setCostsSeries([...baseCostsSeries, ...projectedDeltaSeries]);
     }
 
     if (metrics && showMetrics) {
@@ -85,7 +141,7 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
         }),
       );
     }
-  }, [costs, metrics, showMetrics, granularity]);
+  }, [costs, metrics, showMetrics, granularity, periods, theme]);
 
   useEffect(() => {
     initChartCallback();

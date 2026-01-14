@@ -13,10 +13,12 @@ import {
 } from '../service/consts';
 import {
   getDefaultCacheTTL,
+  getForecastFromCache,
   getReportsFromCache,
   getTagKeysFromCache,
   getTagValuesFromCache,
   logTransformationSummary,
+  setForecastToCache,
   setReportsToCache,
   setTagKeysToCache,
   setTagValuesToCache,
@@ -294,13 +296,22 @@ export abstract class InfraWalletClient {
       for (const integrationConfig of integrationConfigs) {
         const integrationName = integrationConfig.getString('name');
 
-        // first check if there is any cached
+        // first check if there is any cached costs and forecasts
         const cachedCosts = await getReportsFromCache(this.cache, this.provider, integrationName, query);
         if (cachedCosts) {
           this.logger.debug(`${this.provider}/${integrationName} costs from cache`);
           cachedCosts.forEach(cost => {
             results.push(cost);
           });
+
+          // Also check for cached forecast if current month is included
+          if (isCurrentMonthIncluded) {
+            const cachedForecast = await getForecastFromCache(this.cache, this.provider, integrationName, query);
+            if (cachedForecast !== undefined) {
+              this.logger.debug(`${this.provider}/${integrationName} forecast from cache: ${cachedForecast}`);
+              forecasts[this.provider] = cachedForecast;
+            }
+          }
           continue;
         }
 
@@ -324,10 +335,22 @@ export abstract class InfraWalletClient {
             transformedReports.forEach((value: any) => {
               results.push(value);
             });
+            
             if (isCurrentMonthIncluded) {
               const integrationForecast = await this.fetchForecast(integrationConfig);
               if (integrationForecast !== null) {
                 forecasts[this.provider] = integrationForecast;
+                
+                // Cache the forecast data with the same TTL as costs
+                await setForecastToCache(
+                  this.cache,
+                  integrationForecast,
+                  this.provider,
+                  integrationName,
+                  query,
+                  getDefaultCacheTTL(CACHE_CATEGORY.COSTS, this.provider),
+                );
+                this.logger.debug(`${this.provider}/${integrationName} forecast cached: ${integrationForecast}`);
               }
             }
           } catch (e) {
