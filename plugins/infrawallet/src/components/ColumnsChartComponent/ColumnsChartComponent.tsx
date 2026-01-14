@@ -61,7 +61,7 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
       type: 'bar' as const,
       label: `${s.name} Actual Spend`,
       yAxisId: 'costsAxis',
-      valueFormatter: (value: number) => formatCurrency(value ? value : 0),
+      valueFormatter: (value: number) => formatCurrency(value || 0),
       highlightScope: { highlight: 'series', fade: 'global' } as const,
       stack: 'stack1',
       stackOrder: 'descending' as const,
@@ -97,7 +97,7 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
       id: `${series.name}-projected`,
       data: deltaData,
       type: 'bar' as const,
-      label: `${series.name} Projected Delta`,
+      label: `${series.name} Forecast`,
       yAxisId: 'costsAxis',
       color: theme.palette.warning.main,
       valueFormatter: (value: number) => {

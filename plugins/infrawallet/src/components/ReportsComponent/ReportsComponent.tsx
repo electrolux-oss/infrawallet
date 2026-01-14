@@ -188,7 +188,6 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
         const response = await infraWalletApi.getBudgets(params.name ?? 'default');
         setBudgets(response.data || []);
       } catch (error) {
-        console.error('Failed to fetch budgets:', error);
         setBudgets([]); // Set empty array as fallback
         alertApi.post({ 
           message: 'Failed to load budget data', 
