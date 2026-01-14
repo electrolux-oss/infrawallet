@@ -278,7 +278,6 @@ export abstract class InfraWalletClient {
 
   // Helper method to handle cached data retrieval
   private async handleCachedData(
-    integrationConfig: Config,
     integrationName: string,
     query: CostQuery,
     isCurrentMonthIncluded: boolean,
@@ -387,7 +386,6 @@ export abstract class InfraWalletClient {
 
         // Check for cached data first
         const foundCachedData = await this.handleCachedData(
-          integrationConfig,
           integrationName,
           query,
           isCurrentMonthIncluded,

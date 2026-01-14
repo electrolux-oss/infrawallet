@@ -34,7 +34,7 @@ import {
   ValueOptions,
 } from '@mui/x-data-grid';
 import moment from 'moment';
-import { FC, useCallback, useEffect, useState } from 'react';
+import React, { FC, useCallback, useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { infraWalletApiRef } from '../../api/InfraWalletApi';
 import { CustomCost } from '../../api/types';
