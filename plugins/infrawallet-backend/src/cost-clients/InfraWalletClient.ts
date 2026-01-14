@@ -271,11 +271,19 @@ export abstract class InfraWalletClient {
     return query.tags === '()' && query.groups === '' && autoloadCostData && this.provider !== CLOUD_PROVIDER.MOCK;
   }
 
+  // Helper method to check if current month is included in the query
+  private isCurrentMonthIncluded(query: CostQuery): boolean {
+    const now = new Date();
+    return (
+      query.granularity === GRANULARITY.MONTHLY &&
+      parseInt(query.endTime, 10) >= new Date(now.getFullYear(), now.getMonth(), 1).getTime()
+    );
+  }
+
   // Helper method to handle cached data retrieval
   private async handleCachedData(
     integrationName: string,
     query: CostQuery,
-    isCurrentMonthIncluded: boolean,
     results: Report[],
     forecasts: Record<string, number>,
   ): Promise<boolean> {
@@ -287,7 +295,7 @@ export abstract class InfraWalletClient {
     this.logger.debug(`${this.provider}/${integrationName} costs from cache`);
     cachedCosts.forEach(cost => results.push(cost));
 
-    if (isCurrentMonthIncluded) {
+    if (this.isCurrentMonthIncluded(query)) {
       const cachedForecast = await getForecastFromCache(this.cache, this.provider, integrationName, query);
       if (cachedForecast !== undefined) {
         this.logger.debug(`${this.provider}/${integrationName} forecast from cache: ${cachedForecast}`);
@@ -302,7 +310,6 @@ export abstract class InfraWalletClient {
     integrationConfig: Config,
     integrationName: string,
     query: CostQuery,
-    isCurrentMonthIncluded: boolean,
     results: Report[],
     forecasts: Record<string, number>,
   ): Promise<void> {
@@ -322,7 +329,7 @@ export abstract class InfraWalletClient {
 
     transformedReports.forEach((value: any) => results.push(value));
 
-    if (isCurrentMonthIncluded) {
+    if (this.isCurrentMonthIncluded(query)) {
       await this.handleForecastData(integrationConfig, integrationName, query, forecasts);
     }
   }
@@ -335,7 +342,7 @@ export abstract class InfraWalletClient {
     forecasts: Record<string, number>,
   ): Promise<void> {
     const integrationForecast = await this.fetchForecast(integrationConfig);
-    if (integrationForecast !== null) {
+    if (integrationForecast !== null && integrationForecast > 0) {
       forecasts[this.provider] = integrationForecast;
 
       await setForecastToCache(
@@ -364,11 +371,6 @@ export abstract class InfraWalletClient {
     const forecasts: Record<string, number> = {};
     const errors: CloudProviderError[] = [];
 
-    const now = new Date();
-    const isCurrentMonthIncluded =
-      query.granularity === GRANULARITY.MONTHLY &&
-      parseInt(query.endTime, 10) >= new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-
     // Use autoload from database if conditions are met
     if (this.shouldUseAutoloadFromDatabase(query, autoloadCostData)) {
       const reportsFromDatabase = await this.getCostReportsFromDatabase(query);
@@ -380,13 +382,7 @@ export abstract class InfraWalletClient {
         const integrationName = integrationConfig.getString('name');
 
         // Check for cached data first
-        const foundCachedData = await this.handleCachedData(
-          integrationName,
-          query,
-          isCurrentMonthIncluded,
-          results,
-          forecasts,
-        );
+        const foundCachedData = await this.handleCachedData(integrationName, query, results, forecasts);
 
         if (foundCachedData) {
           continue;
@@ -395,14 +391,7 @@ export abstract class InfraWalletClient {
         // Process fresh data from API
         const promise = (async () => {
           try {
-            await this.processFreshData(
-              integrationConfig,
-              integrationName,
-              query,
-              isCurrentMonthIncluded,
-              results,
-              forecasts,
-            );
+            await this.processFreshData(integrationConfig, integrationName, query, results, forecasts);
           } catch (e) {
             this.logger.error(e);
             errors.push({
