@@ -268,12 +268,7 @@ export abstract class InfraWalletClient {
 
   // Helper method to check if database autoload should be used
   private shouldUseAutoloadFromDatabase(query: CostQuery, autoloadCostData: boolean): boolean {
-    return (
-      query.tags === '()' && 
-      query.groups === '' && 
-      autoloadCostData && 
-      this.provider !== CLOUD_PROVIDER.MOCK
-    );
+    return query.tags === '()' && query.groups === '' && autoloadCostData && this.provider !== CLOUD_PROVIDER.MOCK;
   }
 
   // Helper method to handle cached data retrieval
@@ -282,7 +277,7 @@ export abstract class InfraWalletClient {
     query: CostQuery,
     isCurrentMonthIncluded: boolean,
     results: Report[],
-    forecasts: Record<string, number>
+    forecasts: Record<string, number>,
   ): Promise<boolean> {
     const cachedCosts = await getReportsFromCache(this.cache, this.provider, integrationName, query);
     if (!cachedCosts) {
@@ -309,7 +304,7 @@ export abstract class InfraWalletClient {
     query: CostQuery,
     isCurrentMonthIncluded: boolean,
     results: Report[],
-    forecasts: Record<string, number>
+    forecasts: Record<string, number>,
   ): Promise<void> {
     const client = await this.initCloudClient(integrationConfig);
     const costResponse = await this.fetchCosts(integrationConfig, client, query);
@@ -337,7 +332,7 @@ export abstract class InfraWalletClient {
     integrationConfig: Config,
     integrationName: string,
     query: CostQuery,
-    forecasts: Record<string, number>
+    forecasts: Record<string, number>,
   ): Promise<void> {
     const integrationForecast = await this.fetchForecast(integrationConfig);
     if (integrationForecast !== null) {
@@ -360,7 +355,7 @@ export abstract class InfraWalletClient {
     const integrationConfigs = this.config.getOptionalConfigArray(
       `backend.infraWallet.integrations.${this.provider.toLowerCase()}`,
     );
-    
+
     if (!integrationConfigs) {
       return { reports: [], errors: [] };
     }
@@ -380,7 +375,7 @@ export abstract class InfraWalletClient {
       reportsFromDatabase.forEach(report => results.push(report));
     } else {
       const promises = [];
-      
+
       for (const integrationConfig of integrationConfigs) {
         const integrationName = integrationConfig.getString('name');
 
@@ -390,7 +385,7 @@ export abstract class InfraWalletClient {
           query,
           isCurrentMonthIncluded,
           results,
-          forecasts
+          forecasts,
         );
 
         if (foundCachedData) {
@@ -406,7 +401,7 @@ export abstract class InfraWalletClient {
               query,
               isCurrentMonthIncluded,
               results,
-              forecasts
+              forecasts,
             );
           } catch (e) {
             this.logger.error(e);

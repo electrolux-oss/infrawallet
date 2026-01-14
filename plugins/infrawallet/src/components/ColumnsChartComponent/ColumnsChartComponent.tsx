@@ -69,63 +69,72 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
   }, []);
 
   // Helper: Build monthly costs lookup
-  const buildMonthlyCosts = useCallback((seriesData: number[]) => {
-    const monthlyCosts: Record<string, number> = {};
-    periods.forEach((period, index) => {
-      monthlyCosts[period] = seriesData[index] || 0;
-    });
-    return monthlyCosts;
-  }, [periods]);
+  const buildMonthlyCosts = useCallback(
+    (seriesData: number[]) => {
+      const monthlyCosts: Record<string, number> = {};
+      periods.forEach((period, index) => {
+        monthlyCosts[period] = seriesData[index] || 0;
+      });
+      return monthlyCosts;
+    },
+    [periods],
+  );
 
   // Helper: Create single projected series
-  const createProjectedSeries = useCallback((series: any, budget: any, forecast: any) => {
-    const effectiveBudget = budget?.amount ? budget : { amount: 100000, provider: series.name };
-    if (!effectiveBudget?.amount) return null;
+  const createProjectedSeries = useCallback(
+    (series: any, budget: any, forecast: any) => {
+      const effectiveBudget = budget?.amount ? budget : { amount: 100000, provider: series.name };
+      if (!effectiveBudget?.amount) return null;
 
-    const monthlyCosts = buildMonthlyCosts(series.data);
-    const analytics = calculateBudgetAnalytics(monthlyCosts, effectiveBudget.amount, forecast);
-    
-    const lastIndex = series.data.length - 1;
-    const lastActualCost = lastIndex >= 0 ? series.data[lastIndex] : 0;
-    const projectedDelta = analytics.projectedCurrentMonthCost - lastActualCost;
-    
-    if (lastIndex < 0 || projectedDelta <= 0) return null;
+      const monthlyCosts = buildMonthlyCosts(series.data);
+      const analytics = calculateBudgetAnalytics(monthlyCosts, effectiveBudget.amount, forecast);
 
-    const deltaData = series.data.map((_: any, i: number) => (i === lastIndex ? projectedDelta : 0));
-    
-    return {
-      id: `${series.name}-projected`,
-      data: deltaData,
-      type: 'bar' as const,
-      label: `${series.name} Forecast`,
-      yAxisId: 'costsAxis',
-      color: theme.palette.warning.main,
-      valueFormatter: (value: number) => {
-        if (value === 0) return null;
-        return `${formatCurrency(projectedDelta)}`;
-      },
-      highlightScope: { highlight: 'series', fade: 'global' } as const,
-      stack: 'stack1',
-      stackOrder: 'descending' as const,
-    };
-  }, [buildMonthlyCosts, theme.palette.warning.main]);
+      const lastIndex = series.data.length - 1;
+      const lastActualCost = lastIndex >= 0 ? series.data[lastIndex] : 0;
+      const projectedDelta = analytics.projectedCurrentMonthCost - lastActualCost;
+
+      if (lastIndex < 0 || projectedDelta <= 0) return null;
+
+      const deltaData = series.data.map((_: any, i: number) => (i === lastIndex ? projectedDelta : 0));
+
+      return {
+        id: `${series.name}-projected`,
+        data: deltaData,
+        type: 'bar' as const,
+        label: `${series.name} Forecast`,
+        yAxisId: 'costsAxis',
+        color: theme.palette.warning.main,
+        valueFormatter: (value: number) => {
+          if (value === 0) return null;
+          return `${formatCurrency(projectedDelta)}`;
+        },
+        highlightScope: { highlight: 'series', fade: 'global' } as const,
+        stack: 'stack1',
+        stackOrder: 'descending' as const,
+      };
+    },
+    [buildMonthlyCosts, theme.palette.warning.main],
+  );
 
   // Helper: Create all projected delta series
-  const createProjectedDeltaSeries = useCallback((costsData: any[]) => {
-    if (granularity !== 'monthly') return [];
+  const createProjectedDeltaSeries = useCallback(
+    (costsData: any[]) => {
+      if (granularity !== 'monthly') return [];
 
-    const projectedSeries: any[] = [];
-    for (const s of costsData) {
-      const budget = budgets?.find(b => b.provider.toLowerCase() === s.name.toLowerCase());
-      const forecast = forecasts?.[s.name];
-      const projectedData = createProjectedSeries(s, budget, forecast);
-      
-      if (projectedData) {
-        projectedSeries.push(projectedData);
+      const projectedSeries: any[] = [];
+      for (const s of costsData) {
+        const budget = budgets?.find(b => b.provider.toLowerCase() === s.name.toLowerCase());
+        const forecast = forecasts?.[s.name];
+        const projectedData = createProjectedSeries(s, budget, forecast);
+
+        if (projectedData) {
+          projectedSeries.push(projectedData);
+        }
       }
-    }
-    return projectedSeries;
-  }, [granularity, budgets, forecasts, createProjectedSeries]);
+      return projectedSeries;
+    },
+    [granularity, budgets, forecasts, createProjectedSeries],
+  );
 
   // Helper: Calculate maximum Y-axis value
   const calculateMaxYAxis = useCallback((baseSums: number[], projectedSeries: any[]) => {
@@ -143,7 +152,7 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
   // Helper: Create metrics series
   const createMetricsSeriesData = useCallback(() => {
     if (!metrics || !showMetrics) return undefined;
-    
+
     return metrics.map(s => ({
       data: s.data,
       type: 'line' as const,
@@ -164,7 +173,7 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
       const baseCostsSeries = createBaseCostsSeries(costs);
       const projectedDeltaSeries = createProjectedDeltaSeries(costs);
       const maxYValue = calculateMaxYAxis(sums, projectedDeltaSeries);
-      
+
       setMaxCostsYaxis(maxYValue);
       setCostsSeries([...baseCostsSeries, ...projectedDeltaSeries]);
     }

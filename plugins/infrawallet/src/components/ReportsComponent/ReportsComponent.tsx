@@ -142,7 +142,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
         if (reportsResponse.data) {
           setReports(reportsResponse.data);
           setPeriods(getPeriodStrings(granularity, monthRange.startMonth, monthRange.endMonth));
-          setForecasts(reportsResponse.forecasts || {});          
+          setForecasts(reportsResponse.forecasts || {});
         }
         if (reportsResponse.status === 207 && reportsResponse.errors) {
           setCloudProviderErrors(reportsResponse.errors);
