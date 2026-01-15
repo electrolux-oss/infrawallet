@@ -18,7 +18,7 @@ import {
   getPeriodStrings,
   mergeCostReports,
 } from '../../api/functions';
-import { CloudProviderError, Filters, Metric, Report, Tag } from '../../api/types';
+import { CloudProviderError, Filters, Metric, Report, Tag, Budget } from '../../api/types';
 import { useInfraWalletLuceneParams } from '../../hooks/useInfraWalletLuceneParams';
 import { Budgets } from '../Budgets';
 import { ColumnsChartComponent } from '../ColumnsChartComponent';
@@ -116,6 +116,8 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
   const [selectedTags, setSelectedTags] = useState<Tag[]>(initialState.selectedTags);
   const [reports, setReports] = useState<Report[] | undefined>(undefined);
   const [metrics, setMetrics] = useState<Metric[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [forecasts, setForecasts] = useState<Record<string, number>>({});
   const [filters, setFilters] = useState<Filters>(initialState.filters);
   const [cloudProviderErrors, setCloudProviderErrors] = useState<CloudProviderError[]>([]);
   const [reportsAggregated, setReportsAggregated] = useState<Report[] | undefined>(undefined);
@@ -140,6 +142,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
         if (reportsResponse.data) {
           setReports(reportsResponse.data);
           setPeriods(getPeriodStrings(granularity, monthRange.startMonth, monthRange.endMonth));
+          setForecasts(reportsResponse.forecasts || {});
         }
         if (reportsResponse.status === 207 && reportsResponse.errors) {
           setCloudProviderErrors(reportsResponse.errors);
@@ -178,6 +181,18 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
     fetchCostReportsCallback();
     fetchMetricsCallback();
   }, [fetchCostReportsCallback, fetchMetricsCallback]);
+
+  useEffect(() => {
+    const fetchBudgets = async () => {
+      try {
+        const response = await infraWalletApi.getBudgets(params.name ?? 'default');
+        setBudgets(response.data || []);
+      } catch (error) {
+        alertApi.post({ message: `Error fetching budgets: ${error}`, severity: 'error' });
+      }
+    };
+    fetchBudgets();
+  }, [infraWalletApi, params.name, alertApi]);
 
   // provide a way for users to access these tabs, if they are configfured to be hidden
   useEffect(() => {
@@ -314,6 +329,9 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
                     group: item.group,
                     data: rearrangeData(item, periods),
                   }))}
+                  budgets={budgets}
+                  forecasts={forecasts}
+                  monthRange={monthRange}
                   height={450}
                   highlightedItem={highlightedItem}
                   highlightedItemSetter={setHighlightedItem}

@@ -103,6 +103,27 @@ export async function getReportsFromCache(
   return cachedCosts;
 }
 
+export async function getForecastFromCache(
+  cache: CacheService,
+  provider: string,
+  configKey: string,
+  query: CostQuery,
+): Promise<number | undefined> {
+  const cacheKey = [
+    'forecast',
+    provider,
+    configKey,
+    query.filters,
+    query.tags,
+    query.groups,
+    query.granularity,
+    query.startTime,
+    query.endTime,
+  ].join('_');
+  const cachedForecast = (await cache.get(cacheKey)) as number | undefined;
+  return cachedForecast;
+}
+
 export async function getMetricsFromCache(
   cache: CacheService,
   provider: string,
@@ -183,6 +204,30 @@ export async function setReportsToCache(
   await cache.set(cacheKey, reports, {
     ttl: ttl ?? 60 * 60 * 2 * 1000,
   }); // cache for 2 hours by default
+}
+
+export async function setForecastToCache(
+  cache: CacheService,
+  forecast: number,
+  provider: string,
+  configKey: string,
+  query: CostQuery,
+  ttl?: number,
+) {
+  const cacheKey = [
+    'forecast',
+    provider,
+    configKey,
+    query.filters,
+    query.tags,
+    query.groups,
+    query.granularity,
+    query.startTime,
+    query.endTime,
+  ].join('_');
+  await cache.set(cacheKey, forecast, {
+    ttl: ttl ?? 60 * 60 * 2 * 1000, // cache for 2 hours by default, same as reports
+  });
 }
 
 export async function setMetricsToCache(
