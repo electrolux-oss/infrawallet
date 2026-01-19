@@ -1,8 +1,7 @@
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import Divider from '@mui/material/Divider';
 import FormControl from '@mui/material/FormControl';
-import FormHelperText from '@mui/material/FormHelperText';
 import Grid from '@mui/material/Grid';
 import InputLabel from '@mui/material/InputLabel';
 import ListSubheader from '@mui/material/ListSubheader';
@@ -59,6 +58,7 @@ export const TopbarComponent: FC<TopbarComponentProps> = ({
             value={monthRange.startMonth}
             label="From"
             views={['year', 'month']}
+            maxDate={endOfMonth(new Date())}
             slotProps={{ textField: { variant: 'standard' } }}
             onAccept={value => {
               if (value) {
@@ -78,6 +78,7 @@ export const TopbarComponent: FC<TopbarComponentProps> = ({
             value={monthRange.endMonth}
             label="To"
             views={['year', 'month']}
+            maxDate={endOfMonth(new Date())}
             slotProps={{ textField: { variant: 'standard' } }}
             onAccept={value => {
               if (value) {
@@ -92,18 +93,11 @@ export const TopbarComponent: FC<TopbarComponentProps> = ({
       </FormControl>
 
       <FormControl sx={{ marginLeft: theme.spacing(1), marginRight: theme.spacing(3), minWidth: 120 }}>
-        <FormHelperText>Quick selections for month ranges</FormHelperText>
         <Grid container spacing={3}>
           <Grid item xs={12}>
-            <Button color="primary" onClick={() => setPreDefinedMonthRange(2)}>
-              Last 3 Months
-            </Button>
-            <Button color="primary" onClick={() => setPreDefinedMonthRange(5)}>
-              Last 6 Months
-            </Button>
-            <Button color="primary" onClick={() => setPreDefinedMonthRange(11)}>
-              Last 12 Months
-            </Button>
+            <Chip label="Last 3 Months" onClick={() => setPreDefinedMonthRange(2)} />
+            <Chip label="Last 6 Months" onClick={() => setPreDefinedMonthRange(5)} />
+            <Chip label="Last 12 Months" onClick={() => setPreDefinedMonthRange(11)} />
           </Grid>
         </Grid>
       </FormControl>

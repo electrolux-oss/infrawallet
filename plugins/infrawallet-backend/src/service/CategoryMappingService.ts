@@ -55,9 +55,8 @@ export class CategoryMappingService {
         result = data;
       })
       .catch(_error => {
-        // it might fail to retrive the mappings from our GitHub repo
-        this.logger.error('Failed to fetch default category mappings from GitHub');
-        this.logger.error('All services will be treated as "Uncategorized"');
+        // it might fail to retrive the mappings from GitHub
+        this.logger.error('Failed to fetch default category mappings, all services will be treated as "Uncategorized"');
       });
 
     return result;
