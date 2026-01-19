@@ -25,28 +25,34 @@ export class DatadogClient extends InfraWalletClient {
       ['application_vulnerability_management_oss_host', 'Application Security - SCA Host'],
       ['application_security_host', 'ASM - Threat Management Hosts'],
       ['audit_trail', 'Audit Trail'],
+      ['bits_ai_investigations', 'Bits AI SRE Investigations'],
       ['ci_pipeline', 'CI Visibility Committers'],
       ['ci_pipeline_indexed_spans', 'CI Visibility Spans'],
       ['cloud_cost_management', 'Cloud Cost Hosts'],
       ['cspm_container', 'Cloud Security Management Containers Pro'],
       ['cspm_host', 'Cloud Security Management Hosts Pro'],
-      ['csm_host_pro', 'Cloud Security Management Hosts Pro'],
-      ['cws_host', 'Cloud Workload Security Hosts'],
+      ['csm_container_pro', 'Cloud Security Management Pro Containers'],
+      ['csm_host_pro', 'Cloud Security Management Pro Hosts'],
+      ['cws_container', 'Workload Protection Containers'],
+      ['cws_host', 'Workload Protection Hosts'],
       ['infra_container', 'Containers'],
       ['infra_container_excl_agent', 'Containers'],
       ['timeseries', 'Custom Metrics'],
       ['error_tracking', 'Error Tracking'],
+      ['error_tracking_tiered', 'Error Tracking Events'],
       ['incident_management', 'Incident Management'],
-      ['logs_indexed_15day', 'Indexed Logs (15-day Retention)'],
-      ['logs_indexed_180day', 'Indexed Logs (180-day Retention)'],
-      ['logs_indexed_1day', 'Indexed Logs (1-day Retention)'],
-      ['logs_indexed_30day', 'Indexed Logs (30-day Retention)'],
-      ['logs_indexed_360day', 'Indexed Logs (360-day Retention)'],
-      ['logs_indexed_3day', 'Indexed Logs (3-day Retention)'],
-      ['logs_indexed_45day', 'Indexed Logs (45-day Retention)'],
-      ['logs_indexed_60day', 'Indexed Logs (60-day Retention)'],
-      ['logs_indexed_7day', 'Indexed Logs (7-day Retention)'],
-      ['logs_indexed_90day', 'Indexed Logs (90-day Retention)'],
+      ['incident_management_seats', 'Incident Management'],
+      ['llm_observability_min_spend', 'LLM Spans'],
+      ['logs_indexed_15day', 'Indexed Logs (15 Day Retention)'],
+      ['logs_indexed_180day', 'Indexed Logs (180 Day Retention)'],
+      ['logs_indexed_1day', 'Indexed Logs (1 Day Retention)'],
+      ['logs_indexed_30day', 'Indexed Logs (30 Day Retention)'],
+      ['logs_indexed_360day', 'Indexed Logs (360 Day Retention)'],
+      ['logs_indexed_3day', 'Indexed Logs (3 Day Retention)'],
+      ['logs_indexed_45day', 'Indexed Logs (45 Day Retention)'],
+      ['logs_indexed_60day', 'Indexed Logs (60 Day Retention)'],
+      ['logs_indexed_7day', 'Indexed Logs (7 Day Retention)'],
+      ['logs_indexed_90day', 'Indexed Logs (90 Day Retention)'],
       ['apm_trace_search', 'Indexed Spans'],
       ['infra_host', 'Infra Hosts'],
       ['logs_ingested', 'Ingested Logs'],
@@ -60,11 +66,13 @@ export class DatadogClient extends InfraWalletClient {
       ['siem_indexed', 'Security Analyzed and Indexed Logs'],
       ['sensitive_data_scanner', 'Sensitive Data Scanner'],
       ['serverless_apps', 'Serverless App Instances'],
+      ['serverless_apps_apm', 'Serverless Apps APM'],
       ['serverless_apm', 'Serverless Traced Invocations'],
       ['serverless_infra', 'Serverless Workload Functions'],
       ['siem', 'SIEM - Analyzed Logs'],
       ['synthetics_api_tests', 'Synthetics API Test Runs'],
       ['synthetics_browser_checks', 'Synthetics Browser Test Runs'],
+      ['synthetics_mobile_app_testing', 'Synthetics Mobile App Test Runs'],
       ['ci_testing', 'Test Visibility Committers'],
       ['ci_test_indexed_spans', 'Test Visibility Spans'],
     ]);
@@ -229,15 +237,15 @@ export class DatadogClient extends InfraWalletClient {
 
   async fetchForecast(integrationConfig: Config): Promise<number> {
     const client = await this.initCloudClient(integrationConfig);
-    let totalProjectedCost = 0;
-
     const response: datadogApiV2.ProjectedCostResponse = await client.getProjectedCost({
       view: 'sub-org',
     });
 
     if (!response.data) {
-      return totalProjectedCost;
+      return 0;
     }
+
+    let forecast = 0;
 
     response.data.forEach(item => {
       const attributes = item.attributes;
@@ -245,11 +253,11 @@ export class DatadogClient extends InfraWalletClient {
       const projectedTotal = attributes?.projectedTotalCost;
 
       if (orgName && projectedTotal !== undefined && this.evaluateIntegrationFilters(orgName, integrationConfig)) {
-        totalProjectedCost += projectedTotal;
+        forecast += projectedTotal;
       }
     });
 
-    return totalProjectedCost;
+    return forecast;
   }
 
   protected async transformCostsData(subAccountConfig: Config, query: CostQuery, costResponse: any): Promise<Report[]> {
