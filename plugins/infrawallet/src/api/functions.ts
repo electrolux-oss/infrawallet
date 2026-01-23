@@ -3,6 +3,36 @@ import { reduce } from 'lodash';
 import moment from 'moment';
 import { Filters, Report, Tag } from './types';
 
+const aggregateReportsAndForecasts = (
+  accumulator: { [key: string]: Report },
+  report: Report,
+  keyName: string,
+): void => {
+  Object.keys(report.reports).forEach(key => {
+    if (accumulator[keyName].reports[key]) {
+      accumulator[keyName].reports[key] += report.reports[key];
+    } else {
+      accumulator[keyName].reports[key] = report.reports[key];
+    }
+  });
+
+  // Aggregate forecast values
+  if (report.forecast) {
+    if (!accumulator[keyName].forecast) {
+      accumulator[keyName].forecast = {};
+    }
+    Object.keys(report.forecast).forEach(key => {
+      const accForecast = accumulator[keyName].forecast as { [key: string]: number };
+      const repForecast = report.forecast as { [key: string]: number };
+      if (accForecast[key]) {
+        accForecast[key] += repForecast[key];
+      } else {
+        accForecast[key] = repForecast[key];
+      }
+    });
+  }
+};
+
 export const mergeCostReports = (reports: Report[], threshold?: number): Report[] => {
   const totalCosts: { id: string; total: number }[] = [];
   reports.forEach(report => {
@@ -26,16 +56,12 @@ export const mergeCostReports = (reports: Report[], threshold?: number): Report[
         accumulator[keyName] = {
           id: keyName,
           reports: {},
+          forecast: {},
         };
       }
 
-      Object.keys(report.reports).forEach(key => {
-        if (accumulator[keyName].reports[key]) {
-          accumulator[keyName].reports[key] += report.reports[key];
-        } else {
-          accumulator[keyName].reports[key] = report.reports[key];
-        }
-      });
+      aggregateReportsAndForecasts(accumulator, report, keyName);
+
       return accumulator;
     },
     {},
@@ -111,9 +137,11 @@ export const aggregateCostReports = (reports: Report[], aggregatedBy?: string): 
           id: keyName,
           provider: report.provider,
           reports: {},
+          forecast: {},
         } as {
           id: string;
           reports: { [key: string]: number };
+          forecast?: { [key: string]: number };
           [key: string]: any;
         };
 
@@ -122,13 +150,8 @@ export const aggregateCostReports = (reports: Report[], aggregatedBy?: string): 
         }
       }
 
-      Object.keys(report.reports).forEach(key => {
-        if (accumulator[keyName].reports[key]) {
-          accumulator[keyName].reports[key] += report.reports[key];
-        } else {
-          accumulator[keyName].reports[key] = report.reports[key];
-        }
-      });
+      aggregateReportsAndForecasts(accumulator, report, keyName);
+
       return accumulator;
     },
     {} as { [key: string]: Report },
@@ -137,11 +160,11 @@ export const aggregateCostReports = (reports: Report[], aggregatedBy?: string): 
 };
 
 export const getReportKeyAndValues = (reports: Report[] | undefined): { [key: string]: string[] } => {
-  const excludedKeys = ['id', 'reports'];
+  const excludedKeys = new Set(['id', 'reports', 'forecast']);
   const keyValueSets: { [key: string]: Set<string> } = {};
   reports?.forEach(report => {
     Object.keys(report).forEach(key => {
-      if (!excludedKeys.includes(key)) {
+      if (!excludedKeys.has(key)) {
         if (keyValueSets[key] === undefined) {
           keyValueSets[key] = new Set<string>();
         }
@@ -201,10 +224,10 @@ export const tagsToString = (tags: Tag[]): string => {
 
 export const getAllReportTags = (reports: Report[]): string[] => {
   const tags = new Set<string>();
-  const reservedKeys = ['id', 'account', 'service', 'category', 'provider', 'reports'];
+  const reservedKeys = new Set(['id', 'account', 'service', 'category', 'provider', 'reports', 'forecast']);
   reports.forEach(report => {
     Object.keys(report).forEach(key => {
-      if (reservedKeys.indexOf(key) === -1) {
+      if (!reservedKeys.has(key)) {
         tags.add(key);
       }
     });

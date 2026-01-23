@@ -2,7 +2,6 @@ import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
 import Switch from '@mui/material/Switch';
-import { useTheme } from '@mui/material/styles';
 import {
   BarPlot,
   ChartsGrid,
@@ -16,10 +15,12 @@ import {
   MarkPlot,
   ResponsiveChartContainer,
 } from '@mui/x-charts';
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 import { formatCurrency, calculateBudgetAnalytics } from '../../api/functions';
 import { colorList } from '../constants';
 import { ColumnsChartComponentProps } from '../types';
+import { getProviderColorIndex } from '../utils';
 
 export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
   granularity,
@@ -28,12 +29,10 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
   costs,
   metrics,
   budgets,
-  forecasts,
   height,
   highlightedItem,
   highlightedItemSetter,
 }) => {
-  const theme = useTheme();
   const [costsSeries, setCostsSeries] = useState<any[] | undefined>(undefined);
   const [metricsSeries, setMetricsSeries] = useState<any[] | undefined>(undefined);
   const [showMetrics, setShowMetrics] = useState<boolean>(false);
@@ -55,17 +54,21 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
 
   // Helper: Create base costs series
   const createBaseCostsSeries = useCallback((costsData: any[]) => {
-    return costsData.map(s => ({
-      id: s.name,
-      data: s.data,
-      type: 'bar' as const,
-      label: `${s.name} Actual Spend`,
-      yAxisId: 'costsAxis',
-      valueFormatter: (value: number) => formatCurrency(value || 0),
-      highlightScope: { highlight: 'series', fade: 'global' } as const,
-      stack: 'stack1',
-      stackOrder: 'descending' as const,
-    }));
+    return costsData.map(s => {
+      const colorIndex = getProviderColorIndex(s.name);
+      return {
+        id: s.name,
+        data: s.data,
+        type: 'bar' as const,
+        label: `${s.name} Actual Spend`,
+        yAxisId: 'costsAxis',
+        valueFormatter: (value: number) => formatCurrency(value || 0),
+        highlightScope: { highlight: 'series', fade: 'global' } as const,
+        stack: 'stack1',
+        stackOrder: 'descending' as const,
+        color: colorList[colorIndex],
+      };
+    });
   }, []);
 
   // Helper: Build monthly costs lookup
@@ -86,16 +89,40 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
       const effectiveBudget = budget?.amount ? budget : { amount: 100000, provider: series.name };
       if (!effectiveBudget?.amount) return null;
 
-      const monthlyCosts = buildMonthlyCosts(series.data);
-      const analytics = calculateBudgetAnalytics(monthlyCosts, effectiveBudget.amount, forecast);
-
       const lastIndex = series.data.length - 1;
-      const lastActualCost = lastIndex >= 0 ? series.data[lastIndex] : 0;
-      const projectedDelta = analytics.projectedCurrentMonthCost - lastActualCost;
+      if (lastIndex < 0) return null;
 
-      if (lastIndex < 0 || projectedDelta <= 0) return null;
+      const lastActualCost = series.data[lastIndex] || 0;
+
+      // Get the forecast value for the current month (last index)
+      let forecastValue: number | null = null;
+
+      // First, try to use per-product forecast from series
+      if (series.forecast && series.forecast[lastIndex] !== null && series.forecast[lastIndex] > 0) {
+        forecastValue = series.forecast[lastIndex];
+      }
+      // Fall back to aggregated forecast if available
+      else if (typeof forecast === 'number' && forecast > 0) {
+        forecastValue = forecast;
+      }
+
+      // If we have a forecast value, calculate the delta
+      let projectedDelta = 0;
+      if (forecastValue !== null && forecastValue > lastActualCost) {
+        projectedDelta = forecastValue - lastActualCost;
+      } else {
+        // No valid forecast, try using calculateBudgetAnalytics
+        const monthlyCosts = buildMonthlyCosts(series.data);
+        const analytics = calculateBudgetAnalytics(monthlyCosts, effectiveBudget.amount, forecast);
+        projectedDelta = analytics.projectedCurrentMonthCost - lastActualCost;
+      }
+
+      if (projectedDelta <= 0) return null;
 
       const deltaData = series.data.map((_: any, i: number) => (i === lastIndex ? projectedDelta : 0));
+
+      const colorIndex = getProviderColorIndex(series.name);
+      const providerColor = colorList[colorIndex];
 
       return {
         id: `${series.name}-projected`,
@@ -103,17 +130,17 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
         type: 'bar' as const,
         label: `${series.name} Forecast`,
         yAxisId: 'costsAxis',
-        color: theme.palette.warning.main,
+        color: `${providerColor}70`,
         valueFormatter: (value: number) => {
           if (value === 0) return null;
-          return `${formatCurrency(projectedDelta)}`;
+          return `Forecast: ${formatCurrency(projectedDelta)}`;
         },
         highlightScope: { highlight: 'series', fade: 'global' } as const,
         stack: 'stack1',
         stackOrder: 'descending' as const,
       };
     },
-    [buildMonthlyCosts, theme.palette.warning.main],
+    [buildMonthlyCosts],
   );
 
   // Helper: Create all projected delta series
@@ -122,18 +149,17 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
       if (granularity !== 'monthly') return [];
 
       const projectedSeries: any[] = [];
-      for (const s of costsData) {
+      costsData.forEach(s => {
         const budget = budgets?.find(b => b.provider.toLowerCase() === s.name.toLowerCase());
-        const forecast = forecasts?.[s.name];
-        const projectedData = createProjectedSeries(s, budget, forecast);
+        const projectedData = createProjectedSeries(s, budget, undefined);
 
         if (projectedData) {
           projectedSeries.push(projectedData);
         }
-      }
+      });
       return projectedSeries;
     },
-    [granularity, budgets, forecasts, createProjectedSeries],
+    [granularity, budgets, createProjectedSeries],
   );
 
   // Helper: Calculate maximum Y-axis value
@@ -238,7 +264,6 @@ export const ColumnsChartComponent: FC<ColumnsChartComponentProps> = ({
               id: 'metricsAxis',
             },
           ]}
-          colors={colorList}
           highlightedItem={highlightedItem ? { seriesId: highlightedItem } : null}
           onHighlightChange={highlighted => {
             highlightedItemSetter(highlighted?.seriesId);

@@ -45,6 +45,9 @@ export type Report = {
   reports: {
     [period: string]: number;
   };
+  forecast?: {
+    [period: string]: number;
+  };
   [key: string]: string | number | { [period: string]: number } | undefined;
 };
 
@@ -73,7 +76,6 @@ export type CloudProviderError = {
 
 export type ClientResponse = {
   reports: Report[];
-  forecasts?: Record<string, number>;
   errors: CloudProviderError[];
 };
 

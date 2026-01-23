@@ -41,7 +41,7 @@ export type ColumnsChartComponentProps = {
   granularity: string;
   granularitySetter: any;
   periods: any[];
-  costs: Array<{ name: string; data: any[] }> | undefined;
+  costs: Array<{ name: string; data: any[]; forecast?: any[] }> | undefined;
   metrics?: Array<{ name: string; group?: string; data: any[] }>;
   budgets?: any[];
   forecasts?: Record<string, number>;

@@ -35,7 +35,8 @@ import {
 } from '@mui/x-charts';
 import { max } from 'lodash';
 import moment from 'moment';
-import React, { FC, useCallback, useEffect, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
+import * as React from 'react';
 import {
   aggregateCostReports,
   formatCurrency,
@@ -48,6 +49,7 @@ import { Budget, Report } from '../../api/types';
 import { colorList } from '../constants';
 import { ProviderIcon } from '../ProviderIcon';
 import { BudgetsProps } from '../types';
+import { getProviderColorIndex } from '../utils';
 
 const enum BUDGET_VIEW {
   MONTHLY = 'Monthly',
@@ -148,6 +150,9 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
   const { provider, monthlyCosts, view, budgets, setBudgets, forecast } = props;
   const infraWalletApi = useApi(infraWalletApiRef);
 
+  const colorIndex = getProviderColorIndex(provider);
+  const providerColor = colorList[colorIndex];
+
   const annualBudget = budgets.find(b => b.provider.toLowerCase() === provider.toLowerCase());
   const annualBudgetAmount = annualBudget?.amount || 0;
 
@@ -222,7 +227,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
         type: 'bar',
         stack: 'combined',
         label: 'Actual Spend',
-        color: colorList[0],
+        color: providerColor,
         valueFormatter: (value: number | null) => formatCurrency(value || 0),
       },
     ];
@@ -237,7 +242,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
         type: 'bar',
         stack: 'combined',
         label: 'Projected Delta',
-        color: theme.palette.warning.main,
+        color: `${providerColor}70`,
         valueFormatter: (value: number | null) => {
           if (value === 0) return null;
           return formatCurrency(value || 0);
@@ -254,7 +259,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
         colorMap: {
           type: 'piecewise',
           thresholds: [budgetAmount > 0 ? budgetAmount : Number.MAX_SAFE_INTEGER],
-          colors: [colorList[0], theme.palette.error.main],
+          colors: [providerColor, theme.palette.error.main],
         },
       },
       {
@@ -284,7 +289,7 @@ function BudgetChart(props: Readonly<BudgetChartProps>) {
         colorMap: {
           type: 'piecewise',
           thresholds: [budgetAmount > 0 ? budgetAmount : Number.MAX_SAFE_INTEGER],
-          colors: [colorList[0], theme.palette.error.main],
+          colors: [providerColor, theme.palette.error.main],
         },
       },
     ];
@@ -631,7 +636,6 @@ export const Budgets: FC<BudgetsProps> = ({ providerErrorsSetter }) => {
   const [reportsAggregatedAndMerged, setReportsAggregatedAndMerged] = useState<Report[] | undefined>(undefined);
   const [budgetView, setBudgetView] = useState(BUDGET_VIEW.ANNUAL);
   const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [forecasts, setForecasts] = useState<Record<string, number>>({});
   const infraWalletApi = useApi(infraWalletApiRef);
   const alertApi = useApi(alertApiRef);
 
@@ -643,7 +647,6 @@ export const Budgets: FC<BudgetsProps> = ({ providerErrorsSetter }) => {
           const aggregatedReports = aggregateCostReports(reportsResponse.data, 'provider');
           const aggregatedAndMergedReports = mergeCostReports(aggregatedReports);
           setReportsAggregatedAndMerged(aggregatedAndMergedReports);
-          setForecasts(reportsResponse.forecasts || {});
         }
         if (reportsResponse.status === 207 && reportsResponse.errors) {
           providerErrorsSetter(reportsResponse.errors);
@@ -693,18 +696,26 @@ export const Budgets: FC<BudgetsProps> = ({ providerErrorsSetter }) => {
         </Grid>
       )}
       {reportsAggregatedAndMerged !== undefined ? (
-        reportsAggregatedAndMerged.map(report => (
-          <Grid item key={`${report.id}-grid`} xs={4}>
-            <BudgetChart
-              provider={report.id}
-              monthlyCosts={report.reports}
-              view={budgetView}
-              budgets={budgets}
-              setBudgets={setBudgets}
-              forecast={forecasts[report.id]}
-            />
-          </Grid>
-        ))
+        reportsAggregatedAndMerged.map(report => {
+          // Extract forecast value from report.forecast object (e.g., {"2026-01": 15000})
+          const forecastValue =
+            report.forecast && Object.keys(report.forecast).length > 0
+              ? (Object.values(report.forecast)[0] as number)
+              : undefined;
+
+          return (
+            <Grid item key={`${report.id}-grid`} xs={4}>
+              <BudgetChart
+                provider={report.id}
+                monthlyCosts={report.reports}
+                view={budgetView}
+                budgets={budgets}
+                setBudgets={setBudgets}
+                forecast={forecastValue}
+              />
+            </Grid>
+          );
+        })
       ) : (
         <Grid item xs={12}>
           <Paper
