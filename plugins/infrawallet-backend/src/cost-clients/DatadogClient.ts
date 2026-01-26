@@ -1,7 +1,13 @@
+function makeReportKey(orgName: string, productName: string, chargeType: string): string {
+  return JSON.stringify({ orgName, productName, chargeType });
+}
+
+function parseReportKey(key: string): ReportKey {
+  return JSON.parse(key);
+}
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { v2 as datadogApiV2, client as datadogClient } from '@datadog/datadog-api-client';
-import { reduce } from 'lodash';
 import moment from 'moment';
 import { CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from '../service/consts';
 import { parseCost } from '../service/functions';
@@ -9,6 +15,12 @@ import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 import { DatadogCostByOrgResponseSchema } from '../schemas/DatadogBilling';
 import { ZodError } from 'zod';
+
+type ReportKey = {
+  orgName: string;
+  productName: string;
+  chargeType: string;
+};
 
 export class DatadogClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -102,8 +114,8 @@ export class DatadogClient extends InfraWalletClient {
   protected async fetchCosts(integrationConfig: Config, client: any, query: CostQuery): Promise<any> {
     const costData: datadogApiV2.CostByOrg[] = [];
     // Strict UTC to prevent month boundary drift
-    const startTime = moment.utc(parseInt(query.startTime, 10)).startOf('month');
-    const endTime = moment.utc(parseInt(query.endTime, 10)).startOf('month');
+    const startTime = moment.utc(Number.parseInt(query.startTime, 10)).startOf('month');
+    const endTime = moment.utc(Number.parseInt(query.endTime, 10)).startOf('month');
     const historicalCutoff = moment.utc().startOf('month').subtract(2, 'months');
 
     // check if costs prior to 2 months ago are in query, if yes, use historical_cost API
@@ -235,38 +247,85 @@ export class DatadogClient extends InfraWalletClient {
     return costs;
   }
 
-  async fetchForecast(integrationConfig: Config): Promise<number> {
+  async fetchForecastDetails(integrationConfig: Config): Promise<Map<string, number>> {
     const client = await this.initCloudClient(integrationConfig);
     const response: datadogApiV2.ProjectedCostResponse = await client.getProjectedCost({
       view: 'sub-org',
     });
 
+    const forecastMap = new Map<string, number>();
+
     if (!response.data) {
-      return 0;
+      this.logger.debug('No forecast data returned from Datadog API');
+      return forecastMap;
     }
 
-    let forecast = 0;
+    this.logger.debug(`Processing ${response.data.length} forecast items`);
 
     response.data.forEach(item => {
       const attributes = item.attributes;
       const orgName = attributes?.orgName;
-      const projectedTotal = attributes?.projectedTotalCost;
+      const charges = attributes?.charges;
 
-      if (orgName && projectedTotal !== undefined && this.evaluateIntegrationFilters(orgName, integrationConfig)) {
-        forecast += projectedTotal;
+      if (!orgName || !charges || !this.evaluateIntegrationFilters(orgName, integrationConfig)) {
+        return;
       }
+
+      charges.forEach((charge: datadogApiV2.ChargebackBreakdown) => {
+        const productName = charge.productName;
+        const chargeType = charge.chargeType;
+        const cost = charge.cost;
+
+        // Log all charge types to understand what's available
+        if (productName) {
+          this.logger.debug(`Forecast charge: ${productName}, type: ${chargeType}, cost: ${cost}`);
+        }
+
+        // Include all non-total charge types for forecast and aggregate by org->product
+        // This way we sum all forecast charge types (committed, on_demand, etc.) for each product
+        if (chargeType !== 'total' && productName && cost !== undefined && cost !== null && cost > 0) {
+          const keyName = JSON.stringify({ orgName, productName });
+          const currentAmount = forecastMap.get(keyName) || 0;
+          forecastMap.set(keyName, currentAmount + cost);
+          this.logger.debug(`Added forecast for ${keyName}: ${cost} (total: ${currentAmount + cost})`);
+        }
+      });
     });
 
-    return forecast;
+    this.logger.info(`Collected ${forecastMap.size} forecast entries`);
+    return forecastMap;
   }
 
-  protected async transformCostsData(subAccountConfig: Config, query: CostQuery, costResponse: any): Promise<Report[]> {
+  protected async transformCostsData(
+    subAccountConfig: Config,
+    query: CostQuery,
+    costResponse: any,
+    forecastData?: Map<string, number>,
+  ): Promise<Report[]> {
     const tags = subAccountConfig.getOptionalStringArray('tags');
     const tagKeyValues: { [key: string]: string } = {};
     tags?.forEach(tag => {
       const [k, v] = tag.split(':');
       tagKeyValues[k.trim()] = v.trim();
     });
+
+    // Get the forecast month in YYYY-MM format (current month, as Datadog API returns current month projection)
+    const forecastMonth = moment.utc().format('YYYY-MM');
+
+    // If forecastData is not provided but we're in a current month query, fetch it
+    let forecastMap = forecastData;
+    if (!forecastMap) {
+      const currentMonth = moment.utc().startOf('month');
+      const endTime = moment.utc(Number.parseInt(query.endTime, 10));
+      if (endTime.isSameOrAfter(currentMonth)) {
+        try {
+          forecastMap = await this.fetchForecastDetails(subAccountConfig);
+          this.logger.debug(`Fetched forecast details for ${forecastMap.size} products`);
+        } catch (error) {
+          this.logger.warn(`Failed to fetch forecast details: ${error.message}`);
+        }
+      }
+    }
 
     // Initialize tracking variables
     let processedRecords = 0;
@@ -277,75 +336,91 @@ export class DatadogClient extends InfraWalletClient {
     const uniqueKeys = new Set<string>();
     const totalRecords = costResponse?.length || 0;
 
-    const transformedData = reduce(
-      costResponse,
-      (accumulator: { [key: string]: Report }, costByOrg) => {
-        const account = costByOrg.orgName;
-        const charges = costByOrg.charges;
+    const transformedDataMap = new Map<string, Report>();
+    costResponse.forEach((costByOrg: any) => {
+      const account = costByOrg.orgName;
+      const charges = costByOrg.charges;
+      if (!account || !costByOrg.date) {
+        filteredOutMissingFields++;
+        return;
+      }
+      let periodFormat = 'YYYY-MM';
+      if (query.granularity === GRANULARITY.DAILY) {
+        periodFormat = 'YYYY-MM-DD';
+      }
+      const dateObj = moment.utc(costByOrg.date);
+      if (!dateObj.isValid()) {
+        filteredOutInvalidDate++;
+        return;
+      }
+      const period = dateObj.format(periodFormat);
+      if (charges) {
+        charges.forEach((charge: datadogApiV2.ChargebackBreakdown) => {
+          const productName = charge.productName;
+          const cost = charge.cost;
+          if (!productName || cost === undefined || cost === null) {
+            filteredOutMissingFields++;
+            return;
+          }
+          const amount = parseCost(cost);
+          if (amount === 0) {
+            filteredOutZeroAmount++;
+            return;
+          }
+          const key = makeReportKey(account ?? '', productName ?? '', charge.chargeType ?? '');
+          if (!transformedDataMap.has(key)) {
+            uniqueKeys.add(key);
+            transformedDataMap.set(key, {
+              id: key,
+              account: `${this.provider}/${account}`,
+              service: `${this.convertServiceName(productName as string)} (${charge.chargeType})`,
+              category: 'Observability',
+              provider: this.provider,
+              providerType: PROVIDER_TYPE.INTEGRATION,
+              reports: {},
+              ...tagKeyValues,
+            });
+          }
+          transformedDataMap.get(key)!.reports[period] = amount;
+          processedRecords++;
+        });
+      }
+    });
+    const transformedData: { [key: string]: Report } = {};
+    for (const [k, v] of transformedDataMap.entries()) {
+      transformedData[k] = v;
+    }
 
-        // Check for missing fields
-        if (!account || !costByOrg.date) {
-          filteredOutMissingFields++;
-          return accumulator;
-        }
-
-        let periodFormat = 'YYYY-MM';
-        if (query.granularity === GRANULARITY.DAILY) {
-          periodFormat = 'YYYY-MM-DD';
-        }
-
-        const dateObj = moment.utc(costByOrg.date);
-        if (!dateObj.isValid()) {
-          filteredOutInvalidDate++;
-          return accumulator;
-        }
-
-        const period = dateObj.format(periodFormat);
-
-        if (charges) {
-          charges.forEach((charge: datadogApiV2.ChargebackBreakdown) => {
-            const productName = charge.productName;
-            const cost = charge.cost;
-
-            // Check for missing fields
-            if (!productName || cost === undefined || cost === null) {
-              filteredOutMissingFields++;
-              return;
+    if (forecastMap && forecastMap.size > 0) {
+      this.logger.debug(`Integrating ${forecastMap.size} forecast entries into reports`);
+      forecastMap.forEach((forecastAmount, forecastKey) => {
+        let matchedReport: string | null = null;
+        try {
+          const { orgName: forecastOrg, productName: forecastProduct } = JSON.parse(forecastKey);
+          for (const reportKey of Object.keys(transformedData)) {
+            try {
+              const { orgName, productName } = parseReportKey(reportKey);
+              if (orgName === forecastOrg && productName === forecastProduct && !matchedReport) {
+                matchedReport = reportKey;
+                if (!transformedData[reportKey].forecast) {
+                  transformedData[reportKey].forecast = {};
+                }
+                transformedData[reportKey].forecast[forecastMonth] = parseCost(forecastAmount);
+                this.logger.debug(`Matched forecast ${forecastKey} (${forecastAmount}) to report ${reportKey}`);
+              }
+            } catch (reportParseError) {
+              this.logger.warn(`Failed to parse report key: ${reportKey}, skipping`);
+              continue;
             }
-
-            const amount = parseCost(cost);
-
-            // Check for zero amount
-            if (amount === 0) {
-              filteredOutZeroAmount++;
-              return;
-            }
-
-            const keyName = `${account}->${productName} (${charge.chargeType})`;
-
-            if (!accumulator[keyName]) {
-              uniqueKeys.add(keyName);
-              accumulator[keyName] = {
-                id: keyName,
-                account: `${this.provider}/${account}`,
-                service: `${this.convertServiceName(productName as string)} (${charge.chargeType})`,
-                category: 'Observability',
-                provider: this.provider,
-                providerType: PROVIDER_TYPE.INTEGRATION,
-                reports: {},
-                ...tagKeyValues,
-              };
-            }
-
-            accumulator[keyName].reports[period] = amount;
-            processedRecords++;
-          });
+          }
+          if (!matchedReport) {
+            this.logger.warn(`No matching report found for forecast key: ${forecastKey}`);
+          }
+        } catch (forecastParseError) {
+          this.logger.warn(`Failed to parse forecast key: ${forecastKey}, skipping`);
         }
-
-        return accumulator;
-      },
-      {},
-    );
+      });
+    }
 
     this.logTransformationSummary({
       processed: processedRecords,
@@ -356,6 +431,25 @@ export class DatadogClient extends InfraWalletClient {
       timeRange: filteredOutTimeRange,
       totalRecords,
     });
+
+    // Log forecast integration summary
+    const reportsWithForecast = Object.values(transformedData).filter(
+      r => r.forecast && Object.keys(r.forecast).length > 0,
+    );
+    if (reportsWithForecast.length > 0) {
+      this.logger.info(`Successfully integrated forecast data into ${reportsWithForecast.length} reports`);
+      reportsWithForecast.forEach(report => {
+        const forecastValue = report.forecast ? Object.values(report.forecast)[0] : 0;
+        this.logger.debug(`Report with forecast: ${report.id} = ${forecastValue}`);
+      });
+      const totalForecast = reportsWithForecast.reduce((sum, r) => {
+        const val = r.forecast ? Object.values(r.forecast)[0] : 0;
+        return sum + (val || 0);
+      }, 0);
+      this.logger.info(`Total forecast across all reports: ${totalForecast}`);
+    } else if (forecastMap && forecastMap.size > 0) {
+      this.logger.warn(`Forecast data was fetched (${forecastMap.size} entries) but no reports were matched`);
+    }
 
     return Object.values(transformedData);
   }

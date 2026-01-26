@@ -6,6 +6,7 @@ import { FC, default as React } from 'react';
 import { formatCurrency } from '../../api/functions';
 import { colorList } from '../constants';
 import { PieChartComponentProps } from '../types';
+import { getProviderColorIndex } from '../utils';
 
 const StyledText = styled('text')(({ theme }) => ({
   fill: theme.palette.text.primary,
@@ -31,11 +32,19 @@ export const PieChartComponent: FC<PieChartComponentProps> = ({
   highlightedItemSetter,
 }) => {
   const data = [];
+  const pieColors: string[] = [];
   let total = 0;
   if (series) {
     for (let i = 0; i < series.length; i++) {
       const label = categories ? categories[i] : 'No label';
       data.push({ id: label, value: series[i], label: label });
+      if (categories) {
+        const colorIndex = getProviderColorIndex(categories[i]);
+        pieColors.push(colorList[colorIndex]);
+      } else {
+        pieColors.push(colorList[i % colorList.length]);
+      }
+
       total += series[i];
     }
   }
@@ -80,7 +89,7 @@ export const PieChartComponent: FC<PieChartComponentProps> = ({
               hidden: true,
             },
           }}
-          colors={colorList}
+          colors={pieColors}
           highlightedItem={
             highlightedItem ? { seriesId: 'cost-summary', dataIndex: categories?.indexOf(highlightedItem) } : null
           }

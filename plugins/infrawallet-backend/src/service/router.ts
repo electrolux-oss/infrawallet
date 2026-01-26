@@ -47,11 +47,10 @@ async function getReports(
   database: DatabaseService,
   cache: CacheService,
   logger: LoggerService,
-): Promise<{ reports: Report[]; forecasts: Record<string, number>; clientErrors: CloudProviderError[] }> {
+): Promise<{ reports: Report[]; clientErrors: CloudProviderError[] }> {
   const { filters, tags, groups, granularityString, startTime, endTime } = queryParameters;
   const promises: Promise<void>[] = [];
   const results: Report[] = [];
-  let forecasts: Record<string, number> = {};
   const errors: CloudProviderError[] = [];
 
   const granularity: GRANULARITY = Object.values(GRANULARITY).includes(granularityString as GRANULARITY)
@@ -95,9 +94,6 @@ async function getReports(
             clientResponse.reports.forEach((cost: Report) => {
               results.push(cost);
             });
-            if (clientResponse.forecasts) {
-              forecasts = { ...forecasts, ...clientResponse.forecasts };
-            }
           } catch (e) {
             logger.error(e);
             errors.push({
@@ -125,7 +121,7 @@ async function getReports(
     });
   });
 
-  return { reports: filteredResults, clientErrors: errors, forecasts: forecasts };
+  return { reports: filteredResults, clientErrors: errors };
 }
 
 export async function createRouter(options: RouterOptions): Promise<express.Router> {
@@ -216,12 +212,12 @@ export async function createRouter(options: RouterOptions): Promise<express.Rout
         reportFilters = await filter.augmentFilters(reportFilters);
       }
     }
-    const { reports, forecasts, clientErrors } = await getReports(reportFilters, config, database, cache, logger);
+    const { reports, clientErrors } = await getReports(reportFilters, config, database, cache, logger);
 
     if (clientErrors.length > 0) {
       response.status(207).json({ data: reports, errors: clientErrors, status: 207 });
     } else {
-      response.json({ data: reports, forecasts: forecasts, errors: clientErrors, status: 200 });
+      response.json({ data: reports, errors: clientErrors, status: 200 });
     }
   });
 

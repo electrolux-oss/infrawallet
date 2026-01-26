@@ -56,6 +56,18 @@ const rearrangeData = (report: Report, periods: string[]): any[] => {
   return costs;
 };
 
+const rearrangeForecastData = (report: Report, periods: string[]): any[] => {
+  const forecasts: any[] = [];
+  periods.forEach((s: string) => {
+    if (report.forecast && typeof report.forecast === 'object' && report.forecast[s]) {
+      forecasts.push(report.forecast[s]);
+    } else {
+      forecasts.push(null);
+    }
+  });
+  return forecasts;
+};
+
 const checkIfFiltersActivated = (filters: Filters): boolean => {
   let activated = false;
   Object.keys(filters).forEach((key: string) => {
@@ -117,7 +129,6 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
   const [reports, setReports] = useState<Report[] | undefined>(undefined);
   const [metrics, setMetrics] = useState<Metric[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [forecasts, setForecasts] = useState<Record<string, number>>({});
   const [filters, setFilters] = useState<Filters>(initialState.filters);
   const [cloudProviderErrors, setCloudProviderErrors] = useState<CloudProviderError[]>([]);
   const [reportsAggregated, setReportsAggregated] = useState<Report[] | undefined>(undefined);
@@ -142,7 +153,6 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
         if (reportsResponse.data) {
           setReports(reportsResponse.data);
           setPeriods(getPeriodStrings(granularity, monthRange.startMonth, monthRange.endMonth));
-          setForecasts(reportsResponse.forecasts || {});
         }
         if (reportsResponse.status === 207 && reportsResponse.errors) {
           setCloudProviderErrors(reportsResponse.errors);
@@ -321,6 +331,7 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
                       ? reportsAggregatedAndMerged.map((item: any) => ({
                           name: item.id,
                           data: rearrangeData(item, periods),
+                          forecast: rearrangeForecastData(item, periods),
                         }))
                       : undefined
                   }
@@ -330,7 +341,6 @@ export const ReportsComponent = (props: ReportsComponentProps) => {
                     data: rearrangeData(item, periods),
                   }))}
                   budgets={budgets}
-                  forecasts={forecasts}
                   monthRange={monthRange}
                   height={450}
                   highlightedItem={highlightedItem}
