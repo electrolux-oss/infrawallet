@@ -1,7 +1,13 @@
+function makeReportKey(orgName: string, productName: string, chargeType: string): string {
+  return JSON.stringify({ orgName, productName, chargeType });
+}
+
+function parseReportKey(key: string): ReportKey {
+  return JSON.parse(key);
+}
 import { CacheService, DatabaseService, LoggerService } from '@backstage/backend-plugin-api';
 import { Config } from '@backstage/config';
 import { v2 as datadogApiV2, client as datadogClient } from '@datadog/datadog-api-client';
-import { reduce } from 'lodash';
 import moment from 'moment';
 import { CLOUD_PROVIDER, GRANULARITY, PROVIDER_TYPE } from '../service/consts';
 import { parseCost } from '../service/functions';
@@ -9,6 +15,12 @@ import { CostQuery, Report } from '../service/types';
 import { InfraWalletClient } from './InfraWalletClient';
 import { DatadogCostByOrgResponseSchema } from '../schemas/DatadogBilling';
 import { ZodError } from 'zod';
+
+type ReportKey = {
+  orgName: string;
+  productName: string;
+  chargeType: string;
+};
 
 export class DatadogClient extends InfraWalletClient {
   static create(config: Config, database: DatabaseService, cache: CacheService, logger: LoggerService) {
@@ -272,7 +284,7 @@ export class DatadogClient extends InfraWalletClient {
         // Include all non-total charge types for forecast and aggregate by org->product
         // This way we sum all forecast charge types (committed, on_demand, etc.) for each product
         if (chargeType !== 'total' && productName && cost !== undefined && cost !== null && cost > 0) {
-          const keyName = `${orgName}->${productName}`; // Remove charge type from key
+          const keyName = JSON.stringify({ orgName, productName });
           const currentAmount = forecastMap.get(keyName) || 0;
           forecastMap.set(keyName, currentAmount + cost);
           this.logger.debug(`Added forecast for ${keyName}: ${cost} (total: ${currentAmount + cost})`);
@@ -324,110 +336,88 @@ export class DatadogClient extends InfraWalletClient {
     const uniqueKeys = new Set<string>();
     const totalRecords = costResponse?.length || 0;
 
-    const transformedData = reduce(
-      costResponse,
-      (accumulator: { [key: string]: Report }, costByOrg) => {
-        const account = costByOrg.orgName;
-        const charges = costByOrg.charges;
+    const transformedDataMap = new Map<string, Report>();
+    costResponse.forEach((costByOrg: any) => {
+      const account = costByOrg.orgName;
+      const charges = costByOrg.charges;
+      if (!account || !costByOrg.date) {
+        filteredOutMissingFields++;
+        return;
+      }
+      let periodFormat = 'YYYY-MM';
+      if (query.granularity === GRANULARITY.DAILY) {
+        periodFormat = 'YYYY-MM-DD';
+      }
+      const dateObj = moment.utc(costByOrg.date);
+      if (!dateObj.isValid()) {
+        filteredOutInvalidDate++;
+        return;
+      }
+      const period = dateObj.format(periodFormat);
+      if (charges) {
+        charges.forEach((charge: datadogApiV2.ChargebackBreakdown) => {
+          const productName = charge.productName;
+          const cost = charge.cost;
+          if (!productName || cost === undefined || cost === null) {
+            filteredOutMissingFields++;
+            return;
+          }
+          const amount = parseCost(cost);
+          if (amount === 0) {
+            filteredOutZeroAmount++;
+            return;
+          }
+          const key = makeReportKey(account ?? '', productName ?? '', charge.chargeType ?? '');
+          if (!transformedDataMap.has(key)) {
+            uniqueKeys.add(key);
+            transformedDataMap.set(key, {
+              id: key,
+              account: `${this.provider}/${account}`,
+              service: `${this.convertServiceName(productName as string)} (${charge.chargeType})`,
+              category: 'Observability',
+              provider: this.provider,
+              providerType: PROVIDER_TYPE.INTEGRATION,
+              reports: {},
+              ...tagKeyValues,
+            });
+          }
+          transformedDataMap.get(key)!.reports[period] = amount;
+          processedRecords++;
+        });
+      }
+    });
+    const transformedData: { [key: string]: Report } = {};
+    for (const [k, v] of transformedDataMap.entries()) {
+      transformedData[k] = v;
+    }
 
-        // Check for missing fields
-        if (!account || !costByOrg.date) {
-          filteredOutMissingFields++;
-          return accumulator;
-        }
-
-        let periodFormat = 'YYYY-MM';
-        if (query.granularity === GRANULARITY.DAILY) {
-          periodFormat = 'YYYY-MM-DD';
-        }
-
-        const dateObj = moment.utc(costByOrg.date);
-        if (!dateObj.isValid()) {
-          filteredOutInvalidDate++;
-          return accumulator;
-        }
-
-        const period = dateObj.format(periodFormat);
-
-        if (charges) {
-          charges.forEach((charge: datadogApiV2.ChargebackBreakdown) => {
-            const productName = charge.productName;
-            const cost = charge.cost;
-
-            // Check for missing fields
-            if (!productName || cost === undefined || cost === null) {
-              filteredOutMissingFields++;
-              return;
-            }
-
-            const amount = parseCost(cost);
-
-            // Check for zero amount
-            if (amount === 0) {
-              filteredOutZeroAmount++;
-              return;
-            }
-
-            const keyName = `${account}->${productName} (${charge.chargeType})`;
-
-            if (!accumulator[keyName]) {
-              uniqueKeys.add(keyName);
-              accumulator[keyName] = {
-                id: keyName,
-                account: `${this.provider}/${account}`,
-                service: `${this.convertServiceName(productName as string)} (${charge.chargeType})`,
-                category: 'Observability',
-                provider: this.provider,
-                providerType: PROVIDER_TYPE.INTEGRATION,
-                reports: {},
-                ...tagKeyValues,
-              };
-            }
-
-            accumulator[keyName].reports[period] = amount;
-            processedRecords++;
-          });
-        }
-
-        return accumulator;
-      },
-      {},
-    );
-
-    // Add forecast data to the transformed reports
     if (forecastMap && forecastMap.size > 0) {
       this.logger.debug(`Integrating ${forecastMap.size} forecast entries into reports`);
-
       forecastMap.forEach((forecastAmount, forecastKey) => {
-        // forecastKey is now in format: "OrgName->ProductName" (without charge type)
-        // We need to find all reports that match this org and product, regardless of charge type
-        // and add the forecast ONLY ONCE to a single representative report
-
         let matchedReport: string | null = null;
-
-        // Find the first matching report for this org->product combination
-        Object.keys(transformedData).forEach(reportKey => {
-          // Extract org and product from report key: "OrgName->ProductName (chargeType)"
-          const reportRegex = /^(.+?)->(.+?) \((.+?)\)$/;
-          const reportMatch = reportRegex.exec(reportKey);
-          if (reportMatch) {
-            const [, reportOrg, reportProduct] = reportMatch;
-            const reportOrgProduct = `${reportOrg}->${reportProduct}`;
-
-            // If this matches our forecast key and we haven't assigned the forecast yet
-            if (reportOrgProduct === forecastKey && !matchedReport) {
-              matchedReport = reportKey;
-              if (!transformedData[reportKey].forecast) {
-                transformedData[reportKey].forecast = {};
+        try {
+          const { orgName: forecastOrg, productName: forecastProduct } = JSON.parse(forecastKey);
+          for (const reportKey of Object.keys(transformedData)) {
+            try {
+              const { orgName, productName } = parseReportKey(reportKey);
+              if (orgName === forecastOrg && productName === forecastProduct && !matchedReport) {
+                matchedReport = reportKey;
+                if (!transformedData[reportKey].forecast) {
+                  transformedData[reportKey].forecast = {};
+                }
+                transformedData[reportKey].forecast[forecastMonth] = parseCost(forecastAmount);
+                this.logger.debug(`Matched forecast ${forecastKey} (${forecastAmount}) to report ${reportKey}`);
               }
-              transformedData[reportKey].forecast![forecastMonth] = parseCost(forecastAmount);
-              this.logger.debug(`Matched forecast ${forecastKey} (${forecastAmount}) to report ${reportKey}`);
+            } catch (reportParseError) {
+              this.logger.warn(`Failed to parse report key: ${reportKey}, skipping`);
+              continue;
             }
           }
-        });
-
-        if (!matchedReport) {
-          this.logger.warn(`No matching report found for forecast key: ${forecastKey}`);
+          if (!matchedReport) {
+            this.logger.warn(`No matching report found for forecast key: ${forecastKey}`);
+          }
+        } catch (forecastParseError) {
+          this.logger.warn(`Failed to parse forecast key: ${forecastKey}, skipping`);
         }
       });
     }
@@ -448,7 +438,6 @@ export class DatadogClient extends InfraWalletClient {
     );
     if (reportsWithForecast.length > 0) {
       this.logger.info(`Successfully integrated forecast data into ${reportsWithForecast.length} reports`);
-      // Log each report with forecast for debugging
       reportsWithForecast.forEach(report => {
         const forecastValue = report.forecast ? Object.values(report.forecast)[0] : 0;
         this.logger.debug(`Report with forecast: ${report.id} = ${forecastValue}`);
