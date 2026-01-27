@@ -1,4 +1,4 @@
-import { format, parse, startOfMonth } from 'date-fns';
+import { format, parse, startOfMonth, endOfMonth } from 'date-fns';
 import * as lucene from 'lucene';
 import { useCallback, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
@@ -162,11 +162,22 @@ const formatDateForUrl = (date: Date): string => {
 };
 
 /**
- * Parse YYYY-MM from URL to Date
+ * Parse YYYY-MM from URL to Date (start of month)
  */
-const parseDateFromUrl = (dateStr: string): Date | null => {
+const parseStartDateFromUrl = (dateStr: string): Date | null => {
   try {
     return startOfMonth(parse(dateStr, 'yyyy-MM', new Date()));
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Parse YYYY-MM from URL to Date (end of month)
+ */
+const parseEndDateFromUrl = (dateStr: string): Date | null => {
+  try {
+    return endOfMonth(parse(dateStr, 'yyyy-MM', new Date()));
   } catch {
     return null;
   }
@@ -214,8 +225,8 @@ export const useInfraWalletLuceneParams = (options: UseInfraWalletLuceneParamsOp
     const toParam = searchParams.get('to');
     let monthRange = options.defaultMonthRange;
     if (fromParam && toParam) {
-      const startMonth = parseDateFromUrl(fromParam);
-      const endMonth = parseDateFromUrl(toParam);
+      const startMonth = parseStartDateFromUrl(fromParam);
+      const endMonth = parseEndDateFromUrl(toParam);
       if (startMonth && endMonth) {
         monthRange = { startMonth, endMonth };
       }
