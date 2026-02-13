@@ -1,6 +1,5 @@
 export { InfraWalletIcon } from './InfraWalletIcon';
 export { EntityInfraWalletCard } from './EntityInfraWalletCard';
-export type { ReportsComponentProps } from './ReportsComponent';
 import { Entity } from '@backstage/catalog-model';
 import {
   INFRAWALLET_ANNOTATION_PROJECT,
