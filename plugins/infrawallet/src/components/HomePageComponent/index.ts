@@ -1,0 +1,1 @@
+export { HomePageComponent } from './HomePageComponent';
