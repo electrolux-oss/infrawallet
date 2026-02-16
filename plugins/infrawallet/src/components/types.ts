@@ -81,7 +81,7 @@ export type BudgetsProps = {
   providerErrorsSetter: any;
 };
 
-export type HomePageComponentProps = {
+export type HomePageProps = {
   title?: string;
   subTitle?: string;
 };

@@ -1,10 +1,10 @@
 import { Content, Header, HeaderTabs, Page } from '@backstage/core-components';
 import { configApiRef, useApi } from '@backstage/core-plugin-api';
-import { default as React, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useLocation, useNavigate, useParams, Outlet } from 'react-router-dom';
-import { HomePageComponentProps } from '../types';
+import { HomePageProps } from '../types';
 
-export const HomePageComponent = (props: HomePageComponentProps) => {
+export const HomePage = (props: HomePageProps) => {
   const { title, subTitle } = props;
   const configApi = useApi(configApiRef);
   const params = useParams();
@@ -23,11 +23,14 @@ export const HomePageComponent = (props: HomePageComponentProps) => {
   ];
   const tabsToShow = tabConfig.filter(tab => tab.enabled);
 
-  // Determine active tab based on URL path
+  // Determine active tab based on URL path (handles nested paths like /budgets/xxx)
   const pathSegments = location.pathname.split('/').filter(Boolean);
-  const currentTabId = pathSegments[pathSegments.length - 1] || 'overview';
+  const tabIds = new Set(tabsToShow.map(tab => tab.id));
+  const currentTabId = pathSegments.find(segment => tabIds.has(segment)) || 'overview';
   const currentTab = tabsToShow.find(tab => tab.id === currentTabId) || tabsToShow[0];
   const activeTabIndex = tabsToShow.indexOf(currentTab);
+  const INFRAWALLET_BASE = '/infrawallet';
+  const basePath = params.name ? `${INFRAWALLET_BASE}/${params.name}` : INFRAWALLET_BASE;
 
   // Save params for overview in sessionStorage on tab change
   useEffect(() => {
@@ -36,10 +39,19 @@ export const HomePageComponent = (props: HomePageComponentProps) => {
     }
   }, [currentTabId, location.search]);
 
+  useEffect(() => {
+    let normalizedPath = location.pathname;
+    while (normalizedPath.endsWith('/') && normalizedPath !== '/') {
+      normalizedPath = normalizedPath.slice(0, -1);
+    }
+    if (normalizedPath === basePath) {
+      navigate(`${basePath}/overview${location.search || ''}`, { replace: true });
+    }
+  }, [basePath, location.pathname, location.search, navigate]);
+
   const handleTabChange = (index: number) => {
     const tab = tabsToShow[index];
-    const basePath = params.name ? `/infrawallet/${params.name}` : '/infrawallet';
-    let newPath = tab.id === 'overview' ? basePath : `${basePath}/${tab.id}`;
+    let newPath = tab.id === 'overview' ? `${basePath}/overview` : `${basePath}/${tab.id}`;
 
     if (tab.id === 'overview') {
       const savedParams = sessionStorage.getItem('overviewParams');
