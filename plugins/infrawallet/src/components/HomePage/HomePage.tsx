@@ -13,14 +13,14 @@ export const HomePage = (props: HomePageProps) => {
   const budgetsEnabled = configApi.getOptionalBoolean('infraWallet.settings.budgets.enabled') ?? true;
   const customCostsEnabled = configApi.getOptionalBoolean('infraWallet.settings.customCosts.enabled') ?? true;
   const businessMetricsEnabled = configApi.getOptionalBoolean('infraWallet.settings.businessMetrics.enabled') ?? true;
+  const overviewTab = 'overview';
   const tabConfig = [
-    { id: 'overview', label: 'Overview', enabled: true },
+    { id: overviewTab, label: 'Overview', enabled: true },
     { id: 'budgets', label: 'Budgets', enabled: budgetsEnabled },
     { id: 'custom-costs', label: 'Custom Costs', enabled: customCostsEnabled },
     { id: 'business-metrics', label: 'Business Metrics', enabled: businessMetricsEnabled },
   ];
   const activeTabs = tabConfig.filter(tab => tab.enabled);
-  const overviewTab = activeTabs[0].id;
   const pathSegments = location.pathname.split('/').filter(Boolean);
   const tabSegment = pathSegments[1];
   const activeTabIndex = activeTabs.findIndex(tab => tab.id === tabSegment);
@@ -45,7 +45,7 @@ export const HomePage = (props: HomePageProps) => {
 
   useEffect(() => {
     if (activeTabIndex === -1) {
-      navigate(`${overviewTab}`, { replace: true });
+      navigate(overviewTab, { replace: true });
     }
   }, [activeTabIndex, overviewTab, navigate]);
 
