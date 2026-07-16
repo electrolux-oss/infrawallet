@@ -15,6 +15,7 @@
     "fix": "backstage-cli repo fix",
     "lint": "backstage-cli repo lint --since origin/main",
     "lint:all": "backstage-cli repo lint",
+    "lint:type-deps": "backstage-repo-tools type-deps",
     "prettier:check": "prettier --check .",
     "new": "backstage-cli new"
   },
@@ -34,6 +35,7 @@
   "devDependencies": {
     "@backstage/cli": "^0.36.2",
     "@backstage/cli-defaults": "^0.1.2",
+    "@backstage/repo-tools": "^0.18.0",
     "@jest/environment-jsdom-abstract": "^30.0.0",
     "@types/jest": "^30.0.0",
     "jest": "^30.2.0",
